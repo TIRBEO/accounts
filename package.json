@@ -17,8 +17,6 @@
     "@tirbeo/ui": "workspace:*",
     "@tirbeo/utils": "workspace:*"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"]
   },
   "devDependencies": {
     "@tirbeo/config": "workspace:*",
