@@ -1,0 +1,11 @@
+
+> @tirbeo/accounts@0.0.1 build C:\Users\gwbis\Downloads\Tirbeo-All\apps\accounts
+> next build
+
+   ▲ Next.js 15.5.19
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 18.9s
+   Linting and checking validity of types ...
+   Collecting page data ...

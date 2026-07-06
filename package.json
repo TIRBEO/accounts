@@ -1,0 +1,30 @@
+{
+  "name": "@tirbeo/accounts",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tirbeo/auth": "workspace:*",
+    "@tirbeo/database": "workspace:*",
+    "@tirbeo/ui": "workspace:*",
+    "@tirbeo/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@tirbeo/config": "workspace:*",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "postcss": "^8.4.0",
+    "@tailwindcss/postcss": "^4.0.0"
+  }
+}
