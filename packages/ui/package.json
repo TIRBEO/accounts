@@ -1,0 +1,60 @@
+{
+  "name": "@tirbeo/ui",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles": {
+      "style": "./src/styles/globals.css",
+      "import": "./src/styles/globals.css",
+      "require": "./src/styles/globals.css"
+    },
+    "./theme": {
+      "style": "./src/styles/theme.css",
+      "import": "./src/styles/theme.css",
+      "require": "./src/styles/theme.css"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "framer-motion": "^10.12.16",
+    "@paper-design/shaders-react": "^0.0.77",
+    "gsap": "^3.12.2",
+    "imagesloaded": "^5.0.0",
+    "react-icons": "^4.10.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0",
+    "lucide-react": "^0.460.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tirbeo/config": "workspace:*",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

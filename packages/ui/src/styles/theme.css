@@ -1,0 +1,82 @@
+@theme {
+  --color-tirbeo-crimson-50: #fef2f4;
+  --color-tirbeo-crimson-100: #fde6e9;
+  --color-tirbeo-crimson-200: #fbd0d9;
+  --color-tirbeo-crimson-300: #f7a9b9;
+  --color-tirbeo-crimson-400: #f17894;
+  --color-tirbeo-crimson-500: #e84a6f;
+  --color-tirbeo-crimson-600: #d42a5a;
+  --color-tirbeo-crimson-700: #b31e4a;
+  --color-tirbeo-crimson-800: #961c42;
+  --color-tirbeo-crimson-900: #801b3c;
+  --color-tirbeo-crimson-950: #470a1e;
+
+  --color-tirbeo-blue-50: #e8eaf5;
+  --color-tirbeo-blue-100: #c2c8e8;
+  --color-tirbeo-blue-200: #99a3d9;
+  --color-tirbeo-blue-300: #6f7ecb;
+  --color-tirbeo-blue-400: #4f62c0;
+  --color-tirbeo-blue-500: #2f4fc4;
+  --color-tirbeo-blue-600: #243de6;
+  --color-tirbeo-blue-700: #2218b8;
+  --color-tirbeo-blue-800: #0a2472;
+  --color-tirbeo-blue-900: #051650;
+  --color-tirbeo-blue-950: #00072d;
+
+  --color-tirbeo-dark-50: #f6f6f6;
+  --color-tirbeo-dark-100: #e7e7e7;
+  --color-tirbeo-dark-200: #d1d1d1;
+  --color-tirbeo-dark-300: #b0b0b0;
+  --color-tirbeo-dark-400: #888888;
+  --color-tirbeo-dark-500: #6d6d6d;
+  --color-tirbeo-dark-600: #5d5d5d;
+  --color-tirbeo-dark-700: #4f4f4f;
+  --color-tirbeo-dark-800: #454545;
+  --color-tirbeo-dark-900: #3d3d3d;
+  --color-tirbeo-dark-950: #0f0f0f;
+
+  --color-tirbeo-gold-50: #fef9ee;
+  --color-tirbeo-gold-100: #fdf0d0;
+  --color-tirbeo-gold-200: #f9de9e;
+  --color-tirbeo-gold-300: #f5c663;
+  --color-tirbeo-gold-400: #f0ad35;
+  --color-tirbeo-gold-500: #ee9b1d;
+  --color-tirbeo-gold-600: #c77510;
+  --color-tirbeo-gold-700: #a65312;
+  --color-tirbeo-gold-800: #874116;
+  --color-tirbeo-gold-900: #6e3618;
+  --color-tirbeo-gold-950: #401b09;
+
+  --font-sans: "Inter", "SF Pro", system-ui, sans-serif;
+  --font-heading: "Inter", "SF Pro Display", system-ui, sans-serif;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-tirbeo-dark-200);
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-tirbeo-dark-950);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body,
+  .dark * {
+    border-color: var(--color-tirbeo-dark-700);
+  }
+
+  .dark body {
+    background-color: var(--color-tirbeo-dark-950);
+    color: var(--color-tirbeo-dark-50);
+  }
+}
