@@ -17,7 +17,6 @@
     "@tirbeo/ui": "workspace:*",
     "@tirbeo/utils": "workspace:*"
   },
-  },
   "devDependencies": {
     "@tirbeo/config": "workspace:*",
     "typescript": "^5.6.0",
