@@ -3,32 +3,45 @@
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { Eye, EyeOff, ArrowLeft, Check, Loader2, Mail, Shield, KeyRound, Lock, PartyPopper } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Check, Mail, KeyRound, Lock } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type FlowStep = "email" | "code" | "set-password" | "success";
 
-function StepIndicator({ step, total }: { step: number; total: number }) {
+function Spinner({ size = 20 }: { size?: number }) {
   return (
-    <div className="flex items-center gap-2 w-full max-w-xs mx-auto mb-2">
+    <span
+      className="ring-spinner"
+      style={{
+        width: size,
+        height: size,
+        borderColor: "rgba(0,0,0,0.15)",
+        borderTopColor: "#0A0A0A",
+      }}
+    />
+  );
+}
+
+function StepDots({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-8">
       {Array.from({ length: total }, (_, i) => {
         const isActive = i + 1 === step;
         const isDone = i + 1 < step;
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-              isActive ? "bg-gradient-to-br from-accent to-accent text-white shadow-lg shadow-accent/25" :
-              isDone ? "bg-success/20 text-success" :
-              "bg-white/5 text-white/25"
-            }`}>
-              {isDone ? <Check size={14} /> : i + 1}
-            </div>
-            <div className={`h-0.5 w-full rounded-full transition-all duration-300 ${
-              isDone ? "bg-success/40" : isActive ? "bg-[#4F8CFF]/40" : "bg-white/10"
-            }`} />
-          </div>
+          <div
+            key={i}
+            className="h-1 flex-1 rounded-full transition-all duration-500"
+            style={{
+              background: isDone
+                ? "rgba(255,255,255,0.85)"
+                : isActive
+                ? "rgba(255,255,255,0.55)"
+                : "rgba(255,255,255,0.12)",
+            }}
+          />
         );
       })}
     </div>
@@ -50,7 +63,7 @@ function ResetPasswordForm() {
   const [devCode, setDevCode] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
-  const stepNumber = step === "email" ? 1 : step === "code" ? 2 : step === "set-password" ? 3 : 3;
+  const stepNumber = step === "email" ? 1 : step === "code" ? 2 : 3;
 
   const apiFetch = useCallback(async (path: string, body: Record<string, unknown>, opts?: { noCreds?: boolean }) => {
     const controller = new AbortController();
@@ -152,83 +165,83 @@ function ResetPasswordForm() {
     }
   }, [email, resetToken, newPassword, confirmPassword, apiFetch]);
 
-  return (
-    <motion.div
-      key={step}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-xl mx-auto space-y-8"
-    >
-      {step !== "success" && (
-        <div className="flex items-center gap-4 mb-2">
-          <a href="/login" className="text-white/30 hover:text-white/80 transition-colors">
-            <ArrowLeft size={20} />
-          </a>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-              {step === "email" ? "Reset Password" :
-               step === "code" ? "Enter Code" :
-               "Set New Password"}
-            </h1>
-            <p className="text-white/40 text-sm mt-2">
-              {step === "email" ? "Enter your email to receive a reset code." :
-               step === "code" ? `We sent a code to ${email}` :
-               urlToken ? "Your link is verified. Choose a new password." :
-               "Choose a strong password for your account."}
-            </p>
-          </div>
-        </div>
-      )}
+  const labelCls = "text-sm font-medium text-white/70";
+  const fieldIcon = "absolute left-4 top-1/2 -translate-y-1/2 text-white/40 z-10";
 
+  const errorBlock = error && (
+    <div className="flex items-center gap-3">
+      <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+      <p className="text-sm text-[#E45D5D]">{error}</p>
+    </div>
+  );
+
+  return (
+    <div key={step} className="phase-fade dir-to-signup">
       {step !== "success" && (
-        <StepIndicator step={stepNumber} total={3} />
+        <>
+          <div className="mb-6 flex items-start gap-3">
+            <a
+              href="/login"
+              className="mt-1 text-white/40 transition-colors hover:text-white"
+              aria-label="Back to login"
+            >
+              <ArrowLeft size={20} />
+            </a>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-white">
+                {step === "email" ? "Reset Password" : step === "code" ? "Enter Code" : "Set New Password"}
+              </h1>
+              <p className="mt-2 text-sm text-white/60">
+                {step === "email"
+                  ? "Enter your email to receive a reset code."
+                  : step === "code"
+                  ? `We sent a code to ${email}`
+                  : urlToken
+                  ? "Your link is verified. Choose a new password."
+                  : "Choose a strong password for your account."}
+              </p>
+            </div>
+          </div>
+          <StepDots step={stepNumber} total={3} />
+        </>
       )}
 
       {step === "email" && (
-        <form onSubmit={handleRequestReset} className="space-y-5">
+        <form onSubmit={handleRequestReset} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white/80">Email</label>
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
-                <Mail size={16} />
-              </div>
+            <label className={labelCls}>Email</label>
+            <div className="relative">
+              <div className={fieldIcon}><Mail size={16} /></div>
               <input
                 type="email"
                 placeholder="hello@example.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
                 autoFocus
-                className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm transition-all duration-200"
+                className="field-underline"
               />
             </div>
           </div>
 
-          {error && (
-            <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-danger">{error}</p>
-            </div>
-          )}
+          {errorBlock}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Code"}
+          <button type="submit" disabled={loading} className="btn-primary-ac">
+            {loading ? <Spinner /> : "Send Reset Code"}
           </button>
+
+          <p className="text-center text-sm text-white/50">
+            Remember your password?{" "}
+            <a href="/login" className="text-white/85 underline underline-offset-2 hover:text-white">Sign in</a>
+          </p>
         </form>
       )}
 
       {step === "code" && (
-        <form onSubmit={handleVerifyCode} className="space-y-5">
+        <form onSubmit={handleVerifyCode} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white/80">Verification Code</label>
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
-                <KeyRound size={16} />
-              </div>
+            <label className={labelCls}>Verification Code</label>
+            <div className="relative">
+              <div className={fieldIcon}><KeyRound size={16} /></div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -236,42 +249,37 @@ function ResetPasswordForm() {
                 value={code}
                 onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(null); }}
                 autoFocus
-                className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm tracking-[0.3em] font-mono transition-all duration-200"
+                className="field-underline"
+                style={{ letterSpacing: "0.3em" }}
               />
             </div>
           </div>
 
-          {devCode && process.env.NODE_ENV === 'development' && (
-            <div className="p-4 rounded-2xl bg-[#111111] border border-white/[0.06]">
-              <p className="text-xs font-medium text-accent">Dev Mode &mdash; Your code: <span className="font-bold text-sm">{devCode}</span></p>
-            </div>
+          {devCode && process.env.NODE_ENV === "development" && (
+            <p className="text-xs text-white/50">
+              Dev Mode &mdash; Your code: <span className="font-semibold text-white">{devCode}</span>
+            </p>
           )}
 
-          <div className="text-center">
-            <button type="button" onClick={handleRequestReset} disabled={loading} className="text-sm text-accent/80 underline hover:text-accent transition-colors">
-              Resend code
-            </button>
-          </div>
+          {errorBlock}
 
-          {error && (
-            <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-danger">{error}</p>
-            </div>
-          )}
+          <button type="submit" disabled={loading || code.length < 4} className="btn-primary-ac">
+            {loading ? <Spinner /> : "Verify Code"}
+          </button>
 
           <button
-            type="submit"
-            disabled={loading || code.length < 4}
-            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
+            type="button"
+            onClick={handleRequestReset}
+            disabled={loading}
+            className="btn-ghost-ac w-full"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Code"}
+            Resend code
           </button>
         </form>
       )}
 
       {step === "set-password" && (
-        <form onSubmit={handleResetPassword} className="space-y-5">
+        <form onSubmit={handleResetPassword} className="space-y-6">
           <PasswordInput
             label="New Password"
             placeholder="8+ characters"
@@ -285,74 +293,57 @@ function ResetPasswordForm() {
             onChange={(v) => { setConfirmPassword(v); setError(null); }}
           />
           {newPassword && newPassword.length < 8 && (
-            <p className="text-xs text-white/30">Password must be at least 8 characters.</p>
+            <p className="text-xs text-white/40">Password must be at least 8 characters.</p>
           )}
           {newPassword && confirmPassword && newPassword !== confirmPassword && (
-            <p className="text-xs text-danger/80">Passwords do not match.</p>
+            <p className="text-xs text-[#E45D5D]">Passwords do not match.</p>
           )}
 
-          {error && (
-            <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-danger">{error}</p>
-            </div>
-          )}
+          {errorBlock}
 
           <button
             type="submit"
             disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
-            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
+            className="btn-primary-ac"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reset Password"}
+            {loading ? <Spinner /> : "Reset Password"}
           </button>
         </form>
       )}
 
       {step === "success" && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center space-y-8 py-8"
+          className="space-y-8 py-4 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2, type: "spring", bounce: 0.4 }}
-            className="w-24 h-24 rounded-full bg-[#111111] border border-white/[0.08] flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(79,140,255,0.12)]"
+            transition={{ duration: 0.5, delay: 0.15, type: "spring", bounce: 0.45 }}
+            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full"
+            style={{
+              background: "#fff",
+              boxShadow: "0 10px 40px rgba(255,255,255,0.2)",
+            }}
           >
-            <Check size={40} className="text-white" strokeWidth={3} />
+            <Check size={38} className="text-black" strokeWidth={3} />
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h2 className="text-2xl font-bold text-white">Password Reset</h2>
-            <p className="text-white/40 text-sm mt-2 max-w-xs mx-auto">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">Password Reset</h2>
+            <p className="mx-auto mt-2 max-w-xs text-sm text-white/60">
               Your password has been successfully updated. You can now sign in with your new password.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <a
-              href="/login"
-              className="w-full h-14 bg-gradient-to-r from-accent to-accent text-white font-semibold rounded-2xl hover:from-accent hover:to-accent/80 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
-            >
-              Go to Login
-            </a>
-          </motion.div>
-
-          <ConfettiDots />
+          <a href="/login" className="btn-primary-ac inline-flex">
+            Go to Login
+          </a>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -360,9 +351,9 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-white/80">{label}</label>
-      <div className="relative group">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
+      <label className="text-sm font-medium text-white/70">{label}</label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 z-10">
           <Lock size={16} />
         </div>
         <input
@@ -370,9 +361,14 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-11 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm transition-all duration-200"
+          className="field-underline"
+          style={{ paddingRight: "2.5rem" }}
         />
-        <button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
+        <button
+          type="button"
+          onClick={() => setShow(!show)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition-colors hover:text-white"
+        >
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </div>
@@ -380,49 +376,42 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
   );
 }
 
-function ConfettiDots() {
-  const colors = ["#4F8CFF", "#275d46", "#D8B36A", "#F5EFE7", "#5F7352"];
-  const dots = Array.from({ length: 24 }, (_, i) => ({
-    id: i,
-    color: colors[i % colors.length],
-    left: `${5 + Math.random() * 90}%`,
-    delay: Math.random() * 0.6,
-    size: 4 + Math.random() * 6,
-  }));
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {dots.map((d) => (
-        <motion.div
-          key={d.id}
-          initial={{ opacity: 1, y: -20, scale: 1 }}
-          animate={{ opacity: 0, y: 320, scale: 0.5, rotate: 360 }}
-          transition={{ duration: 1.8 + Math.random(), delay: 0.3 + d.delay, ease: "easeIn" }}
-          className="absolute rounded-full"
-          style={{ left: d.left, top: 0, width: d.size, height: d.size, background: d.color }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function ResetPasswordPage() {
   return (
     <main
-      className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 selection:bg-accent/30"
-      style={{ background: "#0A0A0B" }}
+      className="min-h-screen w-full flex items-center justify-center p-4"
+      style={{
+        backgroundImage: "url('/login-hero.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       <div className="noise-overlay" />
-      <div className="vignette" />
+      <div className="pointer-events-none fixed inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
 
       <div className="relative z-10 w-full max-w-md">
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
-          </div>
-        }>
-          <ResetPasswordForm />
-        </Suspense>
+        <div
+          className="relative overflow-y-auto rounded-[28px] p-10"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            backdropFilter: "blur(30px)",
+            WebkitBackdropFilter: "blur(30px)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 40px 100px rgba(0,0,0,0.45)",
+            maxHeight: "92vh",
+          }}
+        >
+          <Suspense
+            fallback={
+              <div className="flex h-48 items-center justify-center">
+                <span className="ring-spinner" style={{ width: 32, height: 32 }} />
+              </div>
+            }
+          >
+            <ResetPasswordForm />
+          </Suspense>
+        </div>
       </div>
     </main>
   );
