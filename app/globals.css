@@ -1,2 +1,122 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
-@import "@tirbeo/ui/theme";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0A0A0A;
+  --color-bg-card: #111111;
+  --color-bg-input: #0A0A0A;
+  --color-bg-elevated: #1A1A1A;
+
+  --color-purple-primary: #8B5CF6;
+  --color-purple-secondary: #A78BFA;
+  --color-purple-accent: #6D4AFF;
+
+  --color-off-white: #FFFFFF;
+  --color-text-muted: #9A9AA5;
+  --color-text-placeholder: #70707A;
+
+  --color-success: #3FB950;
+  --color-warning: #D8B36A;
+  --color-error: #E45D5D;
+
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --bg: #050505;
+  --bg-secondary: #0A0A0A;
+  --bg-card: #111111;
+  --bg-input: #0A0A0A;
+  --bg-elevated: #1A1A1A;
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+  --text: #FFFFFF;
+  --text-secondary: #C8C8D0;
+  --text-muted: #8A8A8A;
+  --text-placeholder: #8A8A8A;
+  --accent: #4F8CFF;
+  --accent-hover: #6B9BFF;
+  --accent-muted: rgba(79,140,255,0.15);
+  --accent-glow: rgba(79,140,255,0.2);
+  --accent-border: rgba(79,140,255,0.35);
+  --success: #3FB950;
+  --warning: #D8B36A;
+  --danger: #E45D5D;
+  --danger-subtle: rgba(228,93,93,0.12);
+
+  /* noise / texture */
+  --noise-opacity: 0.03;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar { display: none; }
+
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 140%;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(139,92,246,0.3);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ═══ SUBTLE NOISE TEXTURE OVERLAY ═══ */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+/* ═══ SOFT VIGNETTE ═══ */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%);
+  z-index: 1;
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -6,6 +6,29 @@
    - Environments: .env.local
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 18.9s
-   Linting and checking validity of types ...
+ ✓ Compiled successfully in 34.7s
+   Skipping validation of types
+   Skipping linting
    Collecting page data ...
+   Generating static pages (0/7) ...
+   Generating static pages (1/7) 
+   Generating static pages (3/7) 
+   Generating static pages (5/7) 
+ ✓ Generating static pages (7/7)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      123 B         102 kB
+├ ○ /_not-found                            992 B         103 kB
+├ ○ /callback                            1.39 kB         103 kB
+├ ○ /login                               7.33 kB         146 kB
+└ ○ /reset-password                      3.77 kB         143 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/4557610a-fefa5be19e77ed4a.js  54.2 kB
+  ├ chunks/785-778584e14f2dca51.js       45.8 kB
+  └ other shared chunks (total)             2 kB
+
+
+○  (Static)  prerendered as static content
+

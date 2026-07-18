@@ -9,22 +9,24 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^15.1.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "@tirbeo/auth": "workspace:*",
     "@tirbeo/database": "workspace:*",
     "@tirbeo/ui": "workspace:*",
-    "@tirbeo/utils": "workspace:*"
+    "@tirbeo/utils": "workspace:*",
+    "lucide-react": "^0.460.0",
+    "motion": "12.6.5",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "@tirbeo/config": "workspace:*",
-    "typescript": "^5.6.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.0",
     "postcss": "^8.4.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0"
   }
 }
