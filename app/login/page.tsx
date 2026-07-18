@@ -163,6 +163,33 @@ export default function LoginPage() {
   }, [resuming, mode, phase, email, firstName, lastName, occupation, phone, whoYouAre, findUs, selectedAvatar, customAvatar, agreeTerms]);
 
   // Upload a custom avatar to the Supabase "LOGOS" bucket → returns a public URL.
+  // Accepts either a File or a data URL (re-upload the bytes to storage).
+  const uploadAvatarToStorage = useCallback(
+    async (file: File | string, fileExt = "png"): Promise<string> => {
+      let bytes: Blob;
+      let contentType = "image/png";
+      if (typeof file === "string") {
+        const res = await fetch(file);
+        bytes = await res.blob();
+        contentType = bytes.type || contentType;
+      } else {
+        bytes = file;
+        contentType = file.type || contentType;
+      }
+      const ext = (typeof file === "string" ? fileExt : (file.name.split(".").pop() || "png")).toLowerCase();
+      const supabase = createClient();
+      const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(path, bytes, { cacheControl: "3600", upsert: false, contentType });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+      if (!data?.publicUrl) throw new Error("Could not get public URL");
+      return data.publicUrl;
+    },
+    [],
+  );
+
   const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -178,20 +205,9 @@ export default function LoginPage() {
     previewReader.readAsDataURL(file);
 
     try {
-      const supabase = createClient();
-      const ext = (file.name.split(".").pop() || "png").toLowerCase();
-      const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from(LOGO_BUCKET)
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-      if (upErr) throw upErr;
-      const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
-      if (data?.publicUrl) {
-        setCustomAvatar(data.publicUrl);
-        setSelectedAvatar(data.publicUrl);
-      } else {
-        throw new Error("Could not get public URL");
-      }
+      const publicUrl = await uploadAvatarToStorage(file);
+      setCustomAvatar(publicUrl);
+      setSelectedAvatar(publicUrl);
     } catch (err: any) {
       // Fall back to the local data URL so the user can still continue.
       const reader = new FileReader();
@@ -201,12 +217,12 @@ export default function LoginPage() {
         setSelectedAvatar(url);
       };
       reader.readAsDataURL(file);
-      setError(err?.message ? `Upload failed (${err.message}). Using local preview.` : "Upload failed. Using local preview.");
+      setError(err?.message ? `Upload failed (${err.message}). Using local preview — will retry on save.` : "Upload failed. Using local preview — will retry on save.");
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  }, []);
+  }, [uploadAvatarToStorage]);
 
   const redirectTo = appUrl("dashboard");
 
@@ -338,9 +354,20 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      // Only send a remote URL for the avatar; custom data-URL uploads are
-      // kept client-side so we never hit the storage bucket / Cloudflare limit.
-      const photoUrl = selectedAvatar.startsWith("http") ? selectedAvatar : undefined;
+      // Resolve the avatar to a remote URL the DB can persist.
+      let photoUrl: string | undefined;
+      if (selectedAvatar.startsWith("http")) {
+        photoUrl = selectedAvatar;
+      } else if (selectedAvatar.startsWith("data:")) {
+        // Upload never completed (or failed) — retry now so the link is stored.
+        try {
+          photoUrl = await uploadAvatarToStorage(selectedAvatar, "png");
+          setSelectedAvatar(photoUrl);
+          setCustomAvatar(photoUrl);
+        } catch (err: any) {
+          console.warn("[PROFILE] avatar re-upload failed:", err?.message);
+        }
+      }
       const res = await fetch(`${API}/api/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -364,7 +391,7 @@ export default function LoginPage() {
       try { localStorage.removeItem(DRAFT_KEY); } catch {}
       setPhase(3);
     }
-  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
+  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API, uploadAvatarToStorage]);
 
   const handleOtpLogin = useCallback(async () => {
     if (submittedRef.current) return;
