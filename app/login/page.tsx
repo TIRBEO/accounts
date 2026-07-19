@@ -99,6 +99,13 @@ export default function LoginPage() {
   const [birding, setBirding] = useState(false);
   const [sentStamp, setSentStamp] = useState(false);
 
+  // Auto-dismiss the floating "sent" toast after a few seconds.
+  useEffect(() => {
+    if (!sentStamp) return;
+    const t = setTimeout(() => setSentStamp(false), 3500);
+    return () => clearTimeout(t);
+  }, [sentStamp]);
+
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [noAccount, setNoAccount] = useState(false);
 
@@ -548,6 +555,15 @@ export default function LoginPage() {
 
       {birding && <Bird onDone={() => setBirding(false)} />}
 
+      {sentStamp && (
+        <div className="sent-toast" role="status" aria-live="polite">
+          <svg className="sent-plane" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 3l-9 18-2-7-7-2 18-9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>Code sent to your email</span>
+        </div>
+      )}
+
       <div className="relative z-10 w-full max-w-xl">
         <div
           className="relative p-10 overflow-y-auto rounded-[28px]"
@@ -665,18 +681,6 @@ export default function LoginPage() {
               <p className="text-white/60 text-sm">
                 We sent a 6-digit code to <span className="text-white/90">{email}</span>. Enter it below to sign in.
               </p>
-
-              {sentStamp && (
-                <div className="flex justify-center">
-                  <span className="sent-stamp">
-                    <svg className="sent-plane" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 3L3 10.5l6.5 2.5L12 20l3-6.5L21 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M9.5 13L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Sent!
-                  </span>
-                </div>
-              )}
               <div className="flex gap-3 justify-center" onPaste={(e) => {
                 const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
                 if (text) {
