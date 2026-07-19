@@ -614,8 +614,8 @@ body {
   justify-content: center;
   gap: 0.7rem;
   width: 100%;
-  height: 50vh;
-  padding: 0 1.5rem 2.5rem;
+  height: 26vh;
+  padding: 0 1.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -659,6 +659,55 @@ body {
   60% { transform: translateX(-2px); }
   80% { transform: translateX(2px); }
 }
+
+/* ═══ SUCCESS BANNER — same shape, green neon (sent / verified) ═══ */
+.success-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  height: 26vh;
+  padding: 0 1.5rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-align: center;
+  color: #EAFBF0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+  background:
+    /* U-shape: green hugs the sides, hollow/transparent in the center-middle */
+    linear-gradient(90deg,
+      rgba(63, 185, 80, 0.92) 0%,
+      rgba(63, 185, 80, 0.78) 14%,
+      rgba(63, 185, 80, 0.35) 34%,
+      rgba(63, 185, 80, 0.12) 50%,
+      rgba(63, 185, 80, 0.35) 66%,
+      rgba(63, 185, 80, 0.78) 86%,
+      rgba(63, 185, 80, 0.92) 100%),
+    /* vertical: solid at bottom, gradual blend to transparent at the top */
+    linear-gradient(0deg,
+      rgba(63, 185, 80, 0.95) 0%,
+      rgba(63, 185, 80, 0.72) 26%,
+      rgba(63, 185, 80, 0.42) 54%,
+      rgba(63, 185, 80, 0.14) 78%,
+      rgba(63, 185, 80, 0) 100%);
+  border: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
+  box-shadow: 0 -10px 60px rgba(63, 185, 80, 0.22);
+  pointer-events: none;
+  animation: errorBannerIn 0.4s var(--ease-spring) both, errorShake 0.45s ease both;
+}
+.success-banner svg { width: 22px; height: 22px; flex-shrink: 0; color: #6EE7A0; }
 .error-banner svg { width: 22px; height: 22px; flex-shrink: 0; color: #FF8A8A; }
 .error-banner button {
   margin-left: 0.5rem;

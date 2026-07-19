@@ -511,7 +511,9 @@ export default function LoginPage() {
       const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
       if (res.ok) {
         // Backend sets the session cookie, then sends us to the dashboard.
-        window.location.href = redirectTo;
+        setNotice("Verified! Taking you in…");
+        setSentStamp(false);
+        setTimeout(() => { window.location.href = redirectTo; }, 900);
         return;
       }
       setError(await res.text() || "Invalid or expired code");
@@ -580,6 +582,13 @@ export default function LoginPage() {
           {noAccount && (
             <button type="button" onClick={() => switchMode("signup")}>Create one</button>
           )}
+        </div>
+      )}
+
+      {notice && (
+        <div className="success-banner" role="status">
+          <Check />
+          <span>{notice}</span>
         </div>
       )}
 
