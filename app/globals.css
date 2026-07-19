@@ -614,7 +614,7 @@ body {
   justify-content: center;
   gap: 0.7rem;
   width: 100%;
-  height: 26vh;
+  height: 62vh;
   padding: 0 1.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -634,19 +634,20 @@ body {
       rgba(228, 45, 45, 0.35) 66%,
       rgba(228, 45, 45, 0.78) 86%,
       rgba(228, 45, 45, 0.92) 100%),
-    /* vertical: solid at bottom, very gradual blend to transparent at the top */
+    /* vertical: solid at bottom, blends up onto the panel, fades by the top */
     linear-gradient(0deg,
       rgba(228, 45, 45, 0.98) 0%,
-      rgba(228, 45, 45, 0.82) 26%,
-      rgba(228, 45, 45, 0.5) 54%,
-      rgba(228, 45, 45, 0.18) 78%,
+      rgba(228, 45, 45, 0.86) 30%,
+      rgba(228, 45, 45, 0.6) 55%,
+      rgba(228, 45, 45, 0.32) 75%,
+      rgba(228, 45, 45, 0.1) 90%,
       rgba(228, 45, 45, 0) 100%);
   border: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  -webkit-mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
-  mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
-  box-shadow: 0 -10px 60px rgba(228, 45, 45, 0.22);
+  -webkit-mask-image: linear-gradient(0deg, #000 78%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 78%, transparent 100%);
+  box-shadow: 0 -10px 70px rgba(228, 45, 45, 0.3);
   pointer-events: none;
   animation: errorBannerIn 0.4s var(--ease-spring) both, errorShake 0.45s ease both;
 }
@@ -672,7 +673,7 @@ body {
   justify-content: center;
   gap: 0.7rem;
   width: 100%;
-  height: 26vh;
+  height: 62vh;
   padding: 0 1.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
@@ -691,19 +692,20 @@ body {
       rgba(63, 185, 80, 0.35) 66%,
       rgba(63, 185, 80, 0.78) 86%,
       rgba(63, 185, 80, 0.92) 100%),
-    /* vertical: solid at bottom, gradual blend to transparent at the top */
+    /* vertical: solid at bottom, blends up onto the panel, fades by the top */
     linear-gradient(0deg,
       rgba(63, 185, 80, 0.95) 0%,
-      rgba(63, 185, 80, 0.72) 26%,
-      rgba(63, 185, 80, 0.42) 54%,
-      rgba(63, 185, 80, 0.14) 78%,
+      rgba(63, 185, 80, 0.82) 30%,
+      rgba(63, 185, 80, 0.56) 55%,
+      rgba(63, 185, 80, 0.3) 75%,
+      rgba(63, 185, 80, 0.1) 90%,
       rgba(63, 185, 80, 0) 100%);
   border: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  -webkit-mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
-  mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
-  box-shadow: 0 -10px 60px rgba(63, 185, 80, 0.22);
+  -webkit-mask-image: linear-gradient(0deg, #000 78%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 78%, transparent 100%);
+  box-shadow: 0 -10px 70px rgba(63, 185, 80, 0.3);
   pointer-events: none;
   animation: errorBannerIn 0.4s var(--ease-spring) both, errorShake 0.45s ease both;
 }
