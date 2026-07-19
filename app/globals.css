@@ -614,7 +614,7 @@ body {
   justify-content: center;
   gap: 0.7rem;
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -622,17 +622,34 @@ body {
   text-align: center;
   color: #FFE4E4;
   background:
+    /* horizontal: solid center, fades to transparent at edges */
     linear-gradient(90deg,
-      rgba(228, 93, 93, 0.22) 0%,
-      rgba(228, 45, 45, 0.85) 50%,
-      rgba(228, 93, 93, 0.22) 100%);
-  border-top: 2px solid #FF6B6B;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+      rgba(228, 45, 45, 0) 0%,
+      rgba(228, 45, 45, 0.85) 22%,
+      rgba(228, 45, 45, 0.95) 50%,
+      rgba(228, 45, 45, 0.85) 78%,
+      rgba(228, 45, 45, 0) 100%),
+    /* vertical: solid at bottom, blends to transparent upward (release up to ~half) */
+    linear-gradient(0deg,
+      rgba(228, 45, 45, 0.92) 0%,
+      rgba(228, 45, 45, 0.55) 45%,
+      rgba(228, 45, 45, 0) 100%);
+  border: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   box-shadow:
-    0 -8px 40px rgba(228, 45, 45, 0.45),
-    0 0 60px rgba(228, 45, 45, 0.3);
-  animation: errorBannerIn 0.4s var(--ease-spring) both, shake 0.45s ease both;
+    0 -8px 50px rgba(228, 45, 45, 0.35),
+    0 0 60px rgba(228, 45, 45, 0.25);
+  animation: errorBannerIn 0.4s var(--ease-spring) both, errorShake 0.45s ease both;
+}
+
+/* Gentle shake that won't expose viewport edges on a full-width bar */
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
 .error-banner svg { width: 22px; height: 22px; flex-shrink: 0; color: #FF8A8A; }
 .error-banner button {
