@@ -601,3 +601,51 @@ body {
 .card-shake {
   animation: shake 0.45s ease both;
 }
+
+/* ═══ ERROR BANNER — full-width neon-red bar pinned to bottom of site ═══ */
+.error-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-align: center;
+  color: #FFE4E4;
+  background:
+    linear-gradient(90deg,
+      rgba(228, 93, 93, 0.22) 0%,
+      rgba(228, 45, 45, 0.85) 50%,
+      rgba(228, 93, 93, 0.22) 100%);
+  border-top: 2px solid #FF6B6B;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 -8px 40px rgba(228, 45, 45, 0.45),
+    0 0 60px rgba(228, 45, 45, 0.3);
+  animation: errorBannerIn 0.4s var(--ease-spring) both, shake 0.45s ease both;
+}
+.error-banner svg { width: 22px; height: 22px; flex-shrink: 0; color: #FF8A8A; }
+.error-banner button {
+  margin-left: 0.5rem;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+@keyframes errorBannerIn {
+  0%   { opacity: 0; transform: translateY(100%); }
+  100% { opacity: 1; transform: translateY(0); }
+}

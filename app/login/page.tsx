@@ -115,13 +115,6 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [error]);
 
-  const ErrorBar = ({ msg }: { msg: string }) => (
-    <div className="error-bar" role="alert">
-      <AlertCircle />
-      <span>{msg}</span>
-    </div>
-  );
-
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [noAccount, setNoAccount] = useState(false);
 
@@ -580,6 +573,16 @@ export default function LoginPage() {
         </div>
       )}
 
+      {error && (
+        <div className="error-banner" role="alert">
+          <AlertCircle />
+          <span>{error}</span>
+          {noAccount && (
+            <button type="button" onClick={() => switchMode("signup")}>Create one</button>
+          )}
+        </div>
+      )}
+
       <div className="relative z-10 w-full max-w-xl">
         <div
           className={`relative p-10 overflow-y-auto rounded-[28px] ${cardShake ? "card-shake" : ""}`}
@@ -653,11 +656,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {error && (
-                  <ErrorBar
-                    msg={error + (noAccount ? " " : "")}
-                  />
-                )}
                 {noAccount && (
                   <button type="button" onClick={() => switchMode("signup")}
                     className="text-sm text-white/90 underline underline-offset-2 hover:text-white">
@@ -731,9 +729,6 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              {error && (
-                <ErrorBar msg={error} />
-              )}
 
               {notice && (
                 <div className="flex items-center gap-3 justify-center">
@@ -822,9 +817,6 @@ export default function LoginPage() {
                 </span>
               </label>
 
-              {error && (
-                <ErrorBar msg={error} />
-              )}
 
               <button type="submit" disabled={loading || !agreeTerms} className="btn-primary-ac">
                 {loading ? <Spinner dark /> : "Create Account"}
@@ -875,9 +867,6 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              {error && (
-                <ErrorBar msg={error} />
-              )}
 
               <button type="submit" disabled={loading} className="btn-primary-ac">
                 {loading ? <Spinner dark /> : "Verify & Continue"}
@@ -988,9 +977,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {error && (
-                <ErrorBar msg={error} />
-              )}
 
               <button type="button" onClick={handleSaveProfile} disabled={loading || uploadingAvatar || !selectedAvatar} className="btn-primary-ac">
                 {loading ? <Spinner dark /> : uploadingAvatar ? <Spinner dark /> : "Continue"}
