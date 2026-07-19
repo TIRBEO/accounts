@@ -99,6 +99,10 @@ export default function LoginPage() {
   const [birding, setBirding] = useState(false);
   const [sentStamp, setSentStamp] = useState(false);
 
+  // Rate-limit: ignore repeated submits within this window (ms).
+  const cooldownRef = useRef(0);
+  const COOLDOWN_MS = 1200;
+
   // Auto-dismiss the floating "sent" toast after a few seconds.
   useEffect(() => {
     if (!sentStamp) return;
@@ -106,12 +110,14 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [sentStamp]);
 
-  // Vibrate the card whenever a new error appears.
+  // Vibrate the card on every failed attempt (continuous shake on repeated clicks).
+  const [shakeKey, setShakeKey] = useState(0);
   const [cardShake, setCardShake] = useState(false);
   useEffect(() => {
     if (!error) return;
+    setShakeKey((k) => k + 1);
     setCardShake(true);
-    const t = setTimeout(() => setCardShake(false), 500);
+    const t = setTimeout(() => setCardShake(false), 480);
     return () => clearTimeout(t);
   }, [error]);
 
@@ -473,6 +479,9 @@ export default function LoginPage() {
 
   const handleOtpLoginResend = useCallback(async () => {
     if (submittedRef.current) return;
+    const now = Date.now();
+    if (now < cooldownRef.current) return;
+    cooldownRef.current = now + COOLDOWN_MS;
     if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
     submittedRef.current = true;
     setError(null);
@@ -502,6 +511,9 @@ export default function LoginPage() {
   const handleOtpLoginVerify = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (submittedRef.current) return;
+    const now = Date.now();
+    if (now < cooldownRef.current) return;
+    cooldownRef.current = now + COOLDOWN_MS;
     if (otpCode.length < 6) { setError("Enter the 6-digit code"); return; }
     submittedRef.current = true;
     setError(null);
@@ -568,7 +580,7 @@ export default function LoginPage() {
       {birding && <Bird onDone={() => setBirding(false)} />}
 
       {error && (
-        <div className="error-banner" role="alert">
+        <div key={shakeKey} className="error-banner" role="alert">
           <X />
           <span>{error}</span>
           {noAccount && (
@@ -578,7 +590,7 @@ export default function LoginPage() {
       )}
 
       {notice && (
-        <div className="success-banner" role="status">
+        <div key={shakeKey} className="success-banner" role="status">
           <Check />
           <span>{notice}</span>
         </div>
@@ -586,6 +598,7 @@ export default function LoginPage() {
 
       <div className="relative z-[9999] w-full max-w-xl">
         <div
+          key={shakeKey}
           className={`relative p-10 overflow-y-auto rounded-[28px] ${cardShake ? "card-shake" : ""}`}
           style={{
             background: "rgba(255,255,255,0.08)",
