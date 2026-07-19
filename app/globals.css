@@ -482,9 +482,10 @@ body {
   100% { transform: translate(112vw, -88vh) scale(0.9) rotate(16deg); opacity: 0; }
 }
 
+/* Whole-bird gentle up/down bob to read as flapping flight */
 @keyframes birdFlap {
-  0%, 100% { transform: rotate(-9deg); }
-  50%      { transform: rotate(9deg); }
+  0%, 100% { transform: translateY(0) rotate(-7deg); }
+  50%      { transform: translateY(-10px) rotate(7deg); }
 }
 
 /* Soft trailing glow comet behind the bird */

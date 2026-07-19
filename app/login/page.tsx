@@ -50,24 +50,33 @@ function Bird({ onDone }: { onDone?: () => void }) {
       <div className="bird-trail" />
       <div className="bird">
         <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* body */}
-          <path d="M14 40C20 30 34 24 46 28C50 29.4 52 33 50.5 37C49 41 44 43 39 42C33 41 27 43 23 47C20 50 15 50 13 47C10 43 11 42 14 40Z" fill="url(#birdBody)" />
-          {/* head */}
-          <circle cx="47" cy="27" r="7.5" fill="url(#birdBody)" />
-          {/* eye */}
-          <circle cx="49.5" cy="25.5" r="1.6" fill="#0A0A0A" />
-          {/* beak */}
-          <path d="M54 27L62 25L54 30Z" fill="#F5B547" />
-          {/* wing (upper) */}
-          <path d="M30 33C38 26 48 27 52 33C46 33 40 36 36 41C33 44 29 41 30 33Z" fill="url(#birdWing)" opacity="0.95" />
           {/* tail */}
-          <path d="M14 40C9 38 5 40 4 44C9 43 12 44 14 42Z" fill="url(#birdWing)" />
+          <path d="M8 30C16 30 24 33 30 39C25 40 19 39 14 36C10 34 9 33 8 30Z" fill="url(#birdWing)" />
+          {/* body */}
+          <path d="M22 30C30 24 42 24 50 31C53 33.4 53 38 49.5 40C44 42.6 36 41 30 43C24 45 18 42 18 37C18 33.6 19 31.6 22 30Z" fill="url(#birdBody)" />
+          {/* belly highlight */}
+          <path d="M26 38C31 35 40 35 45 39C40 41 31 41 27 40C25.4 39.4 25 38.6 26 38Z" fill="#EDE9FE" opacity="0.5" />
+          {/* head */}
+          <circle cx="49" cy="29" r="8" fill="url(#birdBody)" />
+          {/* cheek/cap */}
+          <path d="M44 24C49 22 54 25 54 30C50 28 46 28 44 30C43 27 43 25 44 24Z" fill="url(#birdWing)" />
+          {/* beak */}
+          <path d="M56 28.5L63 27L57 31.5C56 30.6 56 29.4 56 28.5Z" fill="#F5A524" />
+          {/* eye */}
+          <circle cx="51" cy="27.5" r="2" fill="#0A0A0A" />
+          <circle cx="51.7" cy="26.8" r="0.6" fill="#fff" />
+          {/* near wing (folded, lower) */}
+          <path d="M28 36C34 33 42 34 46 39C41 39 36 41 32 44C29 46 26 42 28 36Z" fill="#7C3AED" opacity="0.9" />
+          {/* far wing (raised, flapping) */}
+          <path d="M30 32C37 22 49 21 55 27C49 27 43 31 39 37C36 41 32 38 30 32Z" fill="url(#birdWing)" />
+          {/* legs */}
+          <path d="M33 43L32 49M38 43L38 49" stroke="#F5A524" strokeWidth="1.4" strokeLinecap="round" />
           <defs>
-            <linearGradient id="birdBody" x1="12" y1="24" x2="52" y2="48" gradientUnits="userSpaceOnUse">
+            <linearGradient id="birdBody" x1="18" y1="24" x2="52" y2="44" gradientUnits="userSpaceOnUse">
               <stop stopColor="#C4B5FD" />
-              <stop offset="1" stopColor="#7C3AED" />
+              <stop offset="1" stopColor="#8B5CF6" />
             </linearGradient>
-            <linearGradient id="birdWing" x1="20" y1="26" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+            <linearGradient id="birdWing" x1="24" y1="20" x2="54" y2="42" gradientUnits="userSpaceOnUse">
               <stop stopColor="#A855F7" />
               <stop offset="1" stopColor="#6D28D9" />
             </linearGradient>
