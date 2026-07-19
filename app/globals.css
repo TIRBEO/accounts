@@ -622,27 +622,31 @@ body {
   line-height: 1.35;
   text-align: center;
   color: #FFE4E4;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
   background:
-    /* horizontal: solid center, fades to transparent at edges */
+    /* U-shape: red hugs the sides, hollow/transparent in the center-middle.
+       Strong at outer edges, fades to near-transparent toward the middle column. */
     linear-gradient(90deg,
-      rgba(228, 45, 45, 0) 0%,
-      rgba(228, 45, 45, 0.7) 24%,
-      rgba(228, 45, 45, 0.85) 50%,
-      rgba(228, 45, 45, 0.7) 76%,
-      rgba(228, 45, 45, 0) 100%),
-    /* vertical: solid at bottom, very gradual blend to fully transparent at the top */
+      rgba(228, 45, 45, 0.92) 0%,
+      rgba(228, 45, 45, 0.78) 14%,
+      rgba(228, 45, 45, 0.35) 34%,
+      rgba(228, 45, 45, 0.12) 50%,
+      rgba(228, 45, 45, 0.35) 66%,
+      rgba(228, 45, 45, 0.78) 86%,
+      rgba(228, 45, 45, 0.92) 100%),
+    /* vertical: solid at bottom, very gradual blend to transparent at the top */
     linear-gradient(0deg,
-      rgba(228, 45, 45, 0.85) 0%,
-      rgba(228, 45, 45, 0.6) 30%,
-      rgba(228, 45, 45, 0.28) 60%,
+      rgba(228, 45, 45, 0.9) 0%,
+      rgba(228, 45, 45, 0.62) 28%,
+      rgba(228, 45, 45, 0.3) 58%,
       rgba(228, 45, 45, 0.08) 80%,
       rgba(228, 45, 45, 0) 100%);
   border: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  -webkit-mask-image: linear-gradient(0deg, #000 60%, transparent 100%);
-  mask-image: linear-gradient(0deg, #000 60%, transparent 100%);
-  box-shadow: 0 -10px 60px rgba(228, 45, 45, 0.25);
+  -webkit-mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 62%, transparent 100%);
+  box-shadow: 0 -10px 60px rgba(228, 45, 45, 0.22);
   animation: errorBannerIn 0.4s var(--ease-spring) both, errorShake 0.45s ease both;
 }
 
