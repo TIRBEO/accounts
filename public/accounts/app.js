@@ -31,16 +31,24 @@ const I18N = {
     "auth.sendCode": "Email me a code",
     "auth.sendCodeSent": "Code sent",
     "auth.codeHintPre": "We sent a 6-digit code to",
+    "auth.codeHintPost": "Check your inbox (and spam) for the code.",
     "auth.code": "Verification code",
     "auth.verify": "Verify & continue",
     "auth.usePassword": "Use password instead",
     "auth.sending": "Sending…",
-    "auth.verified": "तपाईं प्रमाणित हुनुहुन्छ",
-    "auth.verifiedSub": "तपाईंको कोड स्वीकार गरियो। तपाईं अब तिर्बिओमा जान सक्नुहुन्छ।",
-    "auth.continue": "तिर्बिओमा जारी राख्नुहोस्",
     "auth.verified": "You're verified",
     "auth.verifiedSub": "Your code was accepted. You can now continue to Tirbeo.",
     "auth.continue": "Continue to Tirbeo",
+    "auth.invalidEmail": "Please enter a valid email.",
+    "auth.enterCode": "Enter the 6-digit code.",
+    "auth.verifying": "Verifying…",
+    "auth.codeMismatch": "That code didn’t match. Try again.",
+    "auth.sendFailed": "Could not send the code. Please try again.",
+    "auth.expired": "Code expired. Request a new one.",
+    "auth.noPending": "No pending code. Request a new one.",
+    "auth.acceptTos": "Please accept the Terms & Privacy Policy.",
+    "auth.welcomeBack": "Welcome back — signing you in…",
+    "auth.accountCreated": "Account created — welcome to Tirbeo!",
   },
   ne: {
     "brand.tagline": "समुदायहरू जोड्दै।",
@@ -63,10 +71,24 @@ const I18N = {
     "auth.sendCode": "इमेलमा कोड पठाउनुहोस्",
     "auth.sendCodeSent": "कोड पठाइयो",
     "auth.codeHintPre": "हामीले ६ अङ्कको कोड पठायौं",
+    "auth.codeHintPost": "कोडको लागि आफ्नो इनबक्स (र स्प्याम) हेर्नुहोस्।",
     "auth.code": "प्रमाणीकरण कोड",
     "auth.verify": "प्रमाणित गरी जारी राख्नुहोस्",
     "auth.usePassword": "पासवर्ड प्रयोग गर्नुहोस्",
     "auth.sending": "पठाउँदै…",
+    "auth.verified": "तपाईं प्रमाणित हुनुहुन्छ",
+    "auth.verifiedSub": "तपाईंको कोड स्वीकार गरियो। तपाईं अब तिर्बिओमा जान सक्नुहुन्छ।",
+    "auth.continue": "तिर्बिओमा जारी राख्नुहोस्",
+    "auth.invalidEmail": "कृपया वैध इमेल हाल्नुहोस्।",
+    "auth.enterCode": "६ अङ्कको कोड हाल्नुहोस्।",
+    "auth.verifying": "प्रमाणीकरण गर्दै…",
+    "auth.codeMismatch": "त्यो कोड मेल खाएन। फेरि प्रयास गर्नुहोस्।",
+    "auth.sendFailed": "कोड पठाउन सकिएन। कृपया फेरि प्रयास गर्नुहोस्।",
+    "auth.expired": "कोड समय सकियो। नयाँ कोड माग्नुहोस्।",
+    "auth.noPending": "कुनै पेन्डिङ कोड छैन। नयाँ कोड माग्नुहोस्।",
+    "auth.acceptTos": "कृपया सर्त र गोपनीयता नीति स्वीकार गर्नुहोस्।",
+    "auth.welcomeBack": "फर्कनु भएकोमा स्वागत छ — लग इन गर्दै…",
+    "auth.accountCreated": "खाता सिर्जना भयो — तिर्बिओमा स्वागत छ!",
   },
 };
 
@@ -78,9 +100,16 @@ function applyLang(lang) {
     if (I18N[lang][key]) el.textContent = I18N[lang][key];
   });
   // keep dynamic "sent" labels correct after language switch
-  document.querySelectorAll(".btn-send-code.sent .label").forEach((el) => {
-    el.textContent = I18N[lang]["auth.sendCodeSent"];
+  document.querySelectorAll(".btn-send-code").forEach((btn) => {
+    const label = btn.querySelector(".label");
+    if (btn.classList.contains("sent")) {
+      label.textContent = I18N[lang]["auth.sendCodeSent"];
+    } else if (label && !btn.disabled) {
+      label.textContent = I18N[lang]["auth.sendCode"];
+    }
   });
+  // refresh any visible inline statuses (error / verifying) in the new language
+  refreshStatuses();
   langToggle.querySelectorAll("img").forEach((img) => {
     img.classList.toggle("active", img.dataset.flag === lang);
     img.classList.toggle("dim", img.dataset.flag !== lang);
@@ -150,11 +179,27 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove("show"), 2600);
 }
 
-// ── Status helper ──
-function setStatus(el, msg, kind) {
+// ── Status helper (stores i18n key so language switch can re-render) ──
+const statusRegistry = new WeakMap();
+function setStatus(el, keyOrMsg, kind, isKey = true) {
+  if (isKey) {
+    const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
+    statusRegistry.set(el, { key: keyOrMsg, kind });
+    el.textContent = I18N[lang][keyOrMsg] || keyOrMsg;
+  } else {
+    el.textContent = keyOrMsg;
+  }
   el.hidden = false;
-  el.textContent = msg;
   el.className = "status " + (kind || "");
+}
+function refreshStatuses() {
+  document.querySelectorAll(".status").forEach((el) => {
+    const rec = statusRegistry.get(el);
+    if (rec && !el.hidden) {
+      const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
+      el.textContent = I18N[lang][rec.key] || rec.key;
+    }
+  });
 }
 
 // ── Send-code / verify flow (both forms) ──
@@ -181,13 +226,12 @@ function wireFlow(form) {
     const email = emailInput.value.trim();
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       emailInput.focus();
-      setStatus(statusEl, "Please enter a valid email.", "err");
+      setStatus(statusEl, "auth.invalidEmail", "err");
       return;
     }
     const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
     sendBtn.disabled = true;
     sendBtn.querySelector(".label").textContent = I18N[lang]["auth.sending"];
-    setStatus(statusEl, "", "");
     statusEl.hidden = true;
 
     try {
@@ -198,7 +242,7 @@ function wireFlow(form) {
       });
       if (!res.ok) throw new Error("send failed");
 
-      // success UI
+      // success UI — reveal the one-time code entry part
       sentTo = email;
       codeTo.textContent = email;
       sendBtn.classList.add("sent");
@@ -210,7 +254,7 @@ function wireFlow(form) {
     } catch (err) {
       sendBtn.disabled = false;
       sendBtn.querySelector(".label").textContent = I18N[lang]["auth.sendCode"];
-      setStatus(statusEl, "Could not send the code. Please try again.", "err");
+      setStatus(statusEl, "auth.sendFailed", "err");
     }
   });
 
@@ -218,12 +262,12 @@ function wireFlow(form) {
     const code = codeInput.value.trim();
     if (!/^\d{6}$/.test(code)) {
       codeInput.focus();
-      setStatus(statusEl, "Enter the 6-digit code.", "err");
+      setStatus(statusEl, "auth.enterCode", "err");
       return;
     }
     const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
     verifyBtn.disabled = true;
-    setStatus(statusEl, "Verifying…", "");
+    setStatus(statusEl, "auth.verifying", "");
 
     try {
       const res = await fetch(API_BASE + "/auth/verify-code", {
@@ -231,7 +275,15 @@ function wireFlow(form) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: sentTo, code, flow }),
       });
-      if (!res.ok) throw new Error("verify failed");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const key = errData.error === "Code expired. Request a new one." ? "auth.expired"
+          : errData.error === "No pending code. Request a new one." ? "auth.noPending"
+          : "auth.codeMismatch";
+        verifyBtn.disabled = false;
+        setStatus(statusEl, key, "err");
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       const token = data.token || "tok_" + Math.random().toString(36).slice(2);
 
@@ -247,7 +299,7 @@ function wireFlow(form) {
       form.querySelector(".btn-continue").dataset.token = token;
     } catch (err) {
       verifyBtn.disabled = false;
-      setStatus(statusEl, "That code didn’t match. Try again.", "err");
+      setStatus(statusEl, "auth.codeMismatch", "err");
     }
   });
 
@@ -270,11 +322,12 @@ function wireFlow(form) {
   // submit (password path) — demo only
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
     if (flow === "signup" && !form.querySelector('input[type="checkbox"]').checked) {
-      showToast("Please accept the Terms & Privacy Policy.");
+      showToast(I18N[lang]["auth.acceptTos"]);
       return;
     }
-    showToast(flow === "login" ? "Welcome back — signing you in…" : "Account created — welcome to Tirbeo!");
+    showToast(flow === "login" ? I18N[lang]["auth.welcomeBack"] : I18N[lang]["auth.accountCreated"]);
   });
 }
 
