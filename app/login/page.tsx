@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { appUrl } from "@tirbeo/utils";
 import { createClient } from "@tirbeo/database/client";
-import { Chrome, Github, Eye, EyeOff, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare, Check, Upload, AlertCircle } from "lucide-react";
+import { Chrome, Github, Eye, EyeOff, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare, Check, Upload, AlertCircle, X } from "lucide-react";
 
 const DRAFT_KEY = "tirbeo_signup_draft";
 const LOGO_BUCKET = "LOGOS";
@@ -454,9 +454,10 @@ export default function LoginPage() {
         try {
           const j = await res.json().catch(() => ({}));
           if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
-        } catch {}
+          else setNotice("Code sent to your email");
+        } catch { setNotice("Code sent to your email"); }
         setBirding(true);
-        setSentStamp(true);
+        setSentStamp(false);
         setLoginPhase("code");
         setOtpCode("");
         return;
@@ -566,18 +567,9 @@ export default function LoginPage() {
 
       {birding && <Bird onDone={() => setBirding(false)} />}
 
-      {sentStamp && (
-        <div className="sent-toast" role="status" aria-live="polite">
-          <svg className="sent-plane" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 3l-9 18-2-7-7-2 18-9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span>Code sent to your email</span>
-        </div>
-      )}
-
       {error && (
         <div className="error-banner" role="alert">
-          <AlertCircle />
+          <X />
           <span>{error}</span>
           {noAccount && (
             <button type="button" onClick={() => switchMode("signup")}>Create one</button>
@@ -738,13 +730,6 @@ export default function LoginPage() {
                 ))}
               </div>
 
-
-              {notice && (
-                <div className="flex items-center gap-3 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#3FB950] flex-shrink-0" />
-                  <p className="text-sm text-[#3FB950]">{notice}</p>
-                </div>
-              )}
 
               <button type="submit" disabled={loading} className="btn-primary-ac">
                 {loading ? <Spinner dark /> : "Verify & Sign In"}
