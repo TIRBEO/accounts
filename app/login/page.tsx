@@ -68,6 +68,9 @@ export default function LoginPage() {
   const [resuming, setResuming] = useState(true);
   const submittedRef = useRef(false);
 
+  // Login one-time-code flow (separate from signup phases).
+  const [loginPhase, setLoginPhase] = useState<"form" | "code">("form");
+
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [noAccount, setNoAccount] = useState(false);
 
@@ -78,9 +81,10 @@ export default function LoginPage() {
     setSwitching(true);
     setError(null);
     setTimeout(() => {
-      if (next === "login") {
+       if (next === "login") {
         try { localStorage.removeItem(DRAFT_KEY); } catch {}
         setPhase(1);
+        setLoginPhase("form");
       } else {
         setPhase(1);
       }
@@ -393,7 +397,7 @@ export default function LoginPage() {
     }
   }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API, uploadAvatarToStorage]);
 
-  const handleOtpLogin = useCallback(async () => {
+  const handleOtpLoginRequest = useCallback(async () => {
     if (submittedRef.current) return;
     if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
     submittedRef.current = true;
@@ -401,7 +405,15 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/login-otp/request", { email });
-      if (res.ok) { window.location.href = redirectTo; return; }
+      if (res.ok) {
+        try {
+          const j = await res.json().catch(() => ({}));
+          if (j.devCode) setError(`Dev code: ${j.devCode}`);
+        } catch {}
+        setLoginPhase("code");
+        setOtpCode("");
+        return;
+      }
       setError(await res.text() || "Failed to send code");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -409,7 +421,56 @@ export default function LoginPage() {
       setLoading(false);
       submittedRef.current = false;
     }
-  }, [email, redirectTo, apiFetch]);
+  }, [email, apiFetch]);
+
+  const handleOtpLoginResend = useCallback(async () => {
+    if (submittedRef.current) return;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/login-otp/request", { email });
+      if (res.ok) {
+        try {
+          const j = await res.json().catch(() => ({}));
+          if (j.devCode) setError(`Dev code: ${j.devCode}`);
+          else setError("A new code has been sent to your email.");
+        } catch { setError("A new code has been sent to your email."); }
+        setOtpCode("");
+        return;
+      }
+      setError(await res.text() || "Failed to resend code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, apiFetch]);
+
+  const handleOtpLoginVerify = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submittedRef.current) return;
+    if (otpCode.length < 6) { setError("Enter the 6-digit code"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
+      if (res.ok) {
+        // Backend sets the session cookie, then sends us to the dashboard.
+        window.location.href = redirectTo;
+        return;
+      }
+      setError(await res.text() || "Invalid or expired code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, otpCode, redirectTo, apiFetch]);
 
   const handleMagicLink = useCallback(async () => {
     if (submittedRef.current) return;
@@ -546,7 +607,7 @@ export default function LoginPage() {
                 </button>
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
-                  <button type="button" onClick={handleOtpLogin} disabled={loading} className="btn-ghost-ac">
+                  <button type="button" onClick={handleOtpLoginRequest} disabled={loading} className="btn-ghost-ac">
                     Send one-time code
                   </button>
                   <button type="button" onClick={handleMagicLink} disabled={loading} className="btn-ghost-ac">
@@ -559,6 +620,77 @@ export default function LoginPage() {
                 <a href="/reset-password" className="text-sm text-white/45 hover:text-white/70 transition-colors">Forgot your password?</a>
               </div>
             </>
+          )}
+
+          {/* ── LOGIN: ONE-TIME CODE ── */}
+          {mode === "login" && loginPhase === "code" && (
+            <form onSubmit={handleOtpLoginVerify} className="space-y-5" noValidate>
+              <p className="text-white/60 text-sm">
+                We sent a 6-digit code to <span className="text-white/90">{email}</span>. Enter it below to sign in.
+              </p>
+              <div className="flex gap-3 justify-center" onPaste={(e) => {
+                const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                if (text) {
+                  e.preventDefault();
+                  setOtpCode(text);
+                  setError(null);
+                  const inputs = (e.currentTarget as HTMLDivElement).querySelectorAll("input");
+                  inputs?.[Math.min(text.length, 5)]?.focus();
+                }
+              }}>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={otpCode[i] || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(-1);
+                      const next = otpCode.split("");
+                      next[i] = v;
+                      const joined = next.join("").slice(0, 6);
+                      setOtpCode(joined);
+                      setError(null);
+                      if (v && i < 5) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i + 1]?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !otpCode[i] && i > 0) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i - 1]?.focus();
+                      }
+                    }}
+                    className="otp-box"
+                  />
+                ))}
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+                  <p className="text-sm text-[#E45D5D]">{error}</p>
+                </div>
+              )}
+
+              <button type="submit" disabled={loading} className="btn-primary-ac">
+                {loading ? <Spinner dark /> : "Verify & Sign In"}
+              </button>
+
+              <div className="flex items-center justify-center gap-4 pt-1">
+                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); }}
+                  disabled={loading} className="text-sm text-white/50 hover:text-white/80 transition-colors">
+                  Use password instead
+                </button>
+                <span className="text-white/15">|</span>
+                <button type="button" onClick={handleOtpLoginResend} disabled={loading}
+                  className="text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50">
+                  Resend code
+                </button>
+              </div>
+            </form>
           )}
 
           {/* ── SIGNUP PHASE 1 ── */}
