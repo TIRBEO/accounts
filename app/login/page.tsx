@@ -40,6 +40,44 @@ function FullLoader({ label }: { label?: string }) {
   );
 }
 
+function Bird({ onDone }: { onDone?: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(() => onDone?.(), 2400);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="bird-layer" aria-hidden>
+      <div className="bird-trail" />
+      <div className="bird">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* body */}
+          <path d="M14 40C20 30 34 24 46 28C50 29.4 52 33 50.5 37C49 41 44 43 39 42C33 41 27 43 23 47C20 50 15 50 13 47C10 43 11 42 14 40Z" fill="url(#birdBody)" />
+          {/* head */}
+          <circle cx="47" cy="27" r="7.5" fill="url(#birdBody)" />
+          {/* eye */}
+          <circle cx="49.5" cy="25.5" r="1.6" fill="#0A0A0A" />
+          {/* beak */}
+          <path d="M54 27L62 25L54 30Z" fill="#F5B547" />
+          {/* wing (upper) */}
+          <path d="M30 33C38 26 48 27 52 33C46 33 40 36 36 41C33 44 29 41 30 33Z" fill="url(#birdWing)" opacity="0.95" />
+          {/* tail */}
+          <path d="M14 40C9 38 5 40 4 44C9 43 12 44 14 42Z" fill="url(#birdWing)" />
+          <defs>
+            <linearGradient id="birdBody" x1="12" y1="24" x2="52" y2="48" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#C4B5FD" />
+              <stop offset="1" stopColor="#7C3AED" />
+            </linearGradient>
+            <linearGradient id="birdWing" x1="20" y1="26" x2="52" y2="44" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#A855F7" />
+              <stop offset="1" stopColor="#6D28D9" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>(() =>
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "signup") ? "signup" : "login"
@@ -71,6 +109,8 @@ export default function LoginPage() {
 
   // Login one-time-code flow (separate from signup phases).
   const [loginPhase, setLoginPhase] = useState<"form" | "code">("form");
+  const [birding, setBirding] = useState(false);
+  const [sentStamp, setSentStamp] = useState(false);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [noAccount, setNoAccount] = useState(false);
@@ -412,6 +452,8 @@ export default function LoginPage() {
           const j = await res.json().catch(() => ({}));
           if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
         } catch {}
+        setBirding(true);
+        setSentStamp(true);
         setLoginPhase("code");
         setOtpCode("");
         return;
@@ -439,6 +481,8 @@ export default function LoginPage() {
           if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
           else setNotice("A new code has been sent to your email.");
         } catch { setNotice("A new code has been sent to your email."); }
+        setBirding(true);
+        setSentStamp(true);
         setOtpCode("");
         return;
       }
@@ -458,6 +502,7 @@ export default function LoginPage() {
     submittedRef.current = true;
     setError(null);
     setNotice(null);
+    setSentStamp(false);
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
@@ -514,6 +559,8 @@ export default function LoginPage() {
       <div className="noise-overlay" />
       <div className="pointer-events-none fixed inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
 
+      {birding && <Bird onDone={() => setBirding(false)} />}
+
       <div className="relative z-10 w-full max-w-xl">
         <div
           className="relative p-10 overflow-y-auto rounded-[28px]"
@@ -568,7 +615,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <div className={fieldIcon}><Mail size={16} /></div>
                     <input type="email" placeholder="hello@example.com" value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(null); setNotice(null); setNoAccount(false); }}
+                      onChange={(e) => { setEmail(e.target.value); setError(null); setNotice(null); setSentStamp(false); setNoAccount(false); }}
                       className={inputCls} />
                   </div>
                 </div>
@@ -631,6 +678,17 @@ export default function LoginPage() {
               <p className="text-white/60 text-sm">
                 We sent a 6-digit code to <span className="text-white/90">{email}</span>. Enter it below to sign in.
               </p>
+
+              {sentStamp && (
+                <div className="flex justify-center">
+                  <span className="sent-stamp">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 12.5l5 5L20 6.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Sent!
+                  </span>
+                </div>
+              )}
               <div className="flex gap-3 justify-center" onPaste={(e) => {
                 const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
                 if (text) {
@@ -690,7 +748,7 @@ export default function LoginPage() {
               </button>
 
               <div className="flex items-center justify-center gap-4 pt-1">
-                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); setNotice(null); }}
+                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); setNotice(null); setSentStamp(false); }}
                   disabled={loading} className="text-sm text-white/50 hover:text-white/80 transition-colors">
                   Use password instead
                 </button>

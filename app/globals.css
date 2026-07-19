@@ -445,3 +445,91 @@ body {
   box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
   transform: translateY(-2px);
 }
+
+/* ═══════════════════════════════════════
+   FLYING BIRD — one-time-code send
+   ═══════════════════════════════════════ */
+
+/* Layer that holds the bird so it can escape the card's overflow. */
+.bird-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bird {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  left: -90px;
+  bottom: -90px;
+  color: #fff;
+  filter: drop-shadow(0 8px 22px rgba(124, 58, 237, 0.45));
+  will-change: transform, opacity;
+  animation:
+    birdFly 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards,
+    birdFlap 0.32s ease-in-out infinite;
+}
+.bird svg { width: 100%; height: 100%; display: block; }
+
+@keyframes birdFly {
+  0%   { transform: translate(0, 0) scale(0.7) rotate(-8deg); opacity: 0; }
+  12%  { opacity: 1; }
+  35%  { transform: translate(34vw, -26vh) scale(1) rotate(6deg); }
+  70%  { transform: translate(72vw, -52vh) scale(1.05) rotate(10deg); }
+  100% { transform: translate(112vw, -88vh) scale(0.9) rotate(16deg); opacity: 0; }
+}
+
+@keyframes birdFlap {
+  0%, 100% { transform: rotate(-9deg); }
+  50%      { transform: rotate(9deg); }
+}
+
+/* Soft trailing glow comet behind the bird */
+.bird-trail {
+  position: absolute;
+  left: -120px;
+  bottom: -90px;
+  width: 120px;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.55), transparent);
+  filter: blur(2px);
+  animation: birdTrail 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  opacity: 0;
+}
+@keyframes birdTrail {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  12%  { opacity: 0.9; }
+  100% { transform: translate(112vw, -88vh); opacity: 0; }
+}
+
+/* ═══ SENT! stamp transition ═══ */
+.sent-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #3FB950;
+  background: rgba(63, 185, 80, 0.12);
+  border: 1px solid rgba(63, 185, 80, 0.35);
+  box-shadow: 0 0 24px rgba(63, 185, 80, 0.25);
+  animation: sentPop 0.45s var(--ease-spring) both;
+}
+.sent-stamp svg { width: 18px; height: 18px; }
+
+@keyframes sentPop {
+  0%   { opacity: 0; transform: scale(0.7) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.06) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bird, .bird-trail { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  .bird { opacity: 0; }
+}
