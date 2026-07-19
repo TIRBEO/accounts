@@ -281,7 +281,7 @@ export default function LoginPage() {
 
   const redirectTo = appUrl("dashboard");
 
-  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>) => {
+  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>, attempt = 0) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
@@ -296,10 +296,15 @@ export default function LoginPage() {
       return res;
     } catch (err: any) {
       clearTimeout(timeout);
+      // Retry once on a transient network blip before surfacing the error.
+      if (attempt < 1 && err?.name !== "AbortError") {
+        await new Promise((r) => setTimeout(r, 600));
+        return apiFetch(path, body, attempt + 1);
+      }
       if (err?.name === "AbortError") throw new Error("Request timed out. Check your connection.");
-      throw new Error(err?.message || "Network request failed");
+      throw new Error("Couldn't reach the server. Check your connection and try again.");
     }
-  }, []);
+  }, [API]);
 
   const handleGoogleLogin = useCallback(() => { window.location.href = `${API}/auth/google`; }, []);
   const handleGithubLogin = useCallback(() => { window.location.href = `${API}/auth/github`; }, []);
