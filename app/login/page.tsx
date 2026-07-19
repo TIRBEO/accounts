@@ -542,7 +542,7 @@ export default function LoginPage() {
           </div>
 
           {/* ── LOGIN ── */}
-          {mode === "login" && (
+          {mode === "login" && loginPhase === "form" && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={handleGoogleLogin} disabled={loading} className="btn-glass-ac">
