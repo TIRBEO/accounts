@@ -387,6 +387,22 @@ html, body {
 }
 .link-btn:hover { color: #fff; text-decoration: underline; }
 
+/* Verified / done step */
+.step-done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 12px 0; animation: revealIn 0.5s var(--ease) both; }
+.step-done[hidden] { display: none; }
+.done-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(168,85,247,0.9));
+  box-shadow: 0 8px 30px var(--glow), inset 0 1px rgba(255,255,255,0.3);
+  animation: pop 0.5s var(--ease) both;
+}
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.done-title { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+.done-sub { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 32ch; }
+.btn-continue { margin-top: 6px; width: 100%; }
+
 /* Inline status (no alerts) */
 .status {
   margin: 0; font-size: 0.85rem; text-align: center;

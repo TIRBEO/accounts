@@ -35,6 +35,12 @@ const I18N = {
     "auth.verify": "Verify & continue",
     "auth.usePassword": "Use password instead",
     "auth.sending": "Sending…",
+    "auth.verified": "तपाईं प्रमाणित हुनुहुन्छ",
+    "auth.verifiedSub": "तपाईंको कोड स्वीकार गरियो। तपाईं अब तिर्बिओमा जान सक्नुहुन्छ।",
+    "auth.continue": "तिर्बिओमा जारी राख्नुहोस्",
+    "auth.verified": "You're verified",
+    "auth.verifiedSub": "Your code was accepted. You can now continue to Tirbeo.",
+    "auth.continue": "Continue to Tirbeo",
   },
   ne: {
     "brand.tagline": "समुदायहरू जोड्दै।",
@@ -229,15 +235,16 @@ function wireFlow(form) {
       const data = await res.json().catch(() => ({}));
       const token = data.token || "tok_" + Math.random().toString(36).slice(2);
 
-      // one-time token: consumed by the real app after redirect
+      // one-time token: consumed by the real app after the user clicks Continue
       try {
         sessionStorage.setItem("tirbeo_otp", token);
         sessionStorage.setItem("tirbeo_otp_email", sentTo);
       } catch (_) {}
-      setStatus(statusEl, "Verified. Taking you in…", "ok");
-      setTimeout(() => {
-        window.location.assign(REDIRECT_TO + "?token=" + encodeURIComponent(token));
-      }, 700);
+
+      // Show verified state in-page (no auto-redirect to dashboard).
+      stepCode.hidden = true;
+      form.querySelector(".step-done").hidden = false;
+      form.querySelector(".btn-continue").dataset.token = token;
     } catch (err) {
       verifyBtn.disabled = false;
       setStatus(statusEl, "That code didn’t match. Try again.", "err");
@@ -252,6 +259,12 @@ function wireFlow(form) {
     const lang = localStorage.getItem("tirbeo-lang") === "ne" ? "ne" : "en";
     sendBtn.querySelector(".label").textContent = I18N[lang]["auth.sendCode"];
     statusEl.hidden = true;
+  });
+
+  const continueBtn = form.querySelector(".btn-continue");
+  continueBtn.addEventListener("click", () => {
+    const token = continueBtn.dataset.token || "";
+    window.location.assign(REDIRECT_TO + (token ? "?token=" + encodeURIComponent(token) : ""));
   });
 
   // submit (password path) — demo only
