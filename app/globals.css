@@ -450,21 +450,21 @@ body {
    FLYING BIRD — one-time-code send
    ═══════════════════════════════════════ */
 
-/* Layer that holds the bird so it can escape the card's overflow. */
+/* Layer that holds the flying plane so it can escape the card's overflow. */
 .bird-layer {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 9999;
   pointer-events: none;
   overflow: hidden;
 }
 
 .bird {
   position: absolute;
-  width: 92px;
-  height: 92px;
-  left: -120px;
-  bottom: -120px;
+  width: 96px;
+  height: 96px;
+  left: -40px;
+  top: 70vh;
   color: #fff;
   filter: drop-shadow(0 10px 26px rgba(124, 58, 237, 0.55));
   will-change: transform, opacity;
@@ -475,11 +475,11 @@ body {
 .bird svg { width: 100%; height: 100%; display: block; }
 
 @keyframes birdFly {
-  0%   { transform: translate(0, 0) scale(0.7) rotate(-8deg); opacity: 0; }
-  12%  { opacity: 1; }
-  35%  { transform: translate(34vw, -26vh) scale(1) rotate(6deg); }
-  70%  { transform: translate(72vw, -52vh) scale(1.05) rotate(10deg); }
-  100% { transform: translate(112vw, -88vh) scale(0.9) rotate(16deg); opacity: 0; }
+  0%   { transform: translate(0, 0) scale(0.8) rotate(-10deg); opacity: 0; }
+  10%  { opacity: 1; }
+  40%  { transform: translate(40vw, -46vh) scale(1) rotate(4deg); }
+  75%  { transform: translate(80vw, -64vh) scale(1.05) rotate(10deg); }
+  100% { transform: translate(116vw, -86vh) scale(0.9) rotate(18deg); opacity: 0; }
 }
 
 /* Paper-plane gentle bank/tilt while flying */
@@ -544,5 +544,5 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .bird, .bird-trail { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
-  .bird { opacity: 0; }
+  .bird-trail { opacity: 0; }
 }
