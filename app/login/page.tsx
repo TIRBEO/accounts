@@ -64,6 +64,7 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resuming, setResuming] = useState(true);
   const submittedRef = useRef(false);
@@ -80,6 +81,7 @@ export default function LoginPage() {
     setSwitchDir(next === "signup" ? "to-signup" : "to-login");
     setSwitching(true);
     setError(null);
+    setNotice(null);
     setTimeout(() => {
        if (next === "login") {
         try { localStorage.removeItem(DRAFT_KEY); } catch {}
@@ -408,7 +410,7 @@ export default function LoginPage() {
       if (res.ok) {
         try {
           const j = await res.json().catch(() => ({}));
-          if (j.devCode) setError(`Dev code: ${j.devCode}`);
+          if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
         } catch {}
         setLoginPhase("code");
         setOtpCode("");
@@ -434,9 +436,9 @@ export default function LoginPage() {
       if (res.ok) {
         try {
           const j = await res.json().catch(() => ({}));
-          if (j.devCode) setError(`Dev code: ${j.devCode}`);
-          else setError("A new code has been sent to your email.");
-        } catch { setError("A new code has been sent to your email."); }
+          if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
+          else setNotice("A new code has been sent to your email.");
+        } catch { setNotice("A new code has been sent to your email."); }
         setOtpCode("");
         return;
       }
@@ -455,6 +457,7 @@ export default function LoginPage() {
     if (otpCode.length < 6) { setError("Enter the 6-digit code"); return; }
     submittedRef.current = true;
     setError(null);
+    setNotice(null);
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
@@ -480,7 +483,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/magic-link/request", { email });
-      if (res.ok) { alert("Magic link sent to your email."); return; }
+      if (res.ok) { setNotice("Magic link sent to your email."); return; }
       setError(await res.text() || "Failed to send magic link");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -565,7 +568,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <div className={fieldIcon}><Mail size={16} /></div>
                     <input type="email" placeholder="hello@example.com" value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(null); setNoAccount(false); }}
+                      onChange={(e) => { setEmail(e.target.value); setError(null); setNotice(null); setNoAccount(false); }}
                       className={inputCls} />
                   </div>
                 </div>
@@ -675,12 +678,19 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {notice && (
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#3FB950] flex-shrink-0" />
+                  <p className="text-sm text-[#3FB950]">{notice}</p>
+                </div>
+              )}
+
               <button type="submit" disabled={loading} className="btn-primary-ac">
                 {loading ? <Spinner dark /> : "Verify & Sign In"}
               </button>
 
               <div className="flex items-center justify-center gap-4 pt-1">
-                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); }}
+                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); setNotice(null); }}
                   disabled={loading} className="text-sm text-white/50 hover:text-white/80 transition-colors">
                   Use password instead
                 </button>
