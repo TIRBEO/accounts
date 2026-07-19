@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tirbeo — Account</title>
+    <link rel="icon" href="assets/tirbeo.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Animated background -->
+    <div class="bg-layer" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="particles" id="particles"></div>
+      <div class="noise"></div>
+    </div>
+
+    <!-- Split auth shell (1400px) -->
+    <div class="shell" id="shell">
+      <!-- LEFT: hero -->
+      <aside class="hero" id="hero">
+        <div class="hero-media" id="heroMedia">
+          <div class="hero-slide is-active" style="--img:url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop')"></div>
+          <div class="hero-slide" style="--img:url('https://images.unsplash.com/photo-1550859492-d5da9d8e45f3?q=80&w=1200&auto=format&fit=crop')"></div>
+          <div class="hero-slide" style="--img:url('https://images.unsplash.com/photo-1635776062127-d379bfcba9f8?q=80&w=1200&auto=format&fit=crop')"></div>
+        </div>
+        <div class="hero-overlay"></div>
+
+        <div class="hero-top">
+          <div class="brand">
+            <img src="assets/tirbeo.svg" alt="Tirbeo" class="brand-mark" />
+            <div class="brand-text">
+              <span class="brand-name">Tirbeo</span>
+              <span class="brand-tag" data-i18n="brand.tagline">Connecting communities.</span>
+            </div>
+          </div>
+          <a class="glass-btn ghost" href="https://tirbeo.app">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span data-i18n="auth.back">Back to Website</span>
+          </a>
+        </div>
+
+        <div class="hero-bottom">
+          <h1 class="hero-heading" data-i18n="hero.heading">A calmer place to belong.</h1>
+          <p class="hero-sub" data-i18n="hero.sub">Real conversations. Real communities. No noise.</p>
+          <div class="carousel" id="carousel">
+            <span class="dot is-active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT: auth panel -->
+      <section class="auth">
+        <div class="auth-top">
+          <button class="lang-toggle" id="langToggle" aria-label="Switch language">
+            <img src="https://flagcdn.com/w40/gb.png" alt="" data-flag="en" />
+            <img src="https://flagcdn.com/w40/np.png" alt="" data-flag="ne" class="dim" />
+          </button>
+        </div>
+
+        <div class="panel glass">
+          <!-- switch tabs -->
+          <div class="seg">
+            <button class="seg-btn is-active" data-tab="login" id="tabLogin" data-i18n="auth.login">Log in</button>
+            <button class="seg-btn" data-tab="signup" id="tabSignup" data-i18n="auth.signup">Sign up</button>
+            <span class="seg-thumb" id="segThumb"></span>
+          </div>
+
+          <!-- forms track -->
+          <div class="track" id="track">
+            <!-- LOGIN -->
+            <form class="form" id="formLogin" novalidate data-flow="login">
+              <div class="step step-email">
+                <div class="field">
+                  <input type="email" id="loginEmail" required placeholder=" " autocomplete="email" />
+                  <label for="loginEmail" data-i18n="auth.email">Email</label>
+                  <span class="bar"></span>
+                </div>
+
+                <div class="field">
+                  <input type="password" id="loginPass" required placeholder=" " autocomplete="current-password" />
+                  <label for="loginPass" data-i18n="auth.password">Password</label>
+                  <button type="button" class="reveal" data-target="loginPass" aria-label="Show password">
+                    <svg class="eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.2 4.2M9.9 5.1A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.1 6.1A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 3.3-.6"/></svg>
+                  </button>
+                  <span class="bar"></span>
+                </div>
+
+                <div class="row">
+                  <label class="check">
+                    <input type="checkbox" id="loginRemember" />
+                    <span class="box"></span>
+                    <span data-i18n="auth.remember">Remember me</span>
+                  </label>
+                  <a class="link" href="#" data-i18n="auth.forgot">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn primary ripple" data-i18n="auth.loginCta">Log in</button>
+
+                <div class="or-divide"><span data-i18n="auth.orCode">or sign in with a code</span></div>
+                <button type="button" class="btn ghost-btn ripple btn-send-code" data-i18n="auth.sendCode">Email me a code</button>
+              </div>
+
+              <div class="step step-code" hidden>
+                <p class="code-hint"><span data-i18n="auth.codeHintPre">We sent a 6-digit code to</span> <b id="loginCodeTo"></b>.</p>
+                <div class="field">
+                  <input type="text" inputmode="numeric" id="loginCode" required placeholder=" " maxlength="6" autocomplete="one-time-code" />
+                  <label for="loginCode" data-i18n="auth.code">Verification code</label>
+                  <span class="bar"></span>
+                </div>
+                <button type="button" class="btn primary ripple btn-verify" data-i18n="auth.verify">Verify &amp; continue</button>
+                <button type="button" class="link-btn" data-back data-i18n="auth.usePassword">Use password instead</button>
+                <p class="status" id="loginStatus" hidden></p>
+              </div>
+            </form>
+
+            <!-- SIGNUP -->
+            <form class="form" id="formSignup" novalidate data-flow="signup">
+              <div class="step step-email">
+                <div class="field">
+                  <input type="text" id="signName" required placeholder=" " autocomplete="name" />
+                  <label for="signName" data-i18n="auth.name">Full name</label>
+                  <span class="bar"></span>
+                </div>
+
+                <div class="field">
+                  <input type="email" id="signEmail" required placeholder=" " autocomplete="email" />
+                  <label for="signEmail" data-i18n="auth.email">Email</label>
+                  <span class="bar"></span>
+                </div>
+
+                <div class="field">
+                  <input type="password" id="signPass" required placeholder=" " autocomplete="new-password" />
+                  <label for="signPass" data-i18n="auth.password">Password</label>
+                  <button type="button" class="reveal" data-target="signPass" aria-label="Show password">
+                    <svg class="eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.2 4.2M9.9 5.1A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.1 6.1A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 3.3-.6"/></svg>
+                  </button>
+                  <span class="bar"></span>
+                </div>
+
+                <label class="check">
+                  <input type="checkbox" id="signTos" />
+                  <span class="box"></span>
+                  <span data-i18n="auth.tos">I agree to the Terms &amp; Privacy Policy</span>
+                </label>
+
+                <button type="submit" class="btn primary ripple" data-i18n="auth.signupCta">Create account</button>
+
+                <div class="or-divide"><span data-i18n="auth.orCode">or sign up with a code</span></div>
+                <button type="button" class="btn ghost-btn ripple btn-send-code" data-i18n="auth.sendCode">Email me a code</button>
+              </div>
+
+              <div class="step step-code" hidden>
+                <p class="code-hint"><span data-i18n="auth.codeHintPre">We sent a 6-digit code to</span> <b id="signCodeTo"></b>.</p>
+                <div class="field">
+                  <input type="text" inputmode="numeric" id="signCode" required placeholder=" " maxlength="6" autocomplete="one-time-code" />
+                  <label for="signCode" data-i18n="auth.code">Verification code</label>
+                  <span class="bar"></span>
+                </div>
+                <button type="button" class="btn primary ripple btn-verify" data-i18n="auth.verify">Verify &amp; continue</button>
+                <button type="button" class="link-btn" data-back data-i18n="auth.usePassword">Use password instead</button>
+                <p class="status" id="signStatus" hidden></p>
+              </div>
+            </form>
+          </div>
+
+          <div class="divider"><span data-i18n="auth.or">or continue with</span></div>
+
+          <div class="social">
+            <button class="social-btn ripple" type="button" aria-label="Google">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.2 14.6 2.2 12 2.2 6.9 2.2 2.8 6.3 2.8 11.4S6.9 20.6 12 20.6c5.3 0 8.8-3.7 8.8-9 0-.6-.06-1-.15-1.4H12Z"/></svg>
+              <span>Google</span>
+            </button>
+            <button class="social-btn ripple" type="button" aria-label="Apple">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M16.4 12.9c0-2 1.6-3 1.7-3-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7s-1.6-.7-2.6-.7c-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 1 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-1 2.3-2c.7-1 1-2 1-2.1-.02 0-2-.8-2-3.2ZM14.3 6.3c.5-.7.9-1.6.8-2.5-.8 0-1.8.5-2.4 1.2-.5.6-1 1.5-.9 2.4.9.1 1.8-.4 2.5-1.1Z"/></svg>
+              <span>Apple</span>
+            </button>
+            <button class="social-btn ripple" type="button" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a4 4 0 0 1 1-2.7c-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.8v2.6c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>
+              <span>GitHub</span>
+            </button>
+          </div>
+        </div>
+
+        <p class="legal" data-i18n="auth.legal">Protected by Tirbeo. Your data stays yours.</p>
+      </section>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
