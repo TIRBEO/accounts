@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { appUrl } from "@tirbeo/utils";
 import { createClient } from "@tirbeo/database/client";
-import { Chrome, Github, Eye, EyeOff, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare, Check, Upload } from "lucide-react";
+import { Chrome, Github, Eye, EyeOff, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare, Check, Upload, AlertCircle } from "lucide-react";
 
 const DRAFT_KEY = "tirbeo_signup_draft";
 const LOGO_BUCKET = "LOGOS";
@@ -105,6 +105,22 @@ export default function LoginPage() {
     const t = setTimeout(() => setSentStamp(false), 3500);
     return () => clearTimeout(t);
   }, [sentStamp]);
+
+  // Vibrate the card whenever a new error appears.
+  const [cardShake, setCardShake] = useState(false);
+  useEffect(() => {
+    if (!error) return;
+    setCardShake(true);
+    const t = setTimeout(() => setCardShake(false), 500);
+    return () => clearTimeout(t);
+  }, [error]);
+
+  const ErrorBar = ({ msg }: { msg: string }) => (
+    <div className="error-bar" role="alert">
+      <AlertCircle />
+      <span>{msg}</span>
+    </div>
+  );
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [noAccount, setNoAccount] = useState(false);
@@ -566,7 +582,7 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-xl">
         <div
-          className="relative p-10 overflow-y-auto rounded-[28px]"
+          className={`relative p-10 overflow-y-auto rounded-[28px] ${cardShake ? "card-shake" : ""}`}
           style={{
             background: "rgba(255,255,255,0.08)",
             backdropFilter: "blur(30px)",
@@ -638,21 +654,15 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                    <p className="text-sm text-[#E45D5D]">
-                      {error}
-                      {noAccount && (
-                        <>
-                          {" "}
-                          <button type="button" onClick={() => switchMode("signup")}
-                            className="text-white/90 underline underline-offset-2 hover:text-white">
-                            Create one
-                          </button>
-                        </>
-                      )}
-                    </p>
-                  </div>
+                  <ErrorBar
+                    msg={error + (noAccount ? " " : "")}
+                  />
+                )}
+                {noAccount && (
+                  <button type="button" onClick={() => switchMode("signup")}
+                    className="text-sm text-white/90 underline underline-offset-2 hover:text-white">
+                    Create one
+                  </button>
                 )}
 
                 <button type="submit" disabled={loading} className="btn-primary-ac">
@@ -722,10 +732,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-3 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
+                <ErrorBar msg={error} />
               )}
 
               {notice && (
@@ -816,10 +823,7 @@ export default function LoginPage() {
               </label>
 
               {error && (
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
+                <ErrorBar msg={error} />
               )}
 
               <button type="submit" disabled={loading || !agreeTerms} className="btn-primary-ac">
@@ -872,10 +876,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-3 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
+                <ErrorBar msg={error} />
               )}
 
               <button type="submit" disabled={loading} className="btn-primary-ac">
@@ -988,10 +989,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
+                <ErrorBar msg={error} />
               )}
 
               <button type="button" onClick={handleSaveProfile} disabled={loading || uploadingAvatar || !selectedAvatar} className="btn-primary-ac">
