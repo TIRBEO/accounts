@@ -89,6 +89,18 @@ export default async function handler(req, res) {
   const code = makeCode();
   const payload = sign({ email, code, flow, exp: Date.now() + CODE_TTL });
 
+  // If RESEND_API_KEY is not configured (local dev / not yet set in Vercel),
+  // fall back to logging the code so the flow stays testable. The email is
+  // NOT sent in this mode — set the env var in production to deliver it.
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`[dev] login code for ${email}: ${code}`);
+    res.setHeader(
+      "Set-Cookie",
+      `tirbeo_code=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`
+    );
+    return res.status(200).json({ sent: true, devCode: code });
+  }
+
   try {
     await RESEND.emails.send({
       from: FROM,

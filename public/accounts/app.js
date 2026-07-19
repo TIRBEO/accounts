@@ -277,8 +277,10 @@ function wireFlow(form) {
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        const key = errData.error === "Code expired. Request a new one." ? "auth.expired"
-          : errData.error === "No pending code. Request a new one." ? "auth.noPending"
+        const code = errData.error; // NO_PENDING | INVALID_SESSION | CODE_EXPIRED | CODE_MISMATCH
+        const key =
+          code === "CODE_EXPIRED" ? "auth.expired"
+          : code === "NO_PENDING" || code === "INVALID_SESSION" ? "auth.noPending"
           : "auth.codeMismatch";
         verifyBtn.disabled = false;
         setStatus(statusEl, key, "err");

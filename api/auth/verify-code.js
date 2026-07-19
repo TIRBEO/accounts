@@ -34,17 +34,17 @@ export default async function handler(req, res) {
   // Read the signed code payload from the cookie set by send-code.
   const cookie = req.headers.cookie || "";
   const m = cookie.match(/(?:^|;\s*)tirbeo_code=([^;]+)/);
-  if (!m) return res.status(400).json({ error: "No pending code. Request a new one." });
+  if (!m) return res.status(400).json({ error: "NO_PENDING" });
 
   const payload = unsign(decodeURIComponent(m[1]));
-  if (!payload) return res.status(400).json({ error: "Invalid code session." });
+  if (!payload) return res.status(400).json({ error: "INVALID_SESSION" });
 
   if (Date.now() > payload.exp) {
     res.setHeader("Set-Cookie", "tirbeo_code=; Path=/; Max-Age=0");
-    return res.status(400).json({ error: "Code expired. Request a new one." });
+    return res.status(400).json({ error: "CODE_EXPIRED" });
   }
   if (payload.email !== email || payload.code !== code || payload.flow !== flow) {
-    return res.status(401).json({ error: "That code didn't match." });
+    return res.status(401).json({ error: "CODE_MISMATCH" });
   }
 
   // One-time: clear the cookie.
