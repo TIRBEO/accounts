@@ -583,7 +583,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      <div className="relative z-10 w-full max-w-xl">
+      <div className="relative z-[9999] w-full max-w-xl">
         <div
           className={`relative p-10 overflow-y-auto rounded-[28px] ${cardShake ? "card-shake" : ""}`}
           style={{
