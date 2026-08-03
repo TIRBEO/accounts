@@ -62,6 +62,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const [user, setUser] = useState<UserData | null>(null);
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     apiGet("users/me")
@@ -94,6 +95,22 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    apiGet("notifications?limit=8")
+      .then((d: any) => {
+        const list = (d?.notifications || []).map((n: any) => ({
+          id: n.id,
+          title: n.title || n.message || 'Notification',
+          body: n.body || '',
+          time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
+          unread: !n.read,
+          href: n.href || '/account/activity',
+        }));
+        setNotifications(list);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleLogout = useCallback(() => {
     window.location.href = "/logout";
   }, []);
@@ -107,7 +124,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       onLogout={handleLogout}
       onNavigate={href => router.push(href)}
       currentPath={pathname}
-      onSearch={() => {}}
+      onSearch={query => { if (query.trim()) router.push(`/account?search=${encodeURIComponent(query)}`); }}
+      searchPlaceholder="Search account, settings, activity..."
+      searchGroups={NAV_SECTIONS.map(section => ({ label: section.label, items: section.items.map(item => ({ label: item.label, href: item.href, icon: item.icon })) }))}
+      notifications={notifications}
+      onMarkAllRead={() => setNotifications(prev => prev.map(n => ({ ...n, unread: false })))}
     >
       <div className="mx-auto max-w-4xl">
         {loading ? (
