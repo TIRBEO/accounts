@@ -2,10 +2,10 @@
 
 import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { AuthShell } from "../components/auth-shell";
 import { apiPost, ApiError } from "../lib/api";
-import { Button, PasswordStrength } from "@tirbeo/ui";
-import { Eye, EyeOff } from "lucide-react";
+import { PasswordStrength } from "@tirbeo/ui";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -21,33 +21,52 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [invalidToken, setInvalidToken] = useState(!token);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors: Record<string, string> = {};
-    if (!newPassword || newPassword.length < 8) errors.newPassword = "Password must be at least 8 characters";
-    if (newPassword !== confirmPassword) errors.confirmPassword = "Passwords do not match";
-    if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
-    setFieldErrors({});
-    setLoading(true);
-    setError("");
-    try {
-      await apiPost("auth/password-reset/confirm", { resetToken: token, newPassword });
-      setDone(true);
-    } catch (err: unknown) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError("Failed to reset password. The link may have expired.");
-    }
-    setLoading(false);
-  }, [token, newPassword, confirmPassword]);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const errors: Record<string, string> = {};
+      if (!newPassword || newPassword.length < 8) errors.newPassword = "Password must be at least 8 characters";
+      if (newPassword !== confirmPassword) errors.confirmPassword = "Passwords do not match";
+      if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+      setFieldErrors({});
+      setLoading(true);
+      setError("");
+      try {
+        await apiPost("auth/password-reset/confirm", { resetToken: token, newPassword });
+        setDone(true);
+      } catch (err: unknown) {
+        if (err instanceof ApiError) setError(err.message);
+        else setError("Failed to reset password. The link may have expired.");
+      }
+      setLoading(false);
+    },
+    [token, newPassword, confirmPassword]
+  );
 
   if (done) {
     return (
       <AuthShell title="Password updated">
         <div className="space-y-4 text-center">
-          <p className="text-[13px] text-[#5f6368]">Your password has been changed successfully.</p>
-          <a href="/login"
-            className="flex w-full items-center justify-center h-8 rounded-[7px] bg-[#1A73E8] text-[13px] font-medium text-white hover:bg-[#1769d2] transition-colors">
-            Sign in
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Your password has been changed successfully.
+          </p>
+          <a href="/login" className="btn-primary w-full">
+            Sign in <ArrowRight size={17} />
+          </a>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  if (invalidToken) {
+    return (
+      <AuthShell title="Invalid link">
+        <div className="space-y-4 text-center">
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            This password reset link is missing or invalid. Please request a new one.
+          </p>
+          <a href="/forgot-password" className="btn-primary w-full">
+            Reset password
           </a>
         </div>
       </AuthShell>
@@ -55,48 +74,84 @@ function ResetPasswordContent() {
   }
 
   return (
-    <AuthShell title="Choose a new password">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <AuthShell
+      title="Choose a new password"
+      subtitle={email ? `Set a new password for ${email}` : undefined}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="new-password" className="block text-[13px] font-medium text-[#3c4043] mb-1">New password</label>
+          <label htmlFor="new-password" className="form-label required">New password</label>
           <div className="relative">
-            <input id="new-password" type={showPassword ? "text" : "password"} value={newPassword}
-              onChange={e => { setNewPassword(e.target.value); setFieldErrors({}); }}
-              placeholder="At least 8 characters" autoFocus autoComplete="new-password"
-              className="block w-full h-9 rounded-[7px] border border-[#dadce0] bg-white px-3 pr-9 text-[13px] text-[#202124] outline-none transition-colors placeholder:text-[#80868b] focus:border-[#1A73E8] focus:shadow-[0_0_0_1px_#1A73E8]"
-              aria-invalid={!!fieldErrors.newPassword} />
-            <button type="button" onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124] transition-colors" tabIndex={-1}
-              aria-label={showPassword ? "Hide password" : "Show password"}>
-              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            <input
+              id="new-password"
+              type={showPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => { setNewPassword(e.target.value); setFieldErrors({}); }}
+              placeholder="At least 8 characters"
+              autoFocus
+              autoComplete="new-password"
+              className="!pr-12"
+              aria-invalid={!!fieldErrors.newPassword}
+              style={{ borderColor: fieldErrors.newPassword ? "var(--error)" : undefined }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 transition-opacity hover:opacity-60"
+              style={{ color: "var(--text-muted)" }}
+              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {fieldErrors.newPassword && <p className="text-[12px] text-[#d93025] mt-1">{fieldErrors.newPassword}</p>}
+          {fieldErrors.newPassword && <p className="mt-1.5 text-xs" style={{ color: "var(--error)" }}>{fieldErrors.newPassword}</p>}
           <PasswordStrength password={newPassword} />
         </div>
         <div>
-          <label htmlFor="confirm-password" className="block text-[13px] font-medium text-[#3c4043] mb-1">Confirm password</label>
+          <label htmlFor="confirm-password" className="form-label required">Confirm password</label>
           <div className="relative">
-            <input id="confirm-password" type={showConfirm ? "text" : "password"} value={confirmPassword}
-              onChange={e => { setConfirmPassword(e.target.value); setFieldErrors({}); }}
-              placeholder="Re-enter password" autoComplete="new-password"
-              className="block w-full h-9 rounded-[7px] border border-[#dadce0] bg-white px-3 pr-9 text-[13px] text-[#202124] outline-none transition-colors placeholder:text-[#80868b] focus:border-[#1A73E8] focus:shadow-[0_0_0_1px_#1A73E8]"
-              aria-invalid={!!fieldErrors.confirmPassword} />
-            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368] hover:text-[#202124] transition-colors" tabIndex={-1}
-              aria-label={showConfirm ? "Hide password" : "Show password"}>
-              {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+            <input
+              id="confirm-password"
+              type={showConfirm ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors({}); }}
+              placeholder="Re-enter password"
+              autoComplete="new-password"
+              className="!pr-12"
+              aria-invalid={!!fieldErrors.confirmPassword}
+              style={{ borderColor: fieldErrors.confirmPassword ? "var(--error)" : undefined }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 transition-opacity hover:opacity-60"
+              style={{ color: "var(--text-muted)" }}
+              tabIndex={-1}
+              aria-label={showConfirm ? "Hide password" : "Show password"}
+            >
+              {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {fieldErrors.confirmPassword && <p className="text-[12px] text-[#d93025] mt-1">{fieldErrors.confirmPassword}</p>}
+          {fieldErrors.confirmPassword && <p className="mt-1.5 text-xs" style={{ color: "var(--error)" }}>{fieldErrors.confirmPassword}</p>}
         </div>
-        {error && <p className="text-[13px] text-[#d93025]">{error}</p>}
-        <div className="flex justify-end pt-1">
-          <Button type="submit" disabled={!newPassword || newPassword.length < 8 || !confirmPassword} loading={loading}
-            className="h-8 px-4 rounded-[7px] bg-[#1A73E8] hover:bg-[#1769d2] active:bg-[#1558b0] text-white text-[13px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            Update password
-          </Button>
-        </div>
+        {error && (
+          <div
+            role="alert"
+            className="rounded-xl border p-3 text-sm"
+            style={{ borderColor: "var(--error)", color: "var(--error)", background: "var(--error-surface)" }}
+          >
+            {error}
+          </div>
+        )}
+        <button
+          type="submit"
+          disabled={!newPassword || newPassword.length < 8 || !confirmPassword || loading}
+          className="btn-primary w-full"
+        >
+          {loading ? "Updating..." : "Update password"}
+          {!loading && <ArrowRight size={17} />}
+        </button>
       </form>
     </AuthShell>
   );
@@ -104,13 +159,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <AuthShell title="Loading...">
-        <div className="flex justify-center py-6">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#dadce0] border-t-[#1A73E8]" />
-        </div>
-      </AuthShell>
-    }>
+    <Suspense fallback={<AuthShell title="Loading..."><div className="flex justify-center py-6"><span className="spinner" /></div></AuthShell>}>
       <ResetPasswordContent />
     </Suspense>
   );

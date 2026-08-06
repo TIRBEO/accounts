@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { ArrowRight, LogOut } from "lucide-react";
 import { AuthShell } from "../components/auth-shell";
 import { apiPost } from "../lib/api";
 import { appUrl } from "@tirbeo/utils";
-import { img } from "../components/ui-constants";
 
 export default function LogoutPage() {
   const [done, setDone] = useState(false);
@@ -31,7 +31,7 @@ export default function LogoutPage() {
     return (
       <AuthShell title="Signing out...">
         <div className="flex justify-center py-6">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#dadce0] border-t-[#1A73E8]" />
+          <span className="spinner" />
         </div>
       </AuthShell>
     );
@@ -39,17 +39,25 @@ export default function LogoutPage() {
 
   return (
     <AuthShell title="Signed out" subtitle="You have been signed out of your account.">
-      <div className="mt-6 space-y-4">
-        <img src={img("account-logout")} alt="Signed out"
-          className="w-full max-w-[300px] mx-auto rounded-xl border border-[#e8eaed] shadow-sm" />
-        <p className="text-sm text-center text-[#5f6368]">You will be redirected to the sign in page shortly.</p>
+      <div className="mt-2 space-y-4">
+        <div
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border"
+          style={{ borderColor: "var(--border)", background: "var(--bg-muted)", color: "var(--text)" }}
+        >
+          <LogOut className="h-6 w-6" />
+        </div>
+        <p className="text-center text-sm" style={{ color: "var(--text-muted)" }}>
+          You will be redirected to the sign in page shortly.
+        </p>
         <div className="flex flex-col gap-3">
-          <button type="button" onClick={() => window.location.href = "/login"}
-            className="w-full h-9 rounded-[7px] bg-[#1A73E8] hover:bg-[#1769d2] active:bg-[#1558b0] text-white text-[14px] font-medium transition-colors">
-            Sign in again
+          <button type="button" onClick={() => window.location.href = "/login"} className="btn-primary w-full">
+            Sign in again <ArrowRight size={16} />
           </button>
-          <button type="button" onClick={() => window.location.href = appUrl("dashboard", "/")}
-            className="w-full h-9 rounded-[7px] border border-[#dadce0] bg-white text-[#5f6368] text-[14px] font-medium hover:bg-[#f8f9fa] hover:text-[#202124] transition-colors">
+          <button
+            type="button"
+            onClick={() => window.location.href = appUrl("dashboard", "/")}
+            className="btn-secondary w-full"
+          >
             Go to Dashboard
           </button>
         </div>

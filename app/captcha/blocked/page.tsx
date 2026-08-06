@@ -2,8 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, Mail, Clock, MessageSquare, Send } from 'lucide-react';
-import { img } from '../../components/ui-constants';
+import { AlertTriangle, Clock, Mail, MessageSquare, Send } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
 function CaptchaBlockedContent() {
@@ -62,37 +61,51 @@ function CaptchaBlockedContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <img src={img("captcha-block-1")} alt="Access blocked"
-            className="w-full max-w-[320px] mx-auto rounded-xl border border-red-100 mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Access Blocked
-          </h1>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-4">
-            <AlertTriangle className="w-4 h-4" />
+    <div
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{ background: "var(--bg)", color: "var(--text)" }}
+    >
+      <div className="w-full max-w-md">
+        <div
+          className="rounded-2xl border p-8 text-center"
+          style={{ borderColor: "var(--border)", background: "var(--bg-surface)", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}
+        >
+          <div
+            className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border"
+            style={{ borderColor: "var(--error)", color: "var(--error)", background: "var(--error-surface)" }}
+          >
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+          <h1 className="mb-2 text-3xl font-semibold tracking-tight">Access Blocked</h1>
+          <div
+            className="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
+            style={{ background: "var(--error-surface)", color: "var(--error)" }}
+          >
+            <AlertTriangle className="h-4 w-4" />
             Error 4404
           </div>
 
-          <p className="text-gray-600 mb-6">
+          <p className="mb-6 text-sm" style={{ color: "var(--text-muted)" }}>
             Your access has been temporarily blocked due to suspicious activity.
           </p>
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+          <div
+            className="mb-6 space-y-2 rounded-xl border p-4"
+            style={{ borderColor: "var(--border)", background: "var(--bg-muted)" }}
+          >
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Ray ID:</span>
-              <span className="font-mono text-gray-900">{rayId}</span>
+              <span style={{ color: "var(--text-muted)" }}>Ray ID:</span>
+              <span className="font-mono" style={{ color: "var(--text)" }}>{rayId}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Reason:</span>
-              <span className="text-gray-900 capitalize">{reason.replace(/_/g, ' ')}</span>
+              <span style={{ color: "var(--text-muted)" }}>Reason:</span>
+              <span className="capitalize" style={{ color: "var(--text)" }}>{reason.replace(/_/g, ' ')}</span>
             </div>
             {timeRemaining !== null && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Time remaining:</span>
-                <span className="font-mono text-gray-900 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
+                <span style={{ color: "var(--text-muted)" }}>Time remaining:</span>
+                <span className="flex items-center gap-1 font-mono" style={{ color: "var(--text)" }}>
+                  <Clock className="h-3 w-3" />
                   {formatTime(timeRemaining)}
                 </span>
               </div>
@@ -100,64 +113,68 @@ function CaptchaBlockedContent() {
           </div>
 
           {!showTicketForm ? (
-            <div className="border-t pt-4 space-y-3">
-              <p className="text-sm text-gray-500">
+            <div className="space-y-3 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 If you believe this is an error, you can submit an appeal.
               </p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => setShowTicketForm(true)}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="btn-primary w-full"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="h-4 w-4" />
                   Submit Appeal
                 </button>
                 <a
                   href={`mailto:support@tirbeo.app?subject=${encodeURIComponent('Access Blocked - Ray ID ' + rayId)}`}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="btn-secondary w-full"
                 >
-                  <Mail className="w-4 h-4" />
+                  <Mail className="h-4 w-4" />
                   Email Support
                 </a>
               </div>
             </div>
           ) : (
-            <div className="border-t pt-4 text-left space-y-3">
-              <h3 className="font-medium text-gray-900">Submit Appeal</h3>
+            <div className="space-y-3 border-t pt-4 text-left" style={{ borderColor: "var(--border)" }}>
+              <h3 className="text-sm font-semibold">Submit Appeal</h3>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Subject</label>
+                <label className="mb-1 block text-sm" style={{ color: "var(--text-muted)" }}>Subject</label>
                 <input
                   value={ticketSubject}
-                  onChange={e => setTicketSubject(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  onChange={(e) => setTicketSubject(e.target.value)}
                   placeholder="CAPTCHA Block Appeal"
                   readOnly
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Message</label>
+                <label className="mb-1 block text-sm" style={{ color: "var(--text-muted)" }}>Message</label>
                 <textarea
                   value={ticketMessage}
-                  onChange={e => setTicketMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                  onChange={(e) => setTicketMessage(e.target.value)}
                   rows={3}
                   placeholder="Explain why you think this is an error..."
                 />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setShowTicketForm(false)} className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  onClick={() => setShowTicketForm(false)}
+                  className="btn-secondary flex-1"
+                >
                   Cancel
                 </button>
-                <button onClick={handleSubmitTicket} disabled={submitting || !ticketMessage.trim()}
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                  {submitting ? 'Submitting...' : <><Send className="w-3 h-3" /> Submit</>}
+                <button
+                  onClick={handleSubmitTicket}
+                  disabled={submitting || !ticketMessage.trim()}
+                  className="btn-primary flex-1"
+                >
+                  {submitting ? 'Submitting...' : <><Send className="h-3 w-3" /> Submit</>}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="mt-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
           Tirbeo Security System
         </p>
       </div>
@@ -167,11 +184,13 @@ function CaptchaBlockedContent() {
 
 export default function CaptchaBlockedPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--bg)" }}>
+          <span className="spinner" />
+        </div>
+      }
+    >
       <CaptchaBlockedContent />
     </Suspense>
   );

@@ -14,8 +14,6 @@ export interface AccountsConfig {
   ui: {
     welcomeTitle: string;
     welcomeSubtitle: string;
-    heroTitle: string;
-    heroDescription: string;
     privacyLink: string;
     termsLink: string;
     helpLink: string;
@@ -33,8 +31,6 @@ export const DEFAULT_ACCOUNTS_CONFIG: AccountsConfig = {
   ui: {
     welcomeTitle: "Welcome back",
     welcomeSubtitle: "Sign in to continue to TIRBEO.",
-    heroTitle: "Everything you need, in one workspace.",
-    heroDescription: "Manage your work, collaborate with your team, and access your TIRBEO apps from one secure account.",
     privacyLink: "https://docs.tirbeo.app/privacy",
     termsLink: "https://docs.tirbeo.app/terms",
     helpLink: "https://docs.tirbeo.app/help",
@@ -63,8 +59,6 @@ export function useAccountsConfig() {
           ui: {
             welcomeTitle: c.ui?.welcomeTitle ?? DEFAULT_ACCOUNTS_CONFIG.ui.welcomeTitle,
             welcomeSubtitle: c.ui?.welcomeSubtitle ?? DEFAULT_ACCOUNTS_CONFIG.ui.welcomeSubtitle,
-            heroTitle: c.ui?.heroTitle ?? DEFAULT_ACCOUNTS_CONFIG.ui.heroTitle,
-            heroDescription: c.ui?.heroDescription ?? DEFAULT_ACCOUNTS_CONFIG.ui.heroDescription,
             privacyLink: c.ui?.privacyLink ?? DEFAULT_ACCOUNTS_CONFIG.ui.privacyLink,
             termsLink: c.ui?.termsLink ?? DEFAULT_ACCOUNTS_CONFIG.ui.termsLink,
             helpLink: c.ui?.helpLink ?? DEFAULT_ACCOUNTS_CONFIG.ui.helpLink,

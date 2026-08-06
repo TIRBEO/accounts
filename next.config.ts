@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), serial=(), midi=(), sync-xhr=(), autoplay=(), display-capture=(), fullscreen=(), picture-in-picture=(), screen-wake-lock=(), clipboard-read=(), clipboard-write=()' },
-          { key: 'Content-Security-Policy', value: `default-src 'self'; script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://api.tirbeo.app; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.tirbeo.app; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none';` },
+          { key: 'Content-Security-Policy', value: `default-src 'self'; script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://api.tirbeo.app; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.tirbeo.app ${isDev ? 'http://localhost:3000 ws://localhost:3001 ws://localhost:3000' : ''}; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none';` },
         ],
       },
     ];

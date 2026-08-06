@@ -1,78 +1,180 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { ArrowRight, ArrowLeft, Check, Mail, RefreshCw } from "lucide-react";
 import { AuthShell } from "../components/auth-shell";
-import { ResendButton } from "../components/resend-button";
 import { apiPost, ApiError } from "../lib/api";
-import { Mail, CheckCircle2 } from "lucide-react";
+import { OTPInput } from "../components/ui/otp-input";
 
 export default function VerifyEmailPage() {
   const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"enter" | "sent">("enter");
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error">("success");
 
-  const maskedEmail = email.length > 0
-    ? email[0] + "••••" + (email.includes("@") ? email.substring(email.indexOf("@")) : "")
-    : "";
+  const maskedEmail =
+    email.length > 0
+      ? email[0] + "••••" + (email.includes("@") ? email.substring(email.indexOf("@")) : "")
+      : "";
+
+  const handleRequest = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email.trim()) { setFieldError("Enter your email"); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setFieldError("Enter a valid email"); return; }
+      setFieldError("");
+      setLoading(true);
+      setError("");
+      try {
+        await apiPost("auth/verify-email", { email: email.trim() });
+        setStep("sent");
+        setMessage("");
+      } catch (err: unknown) {
+        if (err instanceof ApiError) setError(err.message);
+        else setError("Couldn't send the verification code. Try again.");
+      }
+      setLoading(false);
+    },
+    [email]
+  );
+
+  const handleVerify = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (otp.length !== 6) { setError("Enter the 6-digit verification code"); return; }
+      setLoading(true);
+      setError("");
+      try {
+        await apiPost("auth/verify-email", { email: email.trim(), code: otp });
+        setMessage("Your email has been verified successfully.");
+        setOtp("");
+      } catch (err: unknown) {
+        if (err instanceof ApiError) setError(err.message);
+        else setError("Invalid or expired verification code.");
+        setOtp("");
+      }
+      setLoading(false);
+    },
+    [otp, email]
+  );
 
   const handleResend = useCallback(async () => {
-    setLoading(true);
-    setMessage("");
+    setError("");
     try {
-      await apiPost("auth/email-otp/request", { email });
-      setMessageType("success");
-      setMessage("Verification email sent successfully.");
+      await apiPost("auth/verify-email", { email: email.trim() });
+      setMessage("Verification code resent. Check your inbox.");
     } catch (err: unknown) {
-      setMessageType("error");
-      if (err instanceof ApiError) setMessage(err.message);
-      else setMessage("Failed to send verification email. Try again.");
+      if (err instanceof ApiError) setError(err.message);
+      else setError("Couldn't resend the code.");
     }
-    setLoading(false);
   }, [email]);
 
   return (
-    <AuthShell title="Check your email" subtitle="We sent a verification link to">
-      <div className="space-y-5 text-center">
-        <div className="flex justify-center">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-[#e8f0fe] flex items-center justify-center">
-              <Mail className="w-8 h-8 text-[#1A73E8]" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#188038] flex items-center justify-center border-2 border-white">
-              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-            </div>
+    <AuthShell
+      title={step === "enter" ? "Verify your email" : "Check your email"}
+      subtitle={
+        step === "enter"
+          ? "Enter your email to receive a verification code."
+          : `We sent a 6-digit code to ${maskedEmail || "your email"}.`
+      }
+    >
+      {step === "enter" ? (
+        <form onSubmit={handleRequest} className="space-y-4">
+          <div>
+            <label htmlFor="verify-email" className="form-label required">Email address</label>
+            <input
+              id="verify-email"
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setFieldError(""); setError(""); }}
+              placeholder="you@example.com"
+              autoFocus
+              autoComplete="email"
+              aria-invalid={!!fieldError}
+              style={{ borderColor: fieldError ? "var(--error)" : undefined }}
+            />
+            {fieldError && <p className="mt-1.5 text-xs" style={{ color: "var(--error)" }}>{fieldError}</p>}
           </div>
-        </div>
-        <p className="text-[13px] text-[#5f6368] font-medium">{maskedEmail || "your email address"}</p>
-        <p className="text-[13px] text-[#5f6368]">Click the link in the email to verify your address.</p>
-        {message && (
-          <p className={`text-[13px] text-center ${messageType === "success" ? "text-[#188038]" : "text-[#d93025]"}`}>
-            {message}
-          </p>
-        )}
-        <div className="flex justify-center">
-          <ResendButton
-            onResend={handleResend}
-            label="Resend email"
-            cooldown={30}
-            className="h-8 px-4 rounded-[7px] bg-[#1A73E8] hover:bg-[#1769d2] active:bg-[#1558b0] text-white text-[13px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            spinnerClassName="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <p>
-            <a href="/signup" className="text-[13px] font-medium text-[#1A73E8] hover:text-[#1769d2] transition-colors">
-              Change email address
-            </a>
-          </p>
-          <p>
-            <a href="/login" className="text-[13px] font-medium text-[#1A73E8] hover:text-[#1769d2] transition-colors">
+          {error && (
+            <div
+              role="alert"
+              className="rounded-xl border p-3 text-sm"
+              style={{ borderColor: "var(--error)", color: "var(--error)", background: "var(--error-surface)" }}
+            >
+              {error}
+            </div>
+          )}
+          <button type="submit" disabled={!email.trim() || loading} className="btn-primary w-full">
+            {loading ? "Sending..." : "Send verification code"}
+            {!loading && <ArrowRight size={17} />}
+          </button>
+          <p className="pt-1 text-center text-sm">
+            <a href="/login" className="font-medium underline-offset-4 hover:underline" style={{ color: "var(--text)" }}>
               Back to sign in
             </a>
           </p>
+        </form>
+      ) : (
+        <div className="space-y-5">
+          <div
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border"
+            style={{ borderColor: "var(--border)", background: "var(--bg-muted)", color: "var(--text)" }}
+          >
+            <Mail className="h-6 w-6" />
+          </div>
+          <form onSubmit={handleVerify} className="space-y-5">
+            <div>
+              <label className="form-label">Verification code</label>
+              <div className="mt-2 flex justify-center rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)" }}>
+                <OTPInput
+                  value={otp}
+                  onChange={(v) => { setOtp(v.replace(/\D/g, "").slice(0, 6)); setError(""); setMessage(""); }}
+                  error={!!error}
+                />
+              </div>
+            </div>
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border p-3 text-sm"
+                style={{ borderColor: "var(--error)", color: "var(--error)", background: "var(--error-surface)" }}
+              >
+                {error}
+              </div>
+            )}
+            {message && (
+              <div
+                role="status"
+                className="flex items-center gap-2 rounded-xl border p-3 text-sm"
+                style={{ borderColor: "var(--success)", color: "var(--success)", background: "var(--success-surface)" }}
+              >
+                <Check size={15} /> {message}
+              </div>
+            )}
+            <button type="submit" disabled={otp.length !== 6 || loading} className="btn-primary w-full">
+              {loading ? "Verifying..." : "Verify email"}
+              {!loading && <ArrowRight size={17} />}
+            </button>
+          </form>
+          <div className="flex items-center justify-between pt-1">
+            <button type="button" onClick={() => setStep("enter")} className="auth-back">
+              <ArrowLeft className="h-3.5 w-3.5" /> Change email
+            </button>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 text-sm font-medium hover:opacity-60 disabled:opacity-40"
+              style={{ color: "var(--text)" }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Resend code
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </AuthShell>
   );
 }
