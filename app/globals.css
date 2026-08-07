@@ -1,127 +1,7 @@
 @import "tailwindcss";
+@import "@tirbeo/theme/brutal.css";
 
 @custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-nb-yellow: #ffd93d;
-  --color-nb-blue: #4d96ff;
-  --color-nb-pink: #ff6b9d;
-  --color-nb-green: #4ade80;
-  --color-nb-orange: #ffa000;
-  --color-nb-purple: #9b5de5;
-  --radius: 0px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   DARK THEME (default) — neobrutalist paper + ink
-   ═══════════════════════════════════════════════════════════════════════════ */
-.dark {
-  /* core */
-  --background: #0d0b08;
-  --foreground: #f5f3ef;
-  --card: #17150f;
-  --card-foreground: #f5f3ef;
-  --popover: #17150f;
-  --popover-foreground: #f5f3ef;
-  --primary: #f5f3ef;
-  --primary-foreground: #0d0b08;
-  --secondary: #2a2620;
-  --secondary-foreground: #f5f3ef;
-  --muted: #2a2620;
-  --muted-foreground: #88847a;
-  --accent: #2a2620;
-  --accent-foreground: #f5f3ef;
-  --destructive: #e55454;
-  --border: #3a352d;
-  --input: #3a352d;
-  --ring: #4ade80;
-  /* aliases used by auth-layout / components */
-  --bg: #0d0b08;
-  --bg-surface: #17150f;
-  --bg-muted: #2a2620;
-  --text: #f5f3ef;
-  --text-secondary: #b5aea3;
-  --text-muted: #7e776d;
-  --error: #e55454;
-  --success: #4ade80;
-  --chart-1: #4d96ff;
-  --chart-2: #ffd93d;
-  --chart-3: #ff6b9d;
-  --chart-4: #4ade80;
-  --chart-5: #ffa000;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LIGHT THEME — strict monochrome inverse
-   ═══════════════════════════════════════════════════════════════════════════ */
-:root,
-.light {
-  --background: #f6f3ea;
-  --foreground: #17150f;
-  --card: #ffffff;
-  --card-foreground: #17150f;
-  --popover: #ffffff;
-  --popover-foreground: #17150f;
-  --primary: #17150f;
-  --primary-foreground: #f6f3ea;
-  --secondary: #e9e3d3;
-  --secondary-foreground: #17150f;
-  --muted: #eee9dc;
-  --muted-foreground: #6b6557;
-  --accent: #e9e3d3;
-  --accent-foreground: #17150f;
-  --destructive: #e55454;
-  --border: #17150f;
-  --input: #17150f;
-  --ring: #4d96ff;
-  /* aliases used by auth-layout / components */
-  --bg: #f6f3ea;
-  --bg-surface: #ffffff;
-  --bg-muted: #eee9dc;
-  --text: #17150f;
-  --text-secondary: #6b6557;
-  --text-muted: #7e776d;
-  --error: #e55454;
-  --success: #22c55e;
-  --chart-1: #4d96ff;
-  --chart-2: #ffd93d;
-  --chart-3: #ff6b9d;
-  --chart-4: #22c55e;
-  --chart-5: #ffa000;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   BRUTAL SHADOW UTILITIES
-   ═══════════════════════════════════════════════════════════════════════════ */
-@utility shadow-brutal-sm { box-shadow: 2px 2px 0 0 var(--border); }
-@utility shadow-brutal { box-shadow: 4px 4px 0 0 var(--border); }
-@utility shadow-brutal-lg { box-shadow: 7px 7px 0 0 var(--border); }
-@utility shadow-brutal-lg-yellow { box-shadow: 7px 7px 0 0 #ffd93d; }
-@utility shadow-brutal-lg-blue { box-shadow: 7px 7px 0 0 #4d96ff; }
-@utility shadow-brutal-lg-pink { box-shadow: 7px 7px 0 0 #ff6b9d; }
-@utility shadow-brutal-lg-green { box-shadow: 7px 7px 0 0 #4ade80; }
-
-@keyframes spin { to { transform: rotate(360deg); } }
-@utility animate-spin { animation: spin 0.6s linear infinite; }
-@keyframes nb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@utility animate-marquee { animation: nb-marquee 28s linear infinite; }
-
-@layer base {
-  :root { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-  [class~="dark"] { color-scheme: dark; }
-  [class~="light"] { color-scheme: light; }
-  body {
-    background-color: var(--bg);
-    color: var(--text);
-    transition: background-color 0.2s ease, color 0.2s ease;
-  }
-  * {
-    border-color: var(--border);
-    border-radius: 0px;
-  }
-  button:not([disabled]) { cursor: pointer; }
-  ::selection { background: var(--chart-2); color: var(--text); }
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BUTTONS
@@ -235,6 +115,7 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 /* ═══════════════════════════════════════════════════════════════════════════
    SPINNER
    ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes spin { to { transform: rotate(360deg); } }
 .spinner { width: 20px; height: 20px; border: 3px solid var(--text); border-top-color: transparent; border-radius: 0; animation: spin 0.6s linear infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
