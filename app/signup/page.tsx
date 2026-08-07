@@ -441,8 +441,9 @@ export default function SignupPage() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           suppressHydrationWarning
         >
-          <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.025em", color: "var(--text)", marginBottom: 8 }}>{titles[step]}</h1>
-          <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 32 }}>{subtitles[step]}</p>
+          <span className="kicker">Create account</span>
+          <h1 className="auth-title mt-3">{titles[step]}</h1>
+          <p className="mb-8 mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>{subtitles[step]}</p>
 
           {success && <div className="auth-message auth-message-success"><Check size={16} style={{ marginTop: 2 }} />{success}</div>}
 

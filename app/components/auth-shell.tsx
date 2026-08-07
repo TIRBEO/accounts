@@ -16,13 +16,18 @@ export function AuthShell({ children, title, subtitle, footer }: AuthShellProps)
   return (
     <main className="auth-shell min-h-screen w-full" style={{ background: "var(--bg)", color: "var(--text)" }}>
       <div className="w-full max-w-[440px]">
-        <div className="auth-card">
+        <div className="auth-card" style={{ padding: "36px 32px" }}>
           <div className="mb-8">
             <AuthLogo size={32} />
           </div>
-          {title && <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>}
+          {title && (
+            <>
+              <span className="kicker">Tirbeo account</span>
+              <h1 className="auth-title auth-title-sm mt-3">{title}</h1>
+            </>
+          )}
           {subtitle && (
-            <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
+            <p className="mt-1 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
               {subtitle}
             </p>
           )}

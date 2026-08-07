@@ -36,8 +36,9 @@ export default function ForgotPasswordPage() {
       <div style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
         <div style={{ marginBottom: "32px" }}><Brand /></div>
         <div className="auth-card" style={{ padding: "48px" }}>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, letterSpacing: "-0.025em", color: "var(--text)", marginBottom: "8px" }}>Forgot password</h1>
-          <p style={{ fontSize: "15px", color: "var(--text-secondary)", marginBottom: "32px" }}>Enter your email and we'll send you a reset link.</p>
+          <span className="kicker">Account recovery</span>
+          <h1 className="auth-title mt-3">Forgot password</h1>
+          <p className="mb-8 mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>Enter your email and we'll send you a reset link.</p>
 
           {success && <div className="auth-message auth-message-success">{success}</div>}
           {error && <div className="auth-message auth-message-error">{error}</div>}
