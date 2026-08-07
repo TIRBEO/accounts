@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { OTPInput } from "../components/ui/otp-input";
+import { AuthShell } from "../components/auth-shell";
 
 import OAuthButtons from "../components/oauth-buttons";
 import { apiPost, ApiError } from "../lib/api";
@@ -134,54 +135,6 @@ function PasswordField({
 
       <FieldMessage error={error} />
     </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Auth frame                                                                 */
-/* -------------------------------------------------------------------------- */
-
-function AuthFrame({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <main
-      className="auth-soft min-h-screen px-4 py-6 sm:px-6 sm:py-10"
-      style={{
-        background: "var(--bg)",
-        color: "var(--text)",
-      }}
-    >
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[520px] items-center justify-center sm:min-h-[calc(100vh-5rem)]">
-        <section className="w-full">
-          <div
-            className="overflow-hidden rounded-[26px] border shadow-[0_20px_70px_rgba(0,0,0,0.14)]"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--bg-surface, var(--bg))",
-            }}
-          >
-            <div
-              className="h-1 w-full"
-              style={{ background: "var(--text)" }}
-            />
-
-            <div className="p-6 sm:p-8">
-              {children}
-            </div>
-          </div>
-
-          <p
-            className="mt-5 text-center text-[11px] leading-5"
-            style={{ color: "var(--text-muted)" }}
-          >
-            By continuing, you agree to Tirbeo&apos;s terms and privacy policy.
-          </p>
-        </section>
-      </div>
-    </main>
   );
 }
 
@@ -510,7 +463,7 @@ export default function LoginPage() {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <AuthFrame>
+    <AuthShell footer="By continuing, you agree to Tirbeo's terms and privacy policy.">
       {/* ==================================================================== */}
       {/* EMAIL                                                                 */}
       {/* ==================================================================== */}
@@ -952,6 +905,6 @@ export default function LoginPage() {
           </button>
         </div>
       )}
-    </AuthFrame>
+    </AuthShell>
   );
 }

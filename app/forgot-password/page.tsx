@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { AuthLayout, Brand, FieldError, SecurityFooter } from "../components/auth-layout";
+import { ArrowRight, ArrowLeft, Mail } from "lucide-react";
+import { AuthShell } from "../components/auth-shell";
 import { CaptchaWidget } from "../components/captcha/captcha-widget";
 import { apiPost, ApiError } from "../lib/api";
 
@@ -32,36 +32,90 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout>
-      <div style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "32px" }}><Brand /></div>
-        <div className="auth-card" style={{ padding: "48px" }}>
-          <span className="kicker">Account recovery</span>
-          <h1 className="auth-title mt-3">Forgot password</h1>
-          <p className="mb-8 mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>Enter your email and we'll send you a reset link.</p>
-
-          {success && <div className="auth-message auth-message-success">{success}</div>}
-          {error && <div className="auth-message auth-message-error">{error}</div>}
-          {!emailValid && email && <FieldError>Email is invalid</FieldError>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label required">Email address</label>
-              <div style={{ position: "relative" }}>
-                <input type="email" placeholder="name@company.com" value={email} onChange={e => { setEmail(e.target.value); setError(""); }} autoFocus style={{ paddingRight: "48px", borderColor: email ? (emailValid ? "var(--success)" : "var(--error)") : undefined }} />
-                {email && <div style={{ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)" }}>{emailValid ? <ArrowRight size={20} style={{ color: "var(--success)" }} /> : null}</div>}
-              </div>
-            </div>
-            <CaptchaWidget onSuccess={(id) => setCaptchaRayId(id)} />
-            <button type="submit" className="btn-primary" disabled={loading || !emailValid || !captchaRayId}>{loading ? <span className="spinner" /> : <>Send reset link <ArrowRight size={18} /></>}</button>
-          </form>
-
-            <div style={{ display: "flex", justifyContent: "center", marginTop: "24px", paddingTop: "24px", borderTop: "2px solid var(--border)" }}>
-            <a href="/login" className="auth-link" style={{ fontSize: "13px" }}>&larr; Back to sign in</a>
-          </div>
-        </div>
-        <SecurityFooter />
+    <AuthShell
+      title="Forgot password"
+      subtitle="Enter your email and we'll send you a reset link."
+    >
+      <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--bg-muted)" }}>
+        <Mail size={20} />
       </div>
-    </AuthLayout>
+
+      {success && (
+        <div
+          role="status"
+          className="mb-5 flex items-start gap-3 rounded-xl border px-3.5 py-3 text-sm"
+          style={{
+            borderColor: "color-mix(in srgb, var(--success) 45%, var(--border))",
+            background: "color-mix(in srgb, var(--success) 7%, var(--bg-surface))",
+            color: "var(--success)",
+          }}
+        >
+          <p className="leading-5">{success}</p>
+        </div>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-5 flex items-start gap-3 rounded-xl border px-3.5 py-3 text-sm"
+          style={{
+            borderColor: "color-mix(in srgb, var(--error) 45%, var(--border))",
+            background: "color-mix(in srgb, var(--error) 7%, var(--bg-surface))",
+            color: "var(--error)",
+          }}
+        >
+          <p className="leading-5">{error}</p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div>
+          <label htmlFor="forgot-email" className="form-label required">Email address</label>
+          <div className="relative">
+            <input
+              id="forgot-email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(""); }}
+              autoFocus
+              autoComplete="email"
+              aria-invalid={!!email && !emailValid}
+              className="!pr-12"
+              style={{
+                borderColor: email ? (emailValid ? "var(--success, #22c55e)" : "var(--error)") : undefined,
+              }}
+            />
+            {email && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {emailValid ? (
+                  <ArrowRight size={18} style={{ color: "var(--success, #22c55e)" }} />
+                ) : (
+                  <span className="text-xs font-semibold" style={{ color: "var(--error)" }}>!</span>
+                )}
+              </div>
+            )}
+          </div>
+          {!emailValid && email && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--error)" }} role="alert">
+              Enter a valid email address.
+            </p>
+          )}
+        </div>
+
+        <CaptchaWidget onSuccess={(id) => setCaptchaRayId(id)} />
+
+        <button type="submit" className="btn-primary" disabled={loading || !emailValid || !captchaRayId}>
+          {loading ? "Sending..." : <>Send reset link <ArrowRight size={17} /></>}
+        </button>
+      </form>
+
+      <div className="mt-5 flex items-center justify-center">
+        <a href="/login" className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-60" style={{ color: "var(--text-muted)" }}>
+          <ArrowLeft size={14} />
+          Back to sign in
+        </a>
+      </div>
+    </AuthShell>
   );
 }

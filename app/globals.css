@@ -78,19 +78,6 @@
 }
 .oauth-btn:hover { box-shadow: 3px 3px 0 var(--border); transform: translate(-1px, -1px); }
 
-.btn-ghost {
-  background: transparent;
-  border: 2px solid var(--border);
-  color: var(--text);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: 13px;
-  border-radius: 0;
-  transition: all 150ms ease;
-}
-.btn-ghost:hover { box-shadow: 3px 3px 0 var(--border); transform: translate(-1px, -1px); }
-
 /* ═══════════════════════════════════════════════════════════════════════════
    INPUTS
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -138,13 +125,6 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 .otp-box:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 20%, transparent); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DIVIDER
-   ═══════════════════════════════════════════════════════════════════════════ */
-.auth-divider { display: flex; align-items: center; gap: 16px; margin: 24px 0; }
-.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 2px; background: var(--border); }
-.auth-divider-text { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
-
-/* ═══════════════════════════════════════════════════════════════════════════
    SPINNER
    ═══════════════════════════════════════════════════════════════════════════ */
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -159,15 +139,6 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 .form-label .optional { color: var(--text-muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
 .auth-back { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: color 150ms ease; padding: 0; }
 .auth-back:hover { color: var(--text); }
-.auth-link { color: var(--text); text-decoration: none; font-size: 13px; font-weight: 600; }
-.auth-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MESSAGES
-   ═══════════════════════════════════════════════════════════════════════════ */
-.auth-message { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border: 2px solid var(--border); border-radius: 0; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
-.auth-message-error { background: color-mix(in srgb, var(--error) 12%, var(--bg)); color: var(--error); }
-.auth-message-success { background: color-mix(in srgb, var(--success) 12%, var(--bg)); color: var(--success); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CAPTCHA
@@ -214,63 +185,6 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 .border-error { border-color: var(--error) !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   AUTH CARD
-   ═══════════════════════════════════════════════════════════════════════════ */
-.auth-card {
-  background: var(--bg-surface);
-  border: 2px solid var(--border);
-  border-radius: 0;
-  box-shadow: 7px 7px 0 var(--border);
-  box-sizing: border-box;
-}
-.auth-footer { display: flex; justify-content: center; gap: 24px; margin-top: 28px; padding-top: 24px; border-top: 2px solid var(--border); }
-.auth-footer-text { text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-muted); }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LANDING-STYLE KICKER + TITLE (font-black uppercase, tracking)
-   ═══════════════════════════════════════════════════════════════════════════ */
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 10px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: var(--text-muted);
-}
-.kicker::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  background: var(--nb-yellow);
-  border: 2px solid var(--border);
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-.auth-title {
-  font-size: 34px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  line-height: 0.95;
-  color: var(--text);
-  margin-bottom: 12px;
-}
-.auth-title-sm {
-  font-size: 28px;
-}
-@media (max-width: 480px) {
-  .auth-title, .auth-title-sm { font-size: 24px; }
-}
-.auth-security-footer { border-top: 2px solid var(--border); background: var(--bg-muted); color: var(--text-secondary); font-size: 12px; text-align: center; padding: 12px 16px; }
-.auth-security-footer a { color: var(--text); }
-
-@media (max-width: 580px) {
-  .auth-card { padding: 32px 24px !important; }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
    SOFT AUTH PAGES (new login/signup design)
    The shared brutal.css neutralizes standard rounded-* utilities to 0 for the
    global brutalist look. These new auth pages deliberately use a soft rounded
@@ -286,7 +200,7 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 .auth-soft .rounded-full { border-radius: 9999px !important; }
 .auth-soft .shadow-lg,
 .auth-soft .shadow-md,
-.auth-soft .shadow-xl { box-shadow: none !important; }
+.auth-soft .shadow-xl { box-shadow: 0 20px 70px rgba(0, 0, 0, 0.14) !important; }
 .auth-soft input,
 .auth-soft select,
 .auth-soft textarea {
