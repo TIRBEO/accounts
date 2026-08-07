@@ -8,6 +8,7 @@ interface CaptchaWidgetProps {
   onSuccess?: (rayId: string) => void;
   onBlocked?: (rayId: string, reason: string, expiresAt?: string) => void;
   forceShow?: boolean;
+  autoShow?: boolean;
 }
 
 interface Challenge {
@@ -29,8 +30,8 @@ interface Challenge {
 
 type State = "idle" | "loading" | "challenge" | "verifying" | "verified" | "blocked";
 
-export function CaptchaWidget({ onSuccess, onBlocked, forceShow = false }: CaptchaWidgetProps) {
-  const [state, setState] = useState<State>(forceShow ? "loading" : "idle");
+export function CaptchaWidget({ onSuccess, onBlocked, forceShow = false, autoShow = false }: CaptchaWidgetProps) {
+  const [state, setState] = useState<State>("idle");
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -58,8 +59,8 @@ export function CaptchaWidget({ onSuccess, onBlocked, forceShow = false }: Captc
   };
 
   useEffect(() => {
-    if (forceShow && state === "idle") { void fetchChallenge(); }
-  }, [forceShow]);
+    if (forceShow || autoShow) { void fetchChallenge(); }
+  }, [forceShow, autoShow]);
 
   const handleVerify = async () => {
     if (!challenge || verifying) return;

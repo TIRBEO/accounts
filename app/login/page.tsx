@@ -1,286 +1,957 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { motion } from "motion/react";
-import { ArrowRight, Eye, EyeOff, Check, X, Shield } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Mail,
+  Shield,
+  X,
+} from "lucide-react";
 import { OTPInput } from "../components/ui/otp-input";
-import { AuthLayout, Brand, SecurityFooter } from "../components/auth-layout";
-import { CaptchaWidget } from "../components/captcha/captcha-widget";
+
 import OAuthButtons from "../components/oauth-buttons";
 import { apiPost, ApiError } from "../lib/api";
 import { getRedirectUrl } from "../lib/redirect";
+import { CaptchaWidget } from "../components/captcha/captcha-widget";
 import { useAccountsConfig } from "../lib/use-accounts-config";
+
+type Step = "welcome" | "verify-email" | "password" | "mfa";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/* -------------------------------------------------------------------------- */
+/* Field message                                                              */
+/* -------------------------------------------------------------------------- */
+
+function FieldMessage({
+  error,
+  success,
+}: {
+  error?: string;
+  success?: string;
+}) {
+  if (error) {
+    return (
+      <p
+        className="mt-2 flex items-center gap-1.5 text-xs font-medium"
+        style={{ color: "var(--error)" }}
+      >
+        <X size={13} />
+        {error}
+      </p>
+    );
+  }
+
+  if (success) {
+    return (
+      <p
+        className="mt-2 flex items-center gap-1.5 text-xs font-medium"
+        style={{ color: "var(--success, #22c55e)" }}
+      >
+        <Check size={13} />
+        {success}
+      </p>
+    );
+  }
+
+  return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Error box                                                                  */
+/* -------------------------------------------------------------------------- */
+
+function ErrorBox({ message }: { message: string }) {
+  if (!message) return null;
+
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-3 rounded-xl border px-3.5 py-3 text-sm"
+      style={{
+        borderColor: "color-mix(in srgb, var(--error) 45%, var(--border))",
+        background:
+          "color-mix(in srgb, var(--error) 7%, var(--bg-surface))",
+        color: "var(--error)",
+      }}
+    >
+      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-current">
+        <X size={11} />
+      </div>
+
+      <p className="leading-5">{message}</p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Password field                                                             */
+/* -------------------------------------------------------------------------- */
+
+function PasswordField({
+  value,
+  onChange,
+  visible,
+  onToggle,
+  error,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  visible: boolean;
+  onToggle: () => void;
+  error?: string;
+}) {
+  return (
+    <div>
+      <div className="relative">
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          aria-invalid={!!error}
+          className="!pr-12"
+          style={{
+            borderColor: error ? "var(--error)" : undefined,
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg transition-opacity hover:opacity-60"
+          style={{ color: "var(--text-muted)" }}
+          aria-label={visible ? "Hide password" : "Show password"}
+        >
+          {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+
+      <FieldMessage error={error} />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Auth frame                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function AuthFrame({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <main
+      className="auth-soft min-h-screen px-4 py-6 sm:px-6 sm:py-10"
+      style={{
+        background: "var(--bg)",
+        color: "var(--text)",
+      }}
+    >
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[520px] items-center justify-center sm:min-h-[calc(100vh-5rem)]">
+        <section className="w-full">
+          <div
+            className="overflow-hidden rounded-[26px] border shadow-[0_20px_70px_rgba(0,0,0,0.14)]"
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--bg-surface, var(--bg))",
+            }}
+          >
+            <div
+              className="h-1 w-full"
+              style={{ background: "var(--text)" }}
+            />
+
+            <div className="p-6 sm:p-8">
+              {children}
+            </div>
+          </div>
+
+          <p
+            className="mt-5 text-center text-[11px] leading-5"
+            style={{ color: "var(--text-muted)" }}
+          >
+            By continuing, you agree to Tirbeo&apos;s terms and privacy policy.
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Login page                                                                 */
+/* -------------------------------------------------------------------------- */
+
 export default function LoginPage() {
-  const { config, loaded } = useAccountsConfig();
-  const [step, setStep] = useState<"welcome" | "verify" | "password" | "mfa">("welcome");
+  const { config } = useAccountsConfig();
+
+  const [step, setStep] = useState<Step>("welcome");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [tempToken, setTempToken] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>(
+    {}
+  );
+
+  const [loading, setLoading] = useState(false);
+
   const [captchaRayId, setCaptchaRayId] = useState("");
-  const [countdown, setCountdown] = useState(0);
+  const [captchaForceShow, setCaptchaForceShow] = useState(false);
+
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  /* ------------------------------------------------------------------------ */
+  /* Captcha                                                                  */
+  /* ------------------------------------------------------------------------ */
 
   useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setInterval(() => setCountdown((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
-  }, [countdown]);
+    if (config.captchaForceShow) {
+      setCaptchaForceShow(true);
+    }
+  }, [config.captchaForceShow]);
 
-  const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+  /* ------------------------------------------------------------------------ */
+  /* Resend timer                                                             */
+  /* ------------------------------------------------------------------------ */
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setResendSeconds((value) => Math.max(0, value - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Email                                                                    */
+  /* ------------------------------------------------------------------------ */
+
+  const normalizedEmail = useMemo(
+    () => email.trim().toLowerCase(),
+    [email]
+  );
+
   const emailValid = EMAIL_RE.test(normalizedEmail);
-  const oauthEnabled = config.oauth && (config.oauth.google?.enabled || config.oauth.github?.enabled || config.oauth.discord?.enabled);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailValid || loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      await apiPost("auth/login-otp/request", { email: normalizedEmail });
-      setCountdown(30);
-      setSuccess(`Verification code sent to ${normalizedEmail}`);
-      setStep("verify");
-    } catch (err: any) {
-      setError(err instanceof ApiError ? err.message : (err?.message || "Failed to send code. Please try again."));
-    } finally {
-      setLoading(false);
+  const validateEmail = useCallback((value: string) => {
+    const normalized = value.trim().toLowerCase();
+
+    if (!normalized) {
+      return "Enter your email address.";
     }
-  };
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.length !== 6 || loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      await apiPost("auth/login-otp/verify", { email: normalizedEmail, otpCode: otp });
-      setStep("password");
-    } catch (err: any) {
-      setError(err instanceof ApiError ? err.message : (err?.message || "Invalid code."));
-      setOtp("");
-    } finally {
-      setLoading(false);
+    if (!EMAIL_RE.test(normalized)) {
+      return "Enter a valid email address.";
     }
-  };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!password || loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      const data = await apiPost("auth/login", { email: normalizedEmail, password, captchaRayId });
-      if (data?.needs2FA) {
-        setTempToken(data.tempToken);
-        setStep("mfa");
-      } else {
-        setSuccess("Signed in!");
-        setTimeout(() => (window.location.href = getRedirectUrl()), 1000);
+    return "";
+  }, []);
+
+  /* ------------------------------------------------------------------------ */
+  /* Request email OTP                                                        */
+  /* ------------------------------------------------------------------------ */
+
+  const handleEmailSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+
+      const validationError = validateEmail(email);
+
+      if (validationError) {
+        setFieldErrors({ email: validationError });
+        return;
       }
-    } catch (err: any) {
-      setError(err instanceof ApiError ? err.message : (err?.message || "Sign in failed."));
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleMfaSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.length !== 6 || loading) return;
-    setLoading(true);
+      setLoading(true);
+      setError("");
+      setFieldErrors({});
+
+      try {
+        await apiPost("auth/login-otp/request", {
+          email: normalizedEmail,
+        });
+
+        setOtp("");
+        setResendSeconds(30);
+        setStep("verify-email");
+      } catch (err: unknown) {
+        if (err instanceof ApiError) {
+          setError(
+            err.message || "Unable to send the verification code."
+          );
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, normalizedEmail, validateEmail]
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* Verify email OTP                                                         */
+  /* ------------------------------------------------------------------------ */
+
+  const handleVerifyEmail = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+
+      const cleanOtp = otp.replace(/\D/g, "").slice(0, 6);
+
+      if (cleanOtp.length !== 6) {
+        setError("Enter the 6-digit verification code.");
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        await apiPost("auth/login-otp/verify", {
+          email: normalizedEmail,
+          otpCode: cleanOtp,
+        });
+
+        setOtp("");
+        setStep("password");
+      } catch (err: unknown) {
+        if (err instanceof ApiError) {
+          setError(err.message || "Invalid or expired code.");
+        } else {
+          setError("Invalid or expired verification code.");
+        }
+
+        setOtp("");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [normalizedEmail, otp]
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* Password login                                                           */
+  /* ------------------------------------------------------------------------ */
+
+  const handlePasswordSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+
+      if (!password) {
+        setFieldErrors({
+          password: "Enter your password.",
+        });
+        return;
+      }
+
+      setFieldErrors({});
+      setError("");
+      setLoading(true);
+
+      try {
+        const data = await apiPost("auth/login", {
+          email: normalizedEmail,
+          password,
+          captchaRayId,
+        });
+
+        if (data?.needs2FA) {
+          setTempToken(data.tempToken);
+          setOtp("");
+          setStep("mfa");
+        } else {
+          window.location.assign(getRedirectUrl());
+        }
+      } catch (err: unknown) {
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            setError("Invalid email or password.");
+          } else {
+            setError(err.message || "Unable to sign you in.");
+          }
+
+          if (
+            err.status === 403 &&
+            /captcha/i.test(err.message || "")
+          ) {
+            setCaptchaForceShow(true);
+          }
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [captchaRayId, normalizedEmail, password]
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* MFA                                                                      */
+  /* ------------------------------------------------------------------------ */
+
+  const handleMfaSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+
+      const cleanOtp = otp.replace(/\D/g, "").slice(0, 6);
+
+      if (cleanOtp.length !== 6) {
+        setError("Enter the 6-digit authentication code.");
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        await apiPost("auth/verify-2fa", {
+          tempToken,
+          code: cleanOtp,
+        });
+
+        window.location.assign(getRedirectUrl());
+      } catch (err: unknown) {
+        if (err instanceof ApiError) {
+          setError(
+            err.message || "Invalid authentication code."
+          );
+        } else {
+          setError("Invalid authentication code.");
+        }
+
+        setOtp("");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [otp, tempToken]
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* Navigation                                                               */
+  /* ------------------------------------------------------------------------ */
+
+  const handleBackToEmail = useCallback(() => {
+    setStep("welcome");
+    setPassword("");
+    setOtp("");
+    setTempToken("");
     setError("");
+    setFieldErrors({});
+    setShowPassword(false);
+  }, []);
+
+  const handleBackToVerify = useCallback(() => {
+    setStep("verify-email");
+    setPassword("");
+    setOtp("");
+    setError("");
+    setFieldErrors({});
+    setShowPassword(false);
+  }, []);
+
+  /* ------------------------------------------------------------------------ */
+  /* Resend OTP                                                               */
+  /* ------------------------------------------------------------------------ */
+
+  const handleResendOtp = useCallback(async () => {
+    if (
+      resendSeconds > 0 ||
+      resendLoading ||
+      !normalizedEmail
+    ) {
+      return;
+    }
+
+    setResendLoading(true);
+    setError("");
+
     try {
-      await apiPost("auth/verify-2fa", { tempToken, code: otp });
-      setSuccess("Signed in!");
-      setTimeout(() => (window.location.href = getRedirectUrl()), 1000);
-    } catch (err: any) {
-      setError(err instanceof ApiError ? err.message : (err?.message || "Verification failed."));
-      setOtp("");
+      await apiPost("auth/login-otp/request", {
+        email: normalizedEmail,
+      });
+
+      setResendSeconds(30);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.message || "Couldn't resend the code.");
+      } else {
+        setError("Couldn't resend the code. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
-  };
+  }, [normalizedEmail, resendLoading, resendSeconds]);
 
-  const handleResend = async () => {
-    if (countdown > 0 || loading) return;
-    setCountdown(30);
-    setSuccess("");
-    try {
-      await apiPost("auth/login-otp/request", { email: normalizedEmail });
-      setSuccess("New code sent!");
-    } catch (err: any) {
-      setError(err instanceof ApiError ? err.message : (err?.message || "Failed to resend."));
-    }
-  };
+  const signUpUrl = `/signup?redirect_to=${encodeURIComponent(
+    getRedirectUrl()
+  )}`;
 
-  const titles: Record<string, string> = {
-    welcome: config.ui.welcomeTitle || "Sign in",
-    verify: "Check your email",
-    password: "Enter your password",
-    mfa: "Verify it's you",
-  };
-  const subtitles: Record<string, string> = {
-    welcome: config.ui.welcomeSubtitle || "Enter your email to continue.",
-    verify: `We sent a 6-digit code to ${normalizedEmail}`,
-    password: `Continue with ${normalizedEmail}`,
-    mfa: "Enter the code from your authenticator.",
-  };
+  /* ------------------------------------------------------------------------ */
+  /* UI                                                                       */
+  /* ------------------------------------------------------------------------ */
 
   return (
-    <AuthLayout>
-      <div style={{ width: "100%", maxWidth: "520px", margin: "0 auto" }}>
-        <div style={{ marginBottom: 32 }}><Brand /></div>
-        <motion.div
-          className="auth-card"
-          style={{ padding: 48 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          suppressHydrationWarning
-        >
-          <span className="kicker">Welcome</span>
-          <h1 className="auth-title mt-3">
-            {titles[step]}
-          </h1>
-          <p className="mb-8 mt-1 text-[15px]" style={{ color: "var(--text-secondary)" }}>
-            {subtitles[step]}
-          </p>
+    <AuthFrame>
+      {/* ==================================================================== */}
+      {/* EMAIL                                                                 */}
+      {/* ==================================================================== */}
 
-          {success && <div className="auth-message auth-message-success"><Check size={16} style={{ marginTop: 2 }} />{success}</div>}
-          {error && <div className="auth-message auth-message-error"><Shield size={16} style={{ marginTop: 2 }} />{error}</div>}
+      {step === "welcome" && (
+        <div>
+          <header className="mb-7">
+            <p
+              className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Tirbeo account
+            </p>
 
-          {step === "welcome" && loaded && (
-            <>
-              {oauthEnabled && (
-                <div style={{ marginBottom: 24 }}>
-                  <OAuthButtons redirect={config.ui?.helpLink} />
-                </div>
-              )}
-              <div className="auth-divider"><span className="auth-divider-text">or continue with email</span></div>
-              <form onSubmit={handleEmailSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                <div className="form-group">
-                  <label className="form-label required">Email address</label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="email"
-                      placeholder="name@company.com"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                      autoFocus
-                      style={{ paddingRight: 48, borderColor: email ? (emailValid ? "var(--success)" : "var(--error)") : undefined }}
-                    />
-                    {email && (
-                      <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)" }}>
-                        {emailValid ? <Check size={20} style={{ color: "var(--success)" }} /> : <X size={20} style={{ color: "var(--error)" }} />}
-                      </div>
+            <h1 className="text-[30px] font-semibold tracking-[-0.03em] sm:text-[34px]">
+              Welcome back
+            </h1>
+
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Sign in to continue to Tirbeo.
+            </p>
+          </header>
+
+          <div
+            className="mb-6 rounded-2xl border p-4"
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--bg-muted)",
+            }}
+          >
+            <OAuthButtons redirect={getRedirectUrl()} />
+          </div>
+
+          <div className="mb-6 flex items-center gap-3">
+            <div
+              className="h-px flex-1"
+              style={{ background: "var(--border)" }}
+            />
+
+            <span
+              className="text-[10px] font-bold uppercase tracking-[0.18em]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              or continue with email
+            </span>
+
+            <div
+              className="h-px flex-1"
+              style={{ background: "var(--border)" }}
+            />
+          </div>
+
+          <form
+            onSubmit={handleEmailSubmit}
+            className="space-y-4"
+            noValidate
+          >
+            <div>
+              <label
+                htmlFor="login-email"
+                className="form-label required"
+              >
+                Email address
+              </label>
+
+              <div className="relative">
+                <input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    const value = event.target.value;
+
+                    setEmail(value);
+                    setError("");
+
+                    const validationError = value
+                      ? validateEmail(value)
+                      : "";
+
+                    setFieldErrors(
+                      validationError
+                        ? { email: validationError }
+                        : {}
+                    );
+                  }}
+                  placeholder="you@example.com"
+                  autoFocus
+                  autoComplete="email"
+                  aria-invalid={!!fieldErrors.email}
+                  className="!pr-12"
+                  style={{
+                    borderColor: fieldErrors.email
+                      ? "var(--error)"
+                      : emailValid
+                        ? "var(--success, #22c55e)"
+                        : undefined,
+                  }}
+                />
+
+                {email && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {emailValid ? (
+                      <Check
+                        size={18}
+                        style={{
+                          color: "var(--success, #22c55e)",
+                        }}
+                      />
+                    ) : (
+                      <X
+                        size={18}
+                        style={{
+                          color: "var(--error)",
+                        }}
+                      />
                     )}
                   </div>
-                </div>
-                <button type="submit" className="btn-primary" disabled={loading || !emailValid}>
-                  {loading ? <span className="spinner" /> : <>Continue <ArrowRight size={18} /></>}
-                </button>
-              </form>
-            </>
-          )}
+                )}
+              </div>
 
-          {step === "verify" && (
-            <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <div className="form-group">
-                <label className="form-label required">Verification code</label>
-                <OTPInput
-                  value={otp}
-                  onChange={setOtp}
-                  numDigits={6}
-                  error={!!error}
-                  disabled={loading}
-                  className="otp-input-container"
-                />
-              </div>
-              <button type="submit" className="btn-primary" disabled={loading || otp.length !== 6}>
-                {loading ? <span className="spinner" /> : <>Verify <ArrowRight size={18} /></>}
-              </button>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <button type="button" onClick={() => setStep("welcome")} className="auth-back">← Back</button>
-                <button type="button" onClick={handleResend} disabled={countdown > 0 || loading} className="auth-link" style={{ fontSize: 13 }}>
-                  {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
-                </button>
-              </div>
-            </form>
-          )}
+              <FieldMessage error={fieldErrors.email} />
+            </div>
 
-          {step === "password" && (
-            <form onSubmit={handlePasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div className="form-group">
-                <label className="form-label required">Password</label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                    autoFocus
-                    style={{ paddingRight: 56 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-              <CaptchaWidget onSuccess={(id) => setCaptchaRayId(id)} />
-              <button type="submit" className="btn-primary" disabled={loading || !password || !captchaRayId}>
-                {loading ? <span className="spinner" /> : <>Sign in <ArrowRight size={18} /></>}
-              </button>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <button type="button" onClick={() => setStep("welcome")} className="auth-back">← Back</button>
-                <a href="/forgot-password" className="auth-link" style={{ fontSize: 13 }}>Forgot password?</a>
-              </div>
-            </form>
-          )}
+            <ErrorBox message={error} />
 
-          {step === "mfa" && (
-            <form onSubmit={handleMfaSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8 }}>
-                <Shield size={18} style={{ color: "var(--text-secondary)" }} />
-                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Enter the 6-digit code from your authenticator app.</span>
-              </div>
-              <div className="form-group">
-                <label className="form-label required">Authenticator code</label>
-                <OTPInput
-                  value={otp}
-                  onChange={setOtp}
-                  numDigits={6}
-                  error={!!error}
-                  disabled={loading}
-                  className="otp-input-container"
-                />
-              </div>
-              <button type="submit" className="btn-primary" disabled={loading || otp.length !== 6}>
-                {loading ? <span className="spinner" /> : <>Verify & sign in <ArrowRight size={18} /></>}
-              </button>
-              <button type="button" onClick={() => setStep("welcome")} className="auth-back">← Back to email</button>
-            </form>
-          )}
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || !emailValid}
+            >
+              <span>
+                {loading ? "Sending code..." : "Continue"}
+              </span>
 
-          <div className="auth-footer">
-            <a href="/signup" className="auth-link">Don't have an account? Sign up</a>
+              {!loading && <ArrowRight size={17} />}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p
+              className="text-[13px]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Don&apos;t have an account?{" "}
+              <a
+                href={signUpUrl}
+                className="font-semibold underline-offset-4 hover:underline"
+                style={{ color: "var(--text)" }}
+              >
+                Sign up
+              </a>
+            </p>
           </div>
-          <p className="auth-footer-text">
-            By continuing, you agree to the <a href={config.ui.termsLink}>Terms of Service</a> and <a href={config.ui.privacyLink}>Privacy Policy</a>.
-          </p>
-          <SecurityFooter />
-        </motion.div>
-      </div>
-    </AuthLayout>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* VERIFY EMAIL                                                          */}
+      {/* ==================================================================== */}
+
+      {step === "verify-email" && (
+        <div>
+          <header className="mb-7">
+            <div
+              className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border"
+              style={{
+                borderColor: "var(--border)",
+                background: "var(--bg-muted)",
+              }}
+            >
+              <Mail size={20} />
+            </div>
+
+            <h1 className="text-[30px] font-semibold tracking-[-0.03em]">
+              Check your email
+            </h1>
+
+            <p
+              className="mt-2 text-sm leading-6"
+              style={{ color: "var(--text-muted)" }}
+            >
+              We sent a 6-digit verification code to{" "}
+              <strong style={{ color: "var(--text)" }}>
+                {normalizedEmail}
+              </strong>
+              .
+            </p>
+          </header>
+
+          <form
+            onSubmit={handleVerifyEmail}
+            className="space-y-5"
+            noValidate
+          >
+            <div>
+              <label className="form-label">
+                Verification code
+              </label>
+
+              <div className="mt-2 flex justify-center rounded-2xl border p-5 sm:p-6">
+                <OTPInput
+                  value={otp}
+                  onChange={(value) => {
+                    setOtp(
+                      value.replace(/\D/g, "").slice(0, 6)
+                    );
+                    setError("");
+                  }}
+                />
+              </div>
+            </div>
+
+            <ErrorBox message={error} />
+
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={
+                loading ||
+                otp.replace(/\D/g, "").length !== 6
+              }
+            >
+              {loading ? "Verifying..." : "Continue"}
+
+              {!loading && <ArrowRight size={17} />}
+            </button>
+          </form>
+
+          <div className="mt-5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleBackToEmail}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-60"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              disabled={
+                resendLoading || resendSeconds > 0
+              }
+              className="text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ color: "var(--text)" }}
+            >
+              {resendLoading
+                ? "Sending..."
+                : resendSeconds > 0
+                  ? `Resend in ${resendSeconds}s`
+                  : "Resend code"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* PASSWORD                                                              */}
+      {/* ==================================================================== */}
+
+      {step === "password" && (
+        <div>
+          <header className="mb-7">
+            <h1 className="text-[30px] font-semibold tracking-[-0.03em]">
+              Enter your password
+            </h1>
+
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Continue with{" "}
+              <strong style={{ color: "var(--text)" }}>
+                {normalizedEmail}
+              </strong>
+            </p>
+          </header>
+
+          <form
+            onSubmit={handlePasswordSubmit}
+            className="space-y-4"
+            noValidate
+          >
+            <div>
+              <label
+                htmlFor="login-password"
+                className="form-label required"
+              >
+                Password
+              </label>
+
+              <PasswordField
+                value={password}
+                onChange={(value) => {
+                  setPassword(value);
+                  setError("");
+                  setFieldErrors({});
+                }}
+                visible={showPassword}
+                onToggle={() =>
+                  setShowPassword((value) => !value)
+                }
+                error={fieldErrors.password}
+              />
+            </div>
+
+            <ErrorBox message={error} />
+
+            <CaptchaWidget
+              autoShow
+              forceShow={captchaForceShow}
+              onSuccess={(rayId: string) => {
+                setCaptchaRayId(rayId);
+                setError("");
+              }}
+              onBlocked={(_: string, reason: string) => {
+                setError(`Access blocked: ${reason}`);
+              }}
+            />
+
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || !password}
+            >
+              {loading ? "Signing in..." : "Sign in"}
+
+              {!loading && <ArrowRight size={17} />}
+            </button>
+          </form>
+
+          <div className="mt-5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleBackToVerify}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-60"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+
+            <a
+              href="/forgot-password"
+              className="text-xs font-semibold hover:opacity-60"
+              style={{ color: "var(--text)" }}
+            >
+              Forgot password?
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MFA                                                                   */}
+      {/* ==================================================================== */}
+
+      {step === "mfa" && (
+        <div>
+          <header className="mb-7">
+            <div
+              className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border"
+              style={{
+                borderColor: "var(--border)",
+                background: "var(--bg-muted)",
+              }}
+            >
+              <Shield size={20} />
+            </div>
+
+            <h1 className="text-[30px] font-semibold tracking-[-0.03em]">
+              Verify it&apos;s you
+            </h1>
+
+            <p
+              className="mt-2 text-sm leading-6"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Enter the 6-digit code from your authenticator
+              app.
+            </p>
+          </header>
+
+          <form
+            onSubmit={handleMfaSubmit}
+            className="space-y-5"
+            noValidate
+          >
+            <div>
+              <label className="form-label">
+                Authentication code
+              </label>
+
+              <div className="mt-2 flex justify-center rounded-2xl border p-5 sm:p-6">
+                <OTPInput
+                  value={otp}
+                  onChange={(value) => {
+                    setOtp(
+                      value.replace(/\D/g, "").slice(0, 6)
+                    );
+                    setError("");
+                  }}
+                />
+              </div>
+            </div>
+
+            <ErrorBox message={error} />
+
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={
+                loading ||
+                otp.replace(/\D/g, "").length !== 6
+              }
+            >
+              {loading
+                ? "Verifying..."
+                : "Verify and sign in"}
+
+              {!loading && <ArrowRight size={17} />}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={handleBackToEmail}
+            className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-60"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <ArrowLeft size={14} />
+            Back to email
+          </button>
+        </div>
+      )}
+    </AuthFrame>
   );
 }
