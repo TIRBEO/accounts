@@ -185,35 +185,116 @@ textarea { height: auto; min-height: 100px; padding: 16px 18px; resize: vertical
 .border-error { border-color: var(--error) !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SOFT AUTH PAGES (new login/signup design)
-   The shared brutal.css neutralizes standard rounded-* utilities to 0 for the
-   global brutalist look. These new auth pages deliberately use a soft rounded
-   premium design — restore rounded corners + soft shadows inside .auth-soft.
+   AUTH PAGES (brutalist — sharp rectangle corners, hard offset shadows,
+   press/raise hover states, matching the landing page).
    ═══════════════════════════════════════════════════════════════════════════ */
-.auth-soft .rounded-sm { border-radius: 0.125rem !important; }
-.auth-soft .rounded { border-radius: 0.25rem !important; }
-.auth-soft .rounded-md { border-radius: 0.375rem !important; }
-.auth-soft .rounded-lg { border-radius: 0.5rem !important; }
-.auth-soft .rounded-xl { border-radius: 0.75rem !important; }
-.auth-soft .rounded-2xl { border-radius: 1rem !important; }
-.auth-soft .rounded-3xl { border-radius: 1.5rem !important; }
-.auth-soft .rounded-full { border-radius: 9999px !important; }
-.auth-soft .shadow-lg,
-.auth-soft .shadow-md,
-.auth-soft .shadow-xl { box-shadow: 0 20px 70px rgba(0, 0, 0, 0.14) !important; }
+
+/* Cards keep a hard offset shadow and lift on hover */
+.auth-soft .auth-panel {
+  box-shadow: 7px 7px 0 var(--border);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.auth-soft .auth-panel:hover {
+  box-shadow: 9px 9px 0 var(--border);
+  transform: translate(-2px, -2px);
+}
+
+/* Icon squares + chips: sharp corners, hard shadow on hover */
+.auth-soft .auth-icon {
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 var(--border);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.auth-soft .auth-icon:hover {
+  box-shadow: 4px 4px 0 var(--border);
+  transform: translate(-1px, -1px);
+}
+
+/* Inputs / selects / textareas: sharp corners (already 0 globally), give a
+   hard offset shadow on focus for a brutalist focus ring */
 .auth-soft input,
 .auth-soft select,
 .auth-soft textarea {
-  border-radius: 0.5rem !important;
+  border-radius: 0 !important;
 }
+.auth-soft input:focus,
+.auth-soft select:focus,
+.auth-soft textarea:focus {
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--ring) 55%, transparent) !important;
+}
+
+/* Keep buttons brutalist: uppercase black weight + hard shadow hovers */
 .auth-soft .btn-primary,
 .auth-soft .btn-secondary {
-  border-radius: 0.5rem !important;
-  text-transform: none;
-  letter-spacing: 0.02em;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 13px;
+  font-weight: 900;
 }
 .auth-soft .btn-primary:hover,
-.auth-soft .btn-secondary:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); transform: none; }
-.auth-soft .form-label { letter-spacing: 0.1em; }
+.auth-soft .btn-secondary:hover {
+  box-shadow: 5px 5px 0 var(--foreground);
+  transform: translate(-2px, -2px);
+}
+.auth-soft .form-label { letter-spacing: 0.18em; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAPTCHA POPUP MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.captcha-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: captcha-fade 150ms ease;
+}
+@keyframes captcha-fade { from { opacity: 0; } to { opacity: 1; } }
+.captcha-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-surface, var(--bg));
+  border: 2px solid var(--border);
+  border-radius: 0;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+  animation: captcha-pop 160ms ease;
+}
+@keyframes captcha-pop { from { transform: translateY(8px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.captcha-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg-muted);
+}
+.captcha-modal-body { padding: 18px 16px 20px; }
+.captcha-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--border);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.captcha-close:hover { box-shadow: 2px 2px 0 var(--border); transform: translate(-1px, -1px); }
+.captcha-open { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
+.captcha-open:hover { text-decoration: underline; }
+.captcha-resolve {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.captcha-verified { border-color: var(--success) !important; }

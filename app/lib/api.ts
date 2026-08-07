@@ -44,7 +44,8 @@ async function parseRes(res: Response): Promise<any> {
 
 export async function apiFetch(path: string, opts?: RequestInit): Promise<Response> {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  const url = `${API}${normalized}`;
+  const withPrefix = normalized.startsWith("/api/") ? normalized : `/api${normalized}`;
+  const url = `${API}${withPrefix}`;
   const headers: Record<string, string> = { ...csrfHeaders() };
   if (!(opts?.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

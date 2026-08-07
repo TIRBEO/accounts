@@ -8,6 +8,8 @@ import {
   Check,
   Eye,
   EyeOff,
+  Loader2,
+  Mail,
   ShieldCheck,
   Upload,
   X,
@@ -22,7 +24,7 @@ import { ResendButton } from "../components/resend-button";
 import { getDeviceFingerprint } from "../lib/fingerprint";
 import { useAccountsConfig } from "../lib/use-accounts-config";
 
-type Step = "name" | "details" | "security" | "policy" | "verify" | "success";
+type Step = "name" | "details" | "verify" | "security" | "policy" | "success";
 type FieldName =
   | "firstName"
   | "lastName"
@@ -42,6 +44,7 @@ type FieldErrors = Partial<Record<FieldName, string>>;
 const STEPS: Array<{ id: Step; title: string; short: string }> = [
   { id: "name", title: "Your name", short: "Name" },
   { id: "details", title: "Your details", short: "Details" },
+  { id: "verify", title: "Verify email", short: "Verify" },
   { id: "security", title: "Security", short: "Security" },
   { id: "policy", title: "Finish", short: "Finish" },
 ];
@@ -98,8 +101,6 @@ function validateName(value: string, label: string) {
     return `${label} must be ${MAX_NAME_LENGTH} characters or less`;
   }
 
-  // Letters are required. Internal spaces, apostrophes and hyphens are allowed.
-  // Examples: "Bishnu", "Mary Jane", "O'Connor", "Mary-Jane".
   if (!/^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)*$/.test(normalized)) {
     return `${label} can use letters, spaces, apostrophes or hyphens only`;
   }
@@ -156,7 +157,7 @@ function FieldStatus({ valid, invalid }: { valid: boolean; invalid: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full"
+      className="pointer-events-none absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center"
       style={{
         background: invalid ? "var(--error)" : "var(--success, #22c55e)",
         color: "var(--bg)",
@@ -191,14 +192,14 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boo
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="relative h-7 w-12 shrink-0 rounded-full border transition-all"
+      className="relative h-7 w-12 shrink-0 border transition-all"
       style={{
         background: checked ? "var(--text)" : "var(--bg-muted)",
         borderColor: checked ? "var(--text)" : "var(--border)",
       }}
     >
       <span
-        className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-all"
+        className="absolute top-1/2 h-5 w-5 -translate-y-1/2 transition-all"
         style={{
           left: checked ? "24px" : "3px",
           background: checked ? "var(--bg)" : "var(--text-muted)",
@@ -224,12 +225,12 @@ function Progress({ current }: { current: Step }) {
           return (
             <div key={item.id} className="relative z-10 flex flex-col items-center">
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold transition-all"
+                className="flex h-10 w-10 items-center justify-center border text-sm font-semibold transition-all"
                 style={{
                   background: active || complete ? "var(--text)" : "var(--bg-surface)",
                   color: active || complete ? "var(--bg)" : "var(--text-muted)",
                   borderColor: active || complete ? "var(--text)" : "var(--border)",
-                  boxShadow: active ? "0 0 0 5px var(--bg-muted)" : "none",
+                  boxShadow: active ? "4px 4px 0 var(--bg-muted)" : "none",
                 }}
               >
                 {complete ? <Check size={17} /> : i + 1}
@@ -277,7 +278,7 @@ function PasswordInput({
       <button
         type="button"
         onClick={onToggle}
-        className="absolute right-10 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-opacity hover:opacity-60"
+        className="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 transition-opacity hover:opacity-60"
         style={{ color: "var(--text-muted)" }}
         aria-label={visible ? "Hide password" : "Show password"}
       >
@@ -314,8 +315,12 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
   const [verifyOtp, setVerifyOtp] = useState("");
   const [verifyError, setVerifyError] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const [captchaRayId, setCaptchaRayId] = useState("");
   const [captchaForceShow, setCaptchaForceShow] = useState(false);
   const [adminRequest, setAdminRequest] = useState(false);
@@ -359,7 +364,8 @@ export default function SignupPage() {
     Boolean(occupation) &&
     !emailError &&
     !usernameError &&
-    !companyError;
+    !companyError &&
+    !emailExists;
   const securityValid = !passwordError && !confirmPasswordError;
 
   const clearGlobalError = useCallback(() => {
@@ -423,8 +429,6 @@ export default function SignupPage() {
     if (field === "firstName") setFirstName(value);
     else setLastName(value);
 
-    // Only show a live error when the user has actually entered something invalid.
-    // Empty required fields are handled on blur/submit instead of flashing an error.
     const message = value.trim() ? validateName(value, field === "firstName" ? "First name" : "Last name") : "";
     setFieldError(field, message);
   };
@@ -437,6 +441,31 @@ export default function SignupPage() {
     go("details");
   };
 
+  /* Live availability check: restrict "continue" when the email already exists */
+  const checkEmailAvailability = useCallback(
+    async (value: string) => {
+      const clean = value.trim().toLowerCase();
+      if (!validateEmail(clean)) {
+        setEmailExists(false);
+        setFieldError("email", "");
+        return;
+      }
+      setCheckingEmail(true);
+      try {
+        const result = await apiPost("auth/email-exists", { email: clean });
+        const exists = !!result?.exists;
+        setEmailExists(exists);
+        setFieldError("email", exists ? "An account already exists with this email. Sign in instead." : "");
+      } catch {
+        setEmailExists(false);
+        setFieldError("email", "");
+      } finally {
+        setCheckingEmail(false);
+      }
+    },
+    [setFieldError]
+  );
+
   const handleDetailsNext = async (event: FormEvent) => {
     event.preventDefault();
     const next = validateDetailsStep();
@@ -448,16 +477,58 @@ export default function SignupPage() {
     try {
       const result = await apiPost("auth/email-exists", { email: email.trim().toLowerCase() });
       if (result?.exists) {
-        setFieldError("email", "Account already exists. Sign in instead.");
+        setEmailExists(true);
+        setFieldError("email", "An account already exists with this email. Sign in instead.");
+        setError("This email is already registered. Sign in instead.");
         return;
       }
-      go("security");
-    } catch {
-      // Availability checks must not prevent signup if that endpoint is unavailable.
-      go("security");
+      // Send the pre-signup verification code, then go to the verify step.
+      setSendingCode(true);
+      await apiPost("auth/signup-otp/request", { email: email.trim().toLowerCase() });
+      setCodeSent(true);
+      setOtpCode("");
+      setVerifyOtp("");
+      go("verify");
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 409 || /registered/i.test(err.message))) {
+        setEmailExists(true);
+        setFieldError("email", "An account already exists with this email. Sign in instead.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "Couldn't send the verification code. Please try again.");
+      }
     } finally {
       setCheckingEmail(false);
+      setSendingCode(false);
     }
+  };
+
+  const handleVerify = async (event: FormEvent) => {
+    event.preventDefault();
+    if (loading) return;
+    if (verifyOtp.length !== 6) {
+      setVerifyError("Enter the 6-digit verification code");
+      return;
+    }
+
+    setLoading(true);
+    setVerifyError("");
+    try {
+      const res = await apiPost("auth/signup-otp/verify", { email: email.trim().toLowerCase(), code: verifyOtp });
+      if (res?.verified) {
+        setOtpCode(verifyOtp);
+        go("security");
+      } else {
+        setVerifyError("Invalid or expired verification code");
+      }
+    } catch (err) {
+      setVerifyError(err instanceof ApiError ? err.message : "Invalid or expired verification code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    await apiPost("auth/signup-otp/request", { email: email.trim().toLowerCase() });
   };
 
   const handleSecurityNext = (event: FormEvent) => {
@@ -551,6 +622,7 @@ export default function SignupPage() {
         signatureName: fullName || email.trim().toLowerCase(),
         captchaRayId,
         fingerprint: getDeviceFingerprint(),
+        otpCode,
       });
 
       if (adminRequest) {
@@ -565,7 +637,7 @@ export default function SignupPage() {
         }
       }
 
-      go("verify");
+      go("success");
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -576,30 +648,6 @@ export default function SignupPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleVerify = async (event: FormEvent) => {
-    event.preventDefault();
-    if (loading) return;
-    if (verifyOtp.length !== 6) {
-      setVerifyError("Enter the 6-digit verification code");
-      return;
-    }
-
-    setLoading(true);
-    setVerifyError("");
-    try {
-      await apiPost("auth/verify-email", { email: email.trim().toLowerCase(), code: verifyOtp });
-      go("success");
-    } catch (err) {
-      setVerifyError(err instanceof ApiError ? err.message : "Invalid or expired verification code");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    await apiPost("auth/verify-email", { email: email.trim().toLowerCase() });
   };
 
   const passwordStrength = useMemo(() => {
@@ -619,58 +667,18 @@ export default function SignupPage() {
   const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
   const loginUrl = `/login?redirect_to=${encodeURIComponent(getRedirectUrl())}`;
 
-  if (step === "verify") {
-    return (
-      <AuthLayout>
-        <div className="mx-auto w-full max-w-md">
-          <div className="mb-8">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
-              <ShieldCheck size={23} />
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight">Verify your email</h1>
-            <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
-              We sent a 6-digit verification code to <strong style={{ color: "var(--text)" }}>{email}</strong>
-            </p>
-          </div>
-          <form onSubmit={handleVerify} className="space-y-5">
-            <div className="form-group">
-              <label className="form-label">Verification code</label>
-              <OTPInput
-                value={verifyOtp}
-                onChange={(value) => {
-                  setVerifyOtp(value.replace(/\D/g, "").slice(0, 6));
-                  setVerifyError("");
-                }}
-                error={!!verifyError}
-              />
-              <FieldError>{verifyError}</FieldError>
-            </div>
-            <button type="submit" className="btn-primary" disabled={verifyOtp.length !== 6 || loading}>
-              {loading ? "Verifying..." : "Verify email"}
-              {!loading && <ArrowRight size={18} />}
-            </button>
-          </form>
-          <div className="mt-6 flex items-center justify-between">
-            <button type="button" onClick={() => go("details")} className="auth-back"><ArrowLeft size={15} /> Back</button>
-            <ResendButton onResend={handleResend} label="Resend code" cooldown={30} className="text-sm font-medium" />
-          </div>
-        </div>
-      </AuthLayout>
-    );
-  }
-
   if (step === "success") {
     return (
       <AuthLayout>
         <div className="mx-auto w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+          <div className="auth-icon mx-auto mb-6 flex h-16 w-16 items-center justify-center border" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
             <Check size={30} />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">You're all set</h1>
           <p className="mt-3 text-sm leading-6" style={{ color: "var(--text-muted)" }}>Your Tirbeo account has been created successfully.</p>
           {fullName && <p className="mt-4 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Welcome, {fullName}</p>}
-          {adminRequest && <div className="mt-5 rounded-2xl border p-4 text-left text-sm" style={{ borderColor: "var(--border)", background: "var(--bg-surface)", color: "var(--text-muted)" }}>Your admin access request has been submitted for review.</div>}
-          <button type="button" onClick={() => { window.location.href = loginUrl; }} className="btn-primary mt-7">Sign in to continue <ArrowRight size={18} /></button>
+          {adminRequest && <div className="auth-panel mt-5 border p-4 text-left text-sm" style={{ borderColor: "var(--border)", background: "var(--bg-surface)", color: "var(--text-muted)" }}>Your admin access request has been submitted for review.</div>}
+          <button type="button" onClick={() => { window.location.href = getRedirectUrl(); }} className="btn-primary mt-7">Go to your dashboard <ArrowRight size={18} /></button>
         </div>
       </AuthLayout>
     );
@@ -680,10 +688,10 @@ export default function SignupPage() {
     <AuthLayout>
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-7 lg:hidden"><Brand /></div>
-        <div className="grid overflow-hidden rounded-[28px] border lg:grid-cols-[0.85fr_1.15fr]" style={{ borderColor: "var(--border)" }}>
+        <div className="auth-panel grid border lg:grid-cols-[0.85fr_1.15fr]" style={{ borderColor: "var(--border)" }}>
           <aside className="relative hidden min-h-[680px] flex-col justify-between overflow-hidden p-9 lg:flex" style={{ background: "var(--bg-surface)" }}>
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border opacity-50" style={{ borderColor: "var(--border)" }} />
-            <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full border opacity-30" style={{ borderColor: "var(--border)" }} />
+            <div className="absolute -right-24 -top-24 h-72 w-72 border opacity-50" style={{ borderColor: "var(--border)" }} />
+            <div className="absolute -bottom-32 -left-24 h-80 w-80 border opacity-30" style={{ borderColor: "var(--border)" }} />
             <div className="relative z-10">
               <Brand />
               <div className="mt-28 max-w-sm">
@@ -705,12 +713,14 @@ export default function SignupPage() {
                   <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                     {step === "name" && "Create your account"}
                     {step === "details" && "Tell us about yourself"}
+                    {step === "verify" && "Verify your email"}
                     {step === "security" && "Secure your account"}
                     {step === "policy" && "Almost there"}
                   </h1>
                   <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
                     {step === "name" && "Start with the basics."}
                     {step === "details" && "A few details help personalize your account."}
+                    {step === "verify" && "We sent a 6-digit code to your email."}
                     {step === "security" && "Choose a strong password."}
                     {step === "policy" && "Review the final account settings."}
                   </p>
@@ -721,7 +731,7 @@ export default function SignupPage() {
               <Progress current={step} />
 
               {step === "name" && (
-                <div className="mb-6 rounded-2xl border p-4 lg:hidden" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+                <div className="auth-panel mb-6 border p-4 lg:hidden" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
                   <p className="mb-3 text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: "var(--text-muted)" }}>Quick signup</p>
                   <OAuthButtons redirect={getRedirectUrl()} />
                   <div className="my-4 flex items-center gap-3"><div className="h-px flex-1" style={{ background: "var(--border)" }} /><span className="text-xs" style={{ color: "var(--text-muted)" }}>or continue with email</span><div className="h-px flex-1" style={{ background: "var(--border)" }} /></div>
@@ -730,14 +740,14 @@ export default function SignupPage() {
 
               {step === "name" && (
                 <form onSubmit={handleNameNext} className="space-y-5" noValidate>
-                  <div className="rounded-[24px] border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+                  <div className="auth-panel border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
                         <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>Step 01</div>
                         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">What should we call you?</h2>
                         <p className="mt-2 max-w-lg text-sm leading-6" style={{ color: "var(--text-muted)" }}>Use the name you want people to see on your Tirbeo profile.</p>
                       </div>
-                      <span className="hidden rounded-full border px-3 py-1.5 text-[10px] font-semibold sm:block" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>1 of 4</span>
+                      <span className="hidden border px-3 py-1.5 text-[10px] font-semibold sm:block" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>1 of 5</span>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -788,9 +798,9 @@ export default function SignupPage() {
                     </div>
 
                     {fullName && !firstNameError && !lastNameError && (
-                      <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
+                      <div className="auth-panel mt-4 border p-4" style={{ borderColor: "var(--border)" }}>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "var(--text)", color: "var(--bg)" }}>{firstName.charAt(0).toUpperCase()}</div>
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center text-sm font-bold" style={{ background: "var(--text)", color: "var(--bg)" }}>{firstName.charAt(0).toUpperCase()}</div>
                           <div><p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-muted)" }}>Profile preview</p><p className="text-sm font-semibold">{fullName}</p></div>
                         </div>
                       </div>
@@ -843,10 +853,27 @@ export default function SignupPage() {
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label required">Email address</label>
-                    <FieldShell valid={Boolean(email) && !emailError} invalid={Boolean(email) && Boolean(emailError)}>
-                      <input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setFieldError("email", ""); }} onBlur={() => setFieldError("email", validateEmail(email))} placeholder="you@example.com" autoComplete="email" aria-invalid={Boolean(emailError)} className={emailError ? "!border-[var(--error)] !pr-12" : email ? "!border-[var(--success,#22c55e)] !pr-12" : ""} />
+                    <FieldShell valid={Boolean(email) && !emailError && !emailExists} invalid={Boolean(email) && (Boolean(emailError) || emailExists)}>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); setFieldError("email", ""); setEmailExists(false); setError(""); }}
+                        onBlur={() => { const m = validateEmail(email); setFieldError("email", m); if (!m) void checkEmailAvailability(email); }}
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        aria-invalid={Boolean(emailError) || emailExists}
+                        className={(emailError || emailExists) ? "!border-[var(--error)] !pr-12" : email ? "!border-[var(--success,#22c55e)] !pr-12" : ""}
+                      />
                     </FieldShell>
+                    {checkingEmail && <p className="mt-1.5 flex items-center gap-1.5 text-xs" style={{ color: "var(--text-muted)" }}><Loader2 size={12} className="animate-spin" /> Checking availability…</p>}
                     <FieldError>{emailError || errors.email}</FieldError>
+                    {emailExists && (
+                      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--text)" }}>
+                        <span>Already have an account?</span>
+                        <a href={loginUrl} className="font-semibold underline underline-offset-4">Sign in instead</a>
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -868,9 +895,9 @@ export default function SignupPage() {
 
                   <div className="form-group">
                     <label className="form-label">Profile photo <span className="optional">optional</span></label>
-                    <label className="flex cursor-pointer items-center gap-4 rounded-2xl border p-3 transition-colors hover:bg-[var(--bg-muted)]" style={{ borderColor: errors.photo ? "var(--error)" : "var(--border)" }}>
+                    <label className="flex cursor-pointer items-center gap-4 border p-3 transition-colors hover:bg-[var(--bg-muted)]" style={{ borderColor: errors.photo ? "var(--error)" : "var(--border)" }}>
                       <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" onChange={handlePhotoChange} />
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--bg-muted)" }}>
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border" style={{ borderColor: "var(--border)", background: "var(--bg-muted)" }}>
                         {photoUrl ? <img src={photoUrl} alt="Profile preview" className="h-full w-full object-cover" /> : <Upload size={19} style={{ color: "var(--text-muted)" }} />}
                       </div>
                       <div className="min-w-0"><p className="truncate text-sm font-semibold">{photoName || "Upload a photo"}</p><p className="mt-0.5 text-xs" style={{ color: "var(--text-muted)" }}>JPG, PNG, WebP or GIF · Max 4MB</p></div>
@@ -880,9 +907,46 @@ export default function SignupPage() {
 
                   <div className="flex items-center justify-between gap-4 pt-2">
                     <button type="button" onClick={() => go("name")} className="auth-back"><ArrowLeft size={15} /> Back</button>
-                    <button type="submit" className="btn-primary sm:w-auto" disabled={checkingEmail || !detailsValid}>{checkingEmail ? "Checking..." : "Continue"}{!checkingEmail && <ArrowRight size={18} />}</button>
+                    <button type="submit" className="btn-primary sm:w-auto" disabled={checkingEmail || !detailsValid}>{checkingEmail ? "Checking..." : "Send code"}{!checkingEmail && <ArrowRight size={18} />}</button>
                   </div>
                 </form>
+              )}
+
+              {step === "verify" && (
+                <div className="space-y-5">
+                  <div className="auth-panel border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="auth-icon flex h-11 w-11 items-center justify-center border" style={{ borderColor: "var(--border)", background: "var(--bg-muted)" }}>
+                        <Mail size={19} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Check your email</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>Code sent to <strong style={{ color: "var(--text)" }}>{email}</strong></p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleVerify} className="space-y-4" noValidate>
+                      <div className="form-group">
+                        <label className="form-label">Verification code</label>
+                        <OTPInput
+                          value={verifyOtp}
+                          onChange={(value) => { setVerifyOtp(value.replace(/\D/g, "").slice(0, 6)); setVerifyError(""); }}
+                          error={!!verifyError}
+                        />
+                        <FieldError>{verifyError}</FieldError>
+                      </div>
+                      <button type="submit" className="btn-primary" disabled={verifyOtp.length !== 6 || loading}>
+                        {loading ? "Verifying..." : "Verify and continue"}
+                        {!loading && <ArrowRight size={18} />}
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <button type="button" onClick={() => go("details")} className="auth-back"><ArrowLeft size={15} /> Back</button>
+                    <ResendButton onResend={handleResend} label="Resend code" cooldown={30} className="text-sm font-medium" />
+                  </div>
+                </div>
               )}
 
               {step === "security" && (
@@ -890,7 +954,7 @@ export default function SignupPage() {
                   <div className="form-group">
                     <label className="form-label required">Password</label>
                     <PasswordInput value={password} onChange={(value) => { setPassword(value); setFieldError("password", ""); }} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} placeholder="Create a password" invalid={Boolean(password) && Boolean(passwordError)} valid={Boolean(password) && !passwordError} />
-                    {password && <div className="mt-3"><div className="flex gap-1.5">{[1,2,3,4].map((item) => <div key={item} className="h-1.5 flex-1 rounded-full" style={{ background: item <= passwordStrength.score ? "var(--text)" : "var(--border)" }} />)}</div><p className="mt-1.5 text-xs" style={{ color: "var(--text-muted)" }}>Password strength: <strong style={{ color: "var(--text)" }}>{passwordStrength.label}</strong></p></div>}
+                    {password && <div className="mt-3"><div className="flex gap-1.5">{[1,2,3,4].map((item) => <div key={item} className="h-1.5 flex-1" style={{ background: item <= passwordStrength.score ? "var(--text)" : "var(--border)" }} />)}</div><p className="mt-1.5 text-xs" style={{ color: "var(--text-muted)" }}>Password strength: <strong style={{ color: "var(--text)" }}>{passwordStrength.label}</strong></p></div>}
                     <FieldError>{passwordError || errors.password}</FieldError>
                   </div>
 
@@ -901,10 +965,10 @@ export default function SignupPage() {
                   </div>
 
                   <CaptchaWidget forceShow={captchaForceShow} onSuccess={(rayId) => { setCaptchaRayId(rayId); setError(""); }} onBlocked={(_, reason) => setError(`Access blocked: ${reason}`)} />
-                  {error && <div className="rounded-xl border p-3 text-sm" style={{ borderColor: "var(--error)", color: "var(--error)" }} role="alert">{error}</div>}
+                  {error && <div className="auth-panel border p-3 text-sm" style={{ borderColor: "var(--error)", color: "var(--error)" }} role="alert">{error}</div>}
 
                   <div className="flex items-center justify-between gap-4 pt-2">
-                    <button type="button" onClick={() => go("details")} className="auth-back"><ArrowLeft size={15} /> Back</button>
+                    <button type="button" onClick={() => go("verify")} className="auth-back"><ArrowLeft size={15} /> Back</button>
                     <button type="submit" className="btn-primary sm:w-auto" disabled={!securityValid}>Continue <ArrowRight size={18} /></button>
                   </div>
                 </form>
@@ -912,7 +976,7 @@ export default function SignupPage() {
 
               {step === "policy" && (
                 <form onSubmit={handleCreate} className="space-y-4" noValidate>
-                  <div className="rounded-2xl border p-5" style={{ borderColor: policyAccepted ? "var(--text)" : errors.policyAccepted ? "var(--error)" : "var(--border)", background: "var(--bg-surface)" }}>
+                  <div className="auth-panel border p-5" style={{ borderColor: policyAccepted ? "var(--text)" : errors.policyAccepted ? "var(--error)" : "var(--border)", background: "var(--bg-surface)" }}>
                     <div className="flex items-center justify-between gap-5">
                       <div><p className="text-sm font-semibold">Terms & Privacy</p><p className="mt-1 text-sm leading-5" style={{ color: "var(--text-muted)" }}>I agree to Tirbeo&apos;s <a href={config.ui?.termsLink || "/terms"} className="font-medium underline">Terms</a> and <a href={config.ui?.privacyLink || "/privacy"} className="font-medium underline">Privacy Policy</a>.</p></div>
                       <Toggle checked={policyAccepted} onChange={(value) => { setPolicyAccepted(value); setFieldError("policyAccepted", ""); }} />
@@ -920,11 +984,11 @@ export default function SignupPage() {
                     <FieldError>{errors.policyAccepted}</FieldError>
                   </div>
 
-                  <div className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+                  <div className="auth-panel border p-5" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
                     <div className="flex items-center justify-between gap-5"><div><p className="text-sm font-semibold">Support access</p><p className="mt-1 text-sm leading-5" style={{ color: "var(--text-muted)" }}>Allow admins to view signup details when helping you.</p></div><Toggle checked={adminDataAccess} onChange={setAdminDataAccess} /></div>
                   </div>
 
-                  {adminRequest && <div className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
+                  {adminRequest && <div className="auth-panel border p-5" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
                     <p className="mb-4 text-sm font-semibold">Admin access request</p>
                     <div className="space-y-4">
                       <div className="form-group"><label className="form-label">Why do you need admin access?</label><textarea value={adminReason} onChange={(e) => setAdminReason(e.target.value)} rows={3} maxLength={MAX_ADMIN_REASON_LENGTH} placeholder="Describe your role and reason..." /><p className="mt-1 text-right text-xs" style={{ color: "var(--text-muted)" }}>{adminReason.length}/{MAX_ADMIN_REASON_LENGTH}</p></div>
@@ -934,7 +998,7 @@ export default function SignupPage() {
 
                   <canvas ref={signatureCanvasRef} width={320} height={64} style={{ display: "none" }} aria-hidden="true" />
 
-                  {error && <div className="rounded-xl border p-3 text-sm" style={{ borderColor: "var(--error)", color: "var(--error)" }} role="alert">{error}</div>}
+                  {error && <div className="auth-panel border p-3 text-sm" style={{ borderColor: "var(--error)", color: "var(--error)" }} role="alert">{error}</div>}
 
                   <div className="flex items-center justify-between gap-4 pt-3">
                     <button type="button" onClick={() => go("security")} className="auth-back"><ArrowLeft size={15} /> Back</button>
@@ -954,7 +1018,7 @@ export default function SignupPage() {
 }
 
 function Brand() {
-  return <a href="/" className="inline-flex items-center gap-3" aria-label="Tirbeo home"><span className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold" style={{ background: "var(--text)", color: "var(--bg)" }}>T</span><span className="text-lg font-bold tracking-tight">Tirbeo</span></a>;
+  return <a href="/" className="inline-flex items-center gap-3" aria-label="Tirbeo home"><span className="flex h-9 w-9 items-center justify-center text-sm font-bold" style={{ background: "var(--text)", color: "var(--bg)" }}>T</span><span className="text-lg font-bold tracking-tight">Tirbeo</span></a>;
 }
 
 function AuthLayout({ children }: { children: ReactNode }) {

@@ -167,6 +167,17 @@ export default function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
 
+  /* Account-exists state on the first step */
+  const [checkingAccount, setCheckingAccount] = useState(false);
+  const [accountCheck, setAccountCheck] = useState<
+    | { status: "idle" }
+    | { status: "checking" }
+    | { status: "exists"; hasPassword: boolean }
+    | { status: "missing" }
+    | { status: "error" }
+  >({ status: "idle" });
+  const [accountCheckEmail, setAccountCheckEmail] = useState("");
+
   /* ------------------------------------------------------------------------ */
   /* Captcha                                                                  */
   /* ------------------------------------------------------------------------ */
@@ -217,6 +228,41 @@ export default function LoginPage() {
   }, []);
 
   /* ------------------------------------------------------------------------ */
+  /* Account-exists check (first step)                                        */
+  /* ------------------------------------------------------------------------ */
+
+  const checkAccountExists = useCallback(
+    async (value: string) => {
+      const clean = value.trim().toLowerCase();
+      if (!EMAIL_RE.test(clean)) return;
+
+      setCheckingAccount(true);
+      setAccountCheck({ status: "checking" });
+      setAccountCheckEmail(clean);
+      setError("");
+
+      try {
+        const result = await apiPost("auth/email-exists", {
+          email: clean,
+        });
+        if (result?.exists) {
+          setAccountCheck({
+            status: "exists",
+            hasPassword: !!result.hasPassword,
+          });
+        } else {
+          setAccountCheck({ status: "missing" });
+        }
+      } catch {
+        setAccountCheck({ status: "error" });
+      } finally {
+        setCheckingAccount(false);
+      }
+    },
+    []
+  );
+
+  /* ------------------------------------------------------------------------ */
   /* Request email OTP                                                        */
   /* ------------------------------------------------------------------------ */
 
@@ -228,6 +274,12 @@ export default function LoginPage() {
 
       if (validationError) {
         setFieldErrors({ email: validationError });
+        return;
+      }
+
+      // If the account doesn't exist, don't send an OTP — send to signup instead.
+      if (accountCheck.status === "missing" && accountCheckEmail === normalizedEmail) {
+        setError("No account found with this email. Create one instead.");
         return;
       }
 
@@ -255,7 +307,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [email, normalizedEmail, validateEmail]
+    [accountCheck, accountCheckEmail, email, normalizedEmail, validateEmail]
   );
 
   /* ------------------------------------------------------------------------ */
@@ -283,6 +335,12 @@ export default function LoginPage() {
         });
 
         setOtp("");
+        // OAuth-only accounts have no password — the OTP verify already created
+        // a session, so send them straight to their destination.
+        if (accountCheck.status === "exists" && !accountCheck.hasPassword) {
+          window.location.assign(getRedirectUrl());
+          return;
+        }
         setStep("password");
       } catch (err: unknown) {
         if (err instanceof ApiError) {
@@ -296,7 +354,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [normalizedEmail, otp]
+    [accountCheck, normalizedEmail, otp]
   );
 
   /* ------------------------------------------------------------------------ */
@@ -542,6 +600,7 @@ export default function LoginPage() {
 
                     setEmail(value);
                     setError("");
+                    setAccountCheck({ status: "idle" });
 
                     const validationError = value
                       ? validateEmail(value)
@@ -552,6 +611,9 @@ export default function LoginPage() {
                         ? { email: validationError }
                         : {}
                     );
+                  }}
+                  onBlur={() => {
+                    if (EMAIL_RE.test(email)) void checkAccountExists(email);
                   }}
                   placeholder="you@example.com"
                   autoFocus
@@ -593,16 +655,51 @@ export default function LoginPage() {
 
             <ErrorBox message={error} />
 
+            {accountCheck.status === "missing" &&
+              accountCheckEmail === normalizedEmail && (
+                <div
+                  className="auth-panel border p-3.5 text-sm"
+                  style={{
+                    borderColor: "var(--text)",
+                    background: "var(--bg-muted)",
+                  }}
+                >
+                  <p className="font-semibold">No account found with this email.</p>
+                  <p className="mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    Create a Tirbeo account to get started — it takes about a
+                    minute.
+                  </p>
+                  <a
+                    href={signUpUrl}
+                    className="btn-primary mt-3 !h-11 !text-[11px]"
+                  >
+                    Create account <ArrowRight size={15} />
+                  </a>
+                </div>
+              )}
+
             <button
               type="submit"
               className="btn-primary"
-              disabled={loading || !emailValid}
+              disabled={
+                loading ||
+                !emailValid ||
+                checkingAccount ||
+                (accountCheck.status === "missing" &&
+                  accountCheckEmail === normalizedEmail)
+              }
             >
               <span>
-                {loading ? "Sending code..." : "Continue"}
+                {loading
+                  ? "Sending code..."
+                  : checkingAccount
+                    ? "Checking…"
+                    : "Continue"}
               </span>
 
-              {!loading && <ArrowRight size={17} />}
+              {!loading && !checkingAccount && (
+                <ArrowRight size={17} />
+              )}
             </button>
           </form>
 

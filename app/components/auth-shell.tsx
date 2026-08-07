@@ -23,7 +23,7 @@ export function AuthShell({ children, title, subtitle, footer }: AuthShellProps)
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[520px] items-center justify-center sm:min-h-[calc(100vh-5rem)]">
         <section className="w-full">
           <div
-            className="overflow-hidden rounded-[26px] border shadow-[0_20px_70px_rgba(0,0,0,0.14)]"
+            className="auth-panel overflow-hidden border"
             style={{
               borderColor: "var(--border)",
               background: "var(--bg-surface, var(--bg))",
