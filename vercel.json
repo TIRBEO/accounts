@@ -1,0 +1,25 @@
+{
+  "buildCommand": "pnpm --filter react-example build",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_API_URL": "https://api.tirbeo.app",
+    "NEXT_PUBLIC_API_URL": "https://api.tirbeo.app",
+    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.app",
+    "VITE_SUPABASE_URL": "https://lnmtfekuuhsscnykxwxw.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxubXRmZWt1dWhzc2NueWt4d3h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2NjI4MDAsImV4cCI6MjA1NDIzODgwMH0.JqBvOY7Vf9V7a9e8r3j6k5x2m1n4p0q8w7y3t6u9i2o"
+  },
+  "rewrites": [
+    {
+      "source": "/callback",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

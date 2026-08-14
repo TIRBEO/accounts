@@ -1,0 +1,336 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIRBEO — Dark Charcoal Auth Theme (matches dashboard aesthetic)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    --wave-bg: #080809;
+    --wave-surface: #0F1012;
+    --wave-charcoal: #181819;
+    --wave-gray: #858589;
+    --wave-highlight: #F5F5F5;
+    --wave-accent: #FFFFFF;
+    --wave-accent-bright: #FFFFFF;
+    --wave-accent-deep: #A0A0A8;
+    --wave-card: rgba(15, 16, 18, 0.85);
+    --wave-text: #F5F5F5;
+    --wave-text-dim: #A0A0A8;
+    --wave-border: rgba(255, 255, 255, 0.08);
+    --wave-glow: rgba(255, 255, 255, 0.06);
+    --wave-glow-soft: rgba(255, 255, 255, 0.03);
+    --wave-success: #6FBF8F;
+    --wave-danger: #D87575;
+    --wave-warning: #D6A65B;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background: #080809;
+    color: #F5F5F5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * { box-sizing: border-box; }
+
+  *:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ═══ GLASS CARD ═══ */
+.wave-card {
+  background: linear-gradient(180deg, rgba(20, 20, 22, 0.9) 0%, rgba(10, 10, 12, 0.95) 100%);
+  backdrop-filter: blur(40px) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 40px 80px -20px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.wave-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.06) 70%,
+    transparent 100%
+  );
+}
+
+.wave-card::after {
+  display: none;
+}
+
+/* ═══ INPUT ═══ */
+.wave-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  background: #151618;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #F5F5F5;
+  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  outline: none;
+}
+
+.wave-input:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: #1A1B1D;
+}
+
+.wave-input:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #1A1B1D;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.wave-input::placeholder {
+  color: #5F6063;
+}
+
+.wave-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ═══ BUTTONS ═══ */
+.wave-btn {
+  width: 100%;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, transform 120ms, opacity 120ms;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.wave-btn-primary {
+  background: #F5F5F5;
+  color: #080809;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.wave-btn-primary::before { display: none; }
+
+.wave-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: #FFFFFF;
+}
+
+.wave-btn-primary span, .wave-btn-primary svg {
+  position: relative;
+  z-index: 1;
+}
+
+.wave-btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+}
+
+.wave-btn-primary:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.wave-btn-secondary {
+  background: transparent;
+  color: #F5F5F5;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wave-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ═══ OAUTH BUTTONS ═══ */
+.wave-oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #F5F5F5;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.wave-oauth-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.wave-oauth-btn:active:not(:disabled) { transform: scale(0.99); }
+.wave-oauth-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ═══ DIVIDER ═══ */
+.wave-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.wave-divider::before, .wave-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.wave-divider span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5F6063;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ═══ LABEL ═══ */
+.wave-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #A0A0A8;
+  margin-bottom: 6px;
+}
+
+/* ═══ TOAST ═══ */
+.wave-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(15, 16, 18, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  font-weight: 500;
+  color: #F5F5F5;
+  animation: toastSlide 0.3s ease-out;
+  max-width: 400px;
+}
+
+@keyframes toastSlide {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3A3B3E; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4A4B4F; }
+
+/* ═══ REDUCED MOTION ═══ */
+@media (prefers-reduced-motion: reduce) {
+  .wave-toast, .wave-btn-primary, .wave-oauth-btn, .wave-input {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ═══ STEP RAIL ═══ */
+.wave-rail {
+  position: relative;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: visible;
+}
+.wave-rail-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #A0A0A8, #F5F5F5);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wave-rail-dot {
+  position: absolute;
+  top: 50%; width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #F5F5F5;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08), 0 0 12px rgba(255, 255, 255, 0.15);
+  transform: translate(-50%, -50%);
+  transition: left 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 640px) {
+  .wave-card {
+    border-radius: 12px;
+    padding: 24px 20px;
+  }
+  .wave-btn {
+    height: 48px;
+    font-size: 15px;
+  }
+  .wave-input {
+    height: 48px;
+    font-size: 16px;
+  }
+  .wave-oauth-btn {
+    height: 48px;
+    font-size: 15px;
+  }
+  .wave-toast {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    bottom: 16px;
+  }
+}
+
+/* ═══ ICON BADGE ═══ */
+.wave-icon-badge {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}

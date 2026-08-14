@@ -1,0 +1,6 @@
+{
+  "name": "Tirbeo Auth Screen",
+  "description": "A dark halftone design login and authentication interface with social OAuth options and interactive state management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
