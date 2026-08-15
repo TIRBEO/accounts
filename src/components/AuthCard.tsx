@@ -10,6 +10,7 @@ import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { ImageCropEditor } from './ImageCropEditor';
 import { uploadAvatar } from '../lib/supabase';
 import { login, verify2FA, recovery2FA, requestLoginOtp, verifyLoginOtp, checkEmailExists, checkUsernameExists, requestSignupOtp, verifySignupOtp, signup, updateProfile, requestPasswordReset, requestMagicLink, verifyPasswordReset, confirmPasswordReset, initiateOAuthLogin } from '../lib/api';
+import { getRedirectTarget } from '../lib/redirect';
 
 interface AuthCardProps {
   onSuccessAuth: (email: string, provider: string) => void;
@@ -769,7 +770,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const handleSocialLogin = async (provider: 'github' | 'google' | 'discord') => {
     setLoadingProvider(provider);
     try {
-      const result = await initiateOAuthLogin(provider);
+      const result = await initiateOAuthLogin(provider, getRedirectTarget());
       setLoadingProvider(null);
       if (result.ok && result.data?.url) {
         // Redirect to the OAuth provider's consent page

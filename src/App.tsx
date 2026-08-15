@@ -5,8 +5,7 @@ import { HalftoneBackground } from './components/HalftoneBackground';
 import { AuthCard } from './components/AuthCard';
 import { TermsModal } from './components/TermsModal';
 import { getCurrentUser, verifyMagicLink } from './lib/api';
-
-const DASHBOARD_URL = import.meta.env.VITE_DASHBOARD_URL || 'http://localhost:3005';
+import { getRedirectTarget } from './lib/redirect';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,6 +24,7 @@ export default function App() {
     let cancelled = false;
     const init = async () => {
       const params = new URLSearchParams(window.location.search);
+      const redirectTarget = getRedirectTarget();
       const magicToken = params.get('magic_token');
       if (magicToken) {
         window.history.replaceState({}, '', window.location.pathname);
@@ -33,7 +33,7 @@ export default function App() {
         if (result.ok) {
           setIsAuthenticated(true);
           showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`);
-          setTimeout(() => { window.location.href = DASHBOARD_URL; }, 1000);
+          setTimeout(() => { window.location.href = redirectTarget; }, 1000);
           return;
         }
         showToast(result.error || 'This magic link is invalid or has expired.');
@@ -41,7 +41,7 @@ export default function App() {
       const session = await getCurrentUser();
       if (session.ok && session.data) {
         setIsAuthenticated(true);
-        window.location.href = DASHBOARD_URL;
+        window.location.href = redirectTarget;
       }
       if (!cancelled) setIsLoading(false);
     };
@@ -51,7 +51,7 @@ export default function App() {
 
   const handleSuccessAuth = async (email: string, provider: string) => {
     showToast(`Signed in successfully as ${email}`);
-    setTimeout(() => { window.location.href = DASHBOARD_URL; }, 1000);
+    setTimeout(() => { window.location.href = getRedirectTarget(); }, 1000);
   };
 
   // Loading state
