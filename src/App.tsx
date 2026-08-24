@@ -1,26 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2 } from 'lucide-react';
-import { HalftoneBackground } from './components/HalftoneBackground';
+import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { AuthCard } from './components/AuthCard';
+import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
 import { getCurrentUser, verifyMagicLink } from './lib/api';
+import { preconnectOAuthProviders } from './lib/oauth';
 import { getRedirectTarget } from './lib/redirect';
+
+// `/callback` is where the API lands users after an OAuth provider round-trip
+// (login or first-time signup). Everything else renders the auth card.
+const isCallbackPath = () => window.location.pathname.startsWith('/callback');
+
+export type ToastType = 'success' | 'error' | 'info';
+
+/** Classify a message so every existing toast call gets the right color. */
+const inferToastType = (msg: string): ToastType => {
+  const m = msg.toLowerCase();
+  if (/(error|invalid|failed|expire|unable|wrong|too many|already exists|already registered|could not|couldn.t|not configured|try again|no account)/.test(m)) return 'error';
+  if (/(success|signed in|sent to|verified|created|updated|welcome|resent|check your email|logged in)/.test(m)) return 'success';
+  return 'info';
+};
+
+const TOAST_ICON: Record<ToastType, ReactNode> = {
+  success: <CheckCircle2 className="wave-toast-icon w-[18px] h-[18px]" />,
+  error: <AlertCircle className="wave-toast-icon w-[18px] h-[18px]" />,
+  info: <Info className="wave-toast-icon w-[18px] h-[18px]" />,
+};
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isCallbackPath());
   const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
+  const showToast = (msg: string, type?: ToastType) => {
+    setToast({ msg, type: type || inferToastType(msg) });
     setTimeout(() => {
-      setToastMessage((current) => (current === msg ? null : current));
-    }, 3000);
+      setToast((current) => (current?.msg === msg ? null : current));
+    }, 3500);
   };
 
   useEffect(() => {
+    // Warm TLS to every OAuth provider so social buttons hand off instantly.
+    preconnectOAuthProviders();
+
+    if (isCallbackPath()) return;
+
     let cancelled = false;
     const init = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -54,28 +80,56 @@ export default function App() {
     setTimeout(() => { window.location.href = getRedirectTarget(); }, 1000);
   };
 
+  // Callback route — OAuth post-login / new-user welcome.
+  if (isCallbackPath()) {
+    return (
+      <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden">
+        <CallbackView onToast={showToast} />
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              key={toast.msg}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              className={`wave-toast wave-toast--${toast.type}`}
+            >
+              {TOAST_ICON[toast.type]}
+              <span>{toast.msg}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   // Loading state
   if (isLoading || isAuthenticated) {
     return (
-      <div className="relative min-h-screen bg-[#080809] text-[#F5F5F5] overflow-hidden flex items-center justify-center">
-        <HalftoneBackground />
-        <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
+      <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center gap-4"
+          className="relative z-10 flex flex-col items-center gap-5"
         >
           <img src="/logo.png" alt="Tirbeo" className="h-12 w-auto" />
-          <Loader2 className="w-6 h-6 animate-spin text-[#F5F5F5]" />
-          <p className="text-sm text-[#858589]">{isAuthenticated ? 'Redirecting to dashboard...' : 'Loading...'}</p>
+          <span className="relative flex h-1.5 w-28 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+            <motion.span
+              className="absolute inset-y-0 w-1/3 rounded-full bg-white"
+              animate={{ x: ['-100%', '300%'] }}
+              transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </span>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#77777E]">
+            {isAuthenticated ? 'Redirecting to dashboard' : 'Loading'}
+          </p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#080809] text-[#F5F5F5] overflow-hidden">
-      <HalftoneBackground />
+    <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden">
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
 
       <AnimatePresence mode="wait">
@@ -94,15 +148,16 @@ export default function App() {
       />
 
       <AnimatePresence>
-        {toastMessage && (
+        {toast && (
           <motion.div
+            key={toast.msg}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
-            className="wave-toast"
+            className={`wave-toast wave-toast--${toast.type}`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#F5F5F5]" />
-            <span>{toastMessage}</span>
+            {TOAST_ICON[toast.type]}
+            <span>{toast.msg}</span>
           </motion.div>
         )}
       </AnimatePresence>

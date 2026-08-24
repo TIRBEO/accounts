@@ -6,11 +6,10 @@ import {
   Key, Smartphone, Link2, AlertTriangle,
   Eye, EyeOff, RefreshCw, AlertCircle
 } from 'lucide-react';
-import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
+import { SocialAuthButtons } from './SocialAuthButtons';
 import { ImageCropEditor } from './ImageCropEditor';
 import { uploadAvatar } from '../lib/supabase';
-import { login, verify2FA, recovery2FA, requestLoginOtp, verifyLoginOtp, checkEmailExists, checkUsernameExists, requestSignupOtp, verifySignupOtp, signup, updateProfile, requestPasswordReset, requestMagicLink, verifyPasswordReset, confirmPasswordReset, initiateOAuthLogin } from '../lib/api';
-import { getRedirectTarget } from '../lib/redirect';
+import { login, verify2FA, recovery2FA, requestLoginOtp, verifyLoginOtp, checkEmailExists, checkUsernameExists, requestSignupOtp, verifySignupOtp, signup, updateProfile, requestPasswordReset, requestMagicLink, verifyPasswordReset, confirmPasswordReset } from '../lib/api';
 
 interface AuthCardProps {
   onSuccessAuth: (email: string, provider: string) => void;
@@ -221,7 +220,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const [consentPrivacy, setConsentPrivacy] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
 
-  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -234,6 +232,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const [usernameMessage, setUsernameMessage] = useState('');
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const usernameCheckTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Signup email availability state (blocks progress when registered) ───
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
   // ─── Resend cooldown timer ───
   useEffect(() => {
@@ -296,6 +297,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
     return () => clearTimeout(timer);
   }, [mode, loginStep, email]);
+
+  // ─── SIGNUP: real-time "email already registered" check ───
+  // Runs while typing on signup step 1; a registered email flips the status to
+  // 'taken', which blocks Continue and offers a one-click switch to sign-in.
+  useEffect(() => {
+    if (mode !== 'signup' || signupStep !== 1 || !email || validateEmail(email)) {
+      setEmailCheckStatus('idle');
+      return;
+    }
+    setEmailCheckStatus('checking');
+    const timer = setTimeout(() => {
+      checkEmailExists(email)
+        .then((res) => {
+          setEmailCheckStatus(res.ok && res.data?.exists ? 'taken' : 'available');
+        })
+        .catch(() => setEmailCheckStatus('idle'));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [mode, signupStep, email]);
 
   // ─── Generate username suggestions using the API availability check ───
   const generateSuggestions = useCallback(async (base: string): Promise<string[]> => {
@@ -467,6 +487,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       if (lastNameError) { newErrors.lastName = lastNameError; isValid = false; }
       if (emailError) { newErrors.email = emailError; isValid = false; }
       if (usernameError) { newErrors.username = usernameError; isValid = false; }
+      // Backup for the real-time check — never let a registered email through.
+      if (!emailError && emailCheckStatus === 'taken') {
+        newErrors.email = 'An account with this email already exists';
+        isValid = false;
+      }
 
       // Check email + username availability against the API DB
       if (isValid) {
@@ -767,23 +792,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
   };
 
-  const handleSocialLogin = async (provider: 'github' | 'google' | 'discord') => {
-    setLoadingProvider(provider);
-    try {
-      const result = await initiateOAuthLogin(provider, getRedirectTarget());
-      setLoadingProvider(null);
-      if (result.ok && result.data?.url) {
-        // Redirect to the OAuth provider's consent page
-        window.location.href = result.data.url;
-      } else {
-        onShowToast(result.error || 'Failed to start OAuth login');
-      }
-    } catch {
-      setLoadingProvider(null);
-      onShowToast('Could not start OAuth login');
-    }
-  };
-
   // ═══ PROFILE PICTURE HANDLERS ═══
   const handleProfilePicClick = () => {
     fileInputRef.current?.click();
@@ -1061,7 +1069,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     lastName.trim() &&
     !validateEmail(email) &&
     validateUsername(username) === undefined &&
-    usernameStatus === 'available'
+    usernameStatus === 'available' &&
+    (emailCheckStatus === 'available' || emailCheckStatus === 'idle')
   );
   const step2Complete = Boolean(gender && dob && !validateDob(dob));
   const step4Complete = Boolean(
@@ -1073,112 +1082,82 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   );
 
   return (
-    <div className="relative z-10 h-screen overflow-hidden flex flex-col justify-between p-6 sm:p-10 select-none">
-      {/* Top Navigation */}
-      <div className="w-full max-w-7xl mx-auto">
+    <div className="relative z-10 min-h-screen flex flex-col select-none">
+      {/* ── Top bar ── */}
+      <header className="flex items-center px-6 sm:px-8 h-20 shrink-0">
         <button
           onClick={handleResetToHome}
-          className="text-base font-semibold tracking-tight text-white flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none"
+          className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none"
         >
-          <img src="/logo.png" alt="Tirbeo" className="h-7 w-auto" />
-          Tirbeo
+          <img src="/logo.png" alt="Tirbeo" className="h-8 w-auto" />
+          <span className="text-lg font-semibold tracking-tight text-white">Tirbeo</span>
         </button>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-safe-center my-4 min-h-0 overflow-hidden">
-        {/* Header */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
         <motion.div
-          initial={{ opacity: 0, y: -16 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center text-center mb-5 shrink-0"
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="wave-card w-[92%] sm:w-[76%] lg:w-[60%] p-6 sm:p-10 lg:p-14"
         >
-          <img src="/logo.png" alt="Tirbeo" className="h-10 w-auto mb-4" />
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1.5">
-            {mode === 'signup' ? 'Create your account' : 'Welcome back'}
-          </h1>
-          <p className="text-sm text-[#858589] font-normal">
-            {mode === 'signup' ? (
-              signupStep === 3 || signupStep === 4 ? (
-                <span className="flex items-center gap-2 justify-center">
-                  <span className="w-2 h-2 rounded-full bg-[#F5F5F5]" />
-                  Signing up with <span className="text-white font-medium">{getProviderDisplayName()}</span>
-                </span>
-              ) : (
-                <span>
-                  Already have an account?{' '}
-                  <button
-                    onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                    className="text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors"
-                  >
-                    Sign in
-                  </button>
-                </span>
-              )
-            ) : (
-              <span>
-                Need an account?{' '}
-                <button
-                  onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                  className="text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors"
-                >
-                  Sign up for free
-                </button>
-              </span>
-            )}
-          </p>
-        </motion.div>
-
-        {/* Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-[480px] wave-card p-7 sm:p-8 shrink-0"
-        >
-          {/* ═══ SIGNUP STEP INDICATOR (no numbers) ═══ */}
-          {mode === 'signup' && (
-            <div className="mb-6">
-              <div className="flex items-center gap-1.5">
-                {stepLabels.map((label, idx) => {
-                  const stepNum = idx + 1;
-                  const isActive = stepNum === signupStep;
-                  const isDone = stepNum < signupStep;
-                  return (
-                    <div
-                      key={label}
-                      className={`h-1 flex-1 rounded-full transition-all duration-500 ${
-                        isDone
-                          ? 'bg-[#F5F5F5]'
-                          : isActive
-                            ? 'bg-[rgba(255,255,255,0.15)] shadow-[0_0_8px_rgba(255,255,255,0.1)]'
-                            : 'bg-[rgba(255,255,255,0.08)]'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                {stepLabels.map((label, idx) => {
-                  const stepNum = idx + 1;
-                  const isActive = stepNum === signupStep;
-                  const isDone = stepNum < signupStep;
-                  return (
-                    <span
-                      key={label}
-                      className={`text-[11px] font-semibold uppercase tracking-wider transition-colors duration-300 ${
-                        isDone || isActive ? 'text-[#F5F5F5]' : 'text-[#5F6063]'
-                      }`}
-                    >
-                      {label}
+          <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 lg:gap-16 items-center">
+            {/* Left — heading zone */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-3xl lg:text-[34px] font-bold tracking-tight leading-tight text-white mb-2">
+                {mode === 'signup' ? 'Create your account' : 'Welcome back'}
+              </h1>
+              <p className="text-sm text-[#8A8A90]">
+                {mode === 'signup' ? (
+                  signupStep === 3 || signupStep === 4 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      Signing up with <span className="text-white font-medium">{getProviderDisplayName()}</span>
                     </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  ) : (
+                    <span>
+                      Already have an account?{' '}
+                      <button
+                        onClick={() => { switchMode('login'); setLoginStep('email'); }}
+                        className="text-white hover:text-[#BFBFC6] font-medium cursor-pointer transition-colors"
+                      >
+                        Sign in
+                      </button>
+                    </span>
+                  )
+                ) : (
+                  <span>
+                    Need an account?{' '}
+                    <button
+                      onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
+                      className="text-white hover:text-[#BFBFC6] font-medium cursor-pointer transition-colors"
+                    >
+                      Sign up for free
+                    </button>
+                  </span>
+                )}
+              </p>
 
+              {/* Signup progress */}
+              {mode === 'signup' && (
+                <div className="mt-6 mx-auto lg:mx-0 max-w-[220px] flex items-center gap-1.5">
+                  {stepLabels.map((label, idx) => {
+                    const n = idx + 1;
+                    return (
+                      <span
+                        key={label}
+                        className={`h-0.5 flex-1 rounded-full transition-colors duration-300 ${
+                          n < signupStep ? 'bg-white' : n === signupStep ? 'bg-[rgba(255,255,255,0.45)]' : 'bg-[rgba(255,255,255,0.1)]'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Right — form zone */}
+            <div>
           <AnimatePresence mode="wait">
             {/* ═══ SIGNUP STEP 1: BASICS ═══ */}
             {mode === 'signup' && signupStep === 1 && (
@@ -1189,7 +1168,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleSignupSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <InputWrapper label="Username" required error={errors.username} field="username" touched={touched}>
                   <div className="relative">
@@ -1298,15 +1277,51 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </div>
 
                 <InputWrapper label="Email address" required error={errors.email} field="email" touched={touched}>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => handleBlur('email')}
-                    placeholder="hello@example.com"
-                    maxLength={254}
-                    className={getInputClass('email')}
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => handleBlur('email')}
+                      placeholder="hello@example.com"
+                      maxLength={254}
+                      className={`${getInputClass('email')} pr-9`}
+                    />
+                    {email && !validateEmail(email) && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {emailCheckStatus === 'checking' && (
+                          <Loader2 className="w-4 h-4 text-[#858589] animate-spin" />
+                        )}
+                        {emailCheckStatus === 'available' && (
+                          <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                        )}
+                        {emailCheckStatus === 'taken' && (
+                          <AlertCircle className="w-4 h-4 text-[#EF4444]" />
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {emailCheckStatus === 'taken' && !errors.email && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+                    >
+                      <span className="text-xs text-[#EF4444]">This email is already registered</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setErrors({});
+                          setTouched({});
+                          switchMode('login');
+                          setLoginStep('password');
+                        }}
+                        className="text-xs font-semibold text-[#F5F5F5] hover:text-white underline underline-offset-2 cursor-pointer transition-colors"
+                      >
+                        Sign in instead →
+                      </button>
+                    </motion.div>
+                  )}
                 </InputWrapper>
 
                 <button
@@ -1323,6 +1338,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     </>
                   )}
                 </button>
+
+                <div className="wave-divider">
+                  <span>or sign up with</span>
+                </div>
+
+                {/* One-click social — compact row */}
+                <SocialAuthButtons variant="row" />
               </motion.form>
             )}
 
@@ -1472,7 +1494,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleSignupSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="text-center mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
@@ -1538,7 +1560,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleSignupSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="text-center mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
@@ -1686,7 +1708,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleLoginSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <InputWrapper label="Email address" required error={errors.email} field="email" touched={touched}>
                   <input
@@ -1718,17 +1740,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   />
                 </InputWrapper>
 
-                <div className="text-xs text-[#858589] text-center leading-relaxed py-1">
-                  You agree to our{' '}
-                  <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[#F5F5F5] hover:text-white underline underline-offset-2 transition-colors font-medium cursor-pointer">
-                    Terms of Service
-                  </button>{' '}
-                  and{' '}
-                  <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[#F5F5F5] hover:text-white underline underline-offset-2 transition-colors font-medium cursor-pointer">
-                    Privacy Policy
-                  </button>
-                </div>
-
                 <button type="submit" disabled={isSubmitting} className="wave-btn wave-btn-primary">
                   {isSubmitting ? (
                     <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
@@ -1741,23 +1752,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </button>
 
                 <div className="wave-divider">
-                  <span>or</span>
+                  <span>or continue with</span>
                 </div>
 
-                <div className="space-y-3">
-                  <button type="button" onClick={() => handleSocialLogin('github')} disabled={!!loadingProvider} className="wave-oauth-btn">
-                    {loadingProvider === 'github' ? <Loader2 className="w-5 h-5 animate-spin" /> : <GitHubIcon className="w-5 h-5 text-white" />}
-                    <span>Continue with GitHub</span>
+                {/* One-click social — compact row */}
+                <SocialAuthButtons variant="row" />
+
+                {/* Magic link — one click, no password */}
+                <button
+                  type="button"
+                  onClick={() => { handleRequestRecovery('magic-link'); }}
+                  disabled={isSubmitting}
+                  className="wave-btn wave-btn-secondary mt-3"
+                >
+                  <Mail className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">Email me a magic link</span>
+                </button>
+
+                <p className="text-xs text-[#55555C] text-center leading-relaxed pt-1">
+                  You agree to our{' '}
+                  <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[#8A8A90] hover:text-white underline underline-offset-2 transition-colors cursor-pointer">
+                    Terms
+                  </button>{' '}
+                  and{' '}
+                  <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[#8A8A90] hover:text-white underline underline-offset-2 transition-colors cursor-pointer">
+                    Privacy Policy
                   </button>
-                  <button type="button" onClick={() => handleSocialLogin('google')} disabled={!!loadingProvider} className="wave-oauth-btn">
-                    {loadingProvider === 'google' ? <Loader2 className="w-5 h-5 animate-spin" /> : <GoogleIcon className="w-5 h-5" />}
-                    <span>Continue with Google</span>
-                  </button>
-                  <button type="button" onClick={() => handleSocialLogin('discord')} disabled={!!loadingProvider} className="wave-oauth-btn">
-                    {loadingProvider === 'discord' ? <Loader2 className="w-5 h-5 animate-spin" /> : <DiscordIcon className="w-5 h-5 text-[#5865F2]" />}
-                    <span>Continue with Discord</span>
-                  </button>
-                </div>
+                </p>
               </motion.form>
             )}
 
@@ -1770,7 +1791,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleLoginSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="flex flex-col items-center text-center mb-3">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg shadow-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)]">
@@ -1889,7 +1910,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleLoginSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="text-center mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
@@ -1957,7 +1978,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleLoginSubmit}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="text-center mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
@@ -2048,7 +2069,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="text-center mb-4">
                   <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
@@ -2083,7 +2104,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </div>
 
                 {(recoveryMethod === 'code' || recoveryMethod === 'recovery') && recoveryStage === 'code' && (
-                  <form onSubmit={handleRecoveryCodeSubmit} className="space-y-4">
+                  <form onSubmit={handleRecoveryCodeSubmit} className="space-y-5">
                     <InputWrapper label="Enter Recovery Code" error={errors.recoveryCode} field="recoveryCode" touched={touched}>
                       <input
                         type="text"
@@ -2126,7 +2147,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 )}
 
                 {(recoveryMethod === 'code' || recoveryMethod === 'recovery') && recoveryStage === 'password' && (
-                  <form onSubmit={handleRecoveryNewPassword} className="space-y-4">
+                  <form onSubmit={handleRecoveryNewPassword} className="space-y-5">
                     <InputWrapper label="New Password" required error={errors.password} field="password" touched={touched}>
                       <div className="relative">
                         <input
@@ -2221,33 +2242,41 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+            </div>
+          </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          {mode === 'signup' ? (
-            <p className="text-sm text-[#5F6063] font-normal">
-              Already have an account?{' '}
-              <button
-                onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                className="text-white font-medium hover:text-[#F5F5F5] transition-colors cursor-pointer"
-              >
-                Log in
-              </button>
-            </p>
-          ) : (
-            <p className="text-sm text-[#5F6063] font-normal">
-              Don&apos;t have an account?{' '}
-              <button
-                onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                className="text-white font-medium hover:text-[#F5F5F5] transition-colors cursor-pointer"
-              >
-                Sign up
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
+          {/* Bottom switch */}
+          <div className="mt-8 pt-6 border-t border-[rgba(255,255,255,0.06)] text-sm text-[#8A8A90] text-center">
+            {mode === 'signup' ? (
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => { switchMode('login'); setLoginStep('email'); }}
+                  className="text-white font-medium hover:text-[#BFBFC6] transition-colors cursor-pointer"
+                >
+                  Log in
+                </button>
+              </p>
+            ) : (
+              <p>
+                Don&apos;t have an account?{' '}
+                <button
+                  onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
+                  className="text-white font-medium hover:text-[#BFBFC6] transition-colors cursor-pointer"
+                >
+                  Sign up
+                </button>
+              </p>
+            )}
+          </div>
+          </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="shrink-0 pt-4 pb-8 flex items-center justify-center gap-5 text-xs text-[#55555C]">
+        <button type="button" onClick={() => onOpenLegalModal('terms')} className="uppercase tracking-wider hover:text-white transition-colors cursor-pointer">Terms</button>
+        <button type="button" onClick={() => onOpenLegalModal('privacy')} className="uppercase tracking-wider hover:text-white transition-colors cursor-pointer">Privacy</button>
+      </footer>
 
       {/* Image Crop Editor */}
       {showImageEditor && tempImageUrl && (

@@ -13,8 +13,7 @@ const DEV_PORTS: Record<string, number> = {
   dashboard: 3005,
   accounts: 3002,
   api: 3000,
-  flows: 3001,
-  forms: 3001,
+  forms: 3004,
   support: 3004,
   admin: 4000,
 };
@@ -48,7 +47,7 @@ export function isAllowedRedirectTarget(url: string): boolean {
 }
 
 /**
- * Build a full URL from a bare app name like `flows` → `https://flows.tirbeo.app`.
+ * Build a full URL from a bare app name like `forms` → `https://forms.tirbeo.app`.
  * Localhost names are resolved against the dev port map.
  */
 function buildFromAppName(name: string): string | null {

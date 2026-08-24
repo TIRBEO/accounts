@@ -1,10 +1,10 @@
 // ═══ TIRBEO API CLIENT ═══
 // Talks to apps/api (Next.js). The API runs on localhost:3000 in dev and
 // https://api.tirbeo.app in prod — same convention as the other apps in the
-// monorepo (dashboard, flows, support, admin).
+// monorepo (dashboard, forms, support, admin).
 //
 // All auth is cookie-session based: successful login/signup/2FA/OTP/magic-link
-// flows set an httpOnly __session cookie that the dashboard (and other apps)
+// set an httpOnly __session cookie that the dashboard (and other apps)
 // pick up automatically.
 
 // Vite exposes VITE_* vars; NEXT_PUBLIC_* is read too so the existing
@@ -44,10 +44,39 @@ async function postJson<T>(path: string, body: unknown): Promise<{ status: numbe
   return { status: res.status, data };
 }
 
-async function apiPost<T = Record<string, unknown>>(path: string, body: unknown): Promise<ApiResult<T>> {
+/**
+ * Raw gateway/API messages that must never reach the UI (e.g. the proxy's
+ * "Authentication required. Provide a session cookie or Authorization:
+ * Bearer <api_key> header.") get mapped to short, human copy.
+ */
+function sanitizeApiError(status: number, raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const msg = raw.toLowerCase();
+  if (
+    msg.startsWith('authentication required') ||
+    msg.includes('provide a session cookie') ||
+    msg.includes('authorization:') ||
+    msg.startsWith('invalid authorization') ||
+    msg.includes('unauthenticated')
+  ) {
+    return 'Your session has expired. Please sign in again.';
+  }
+  if (msg.includes('csrf')) {
+    return 'Your request could not be verified. Please refresh the page and try again.';
+  }
+  if (status === 429 || msg.includes('rate limit') || msg.includes('too many')) {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+  if (status >= 500) {
+    return 'Something went wrong on our end. Please try again.';
+  }
+  return raw;
+}
+
+export async function apiPost<T = Record<string, unknown>>(path: string, body: unknown): Promise<ApiResult<T>> {
   try {
     const { status, data } = await postJson<T>(path, body);
-    const error = (data as { error?: string } | null)?.error;
+    const error = sanitizeApiError(status, (data as { error?: string } | null)?.error);
     return { ok: status >= 200 && status < 300, status, data, error };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
@@ -55,6 +84,9 @@ async function apiPost<T = Record<string, unknown>>(path: string, body: unknown)
 }
 
 function readableError<T>(result: ApiResult<T>, fallback: string): string {
+  if (result.status === 401 || result.status === 403) {
+    return 'Your session has expired. Please sign in again.';
+  }
   return result.error || (result.status >= 500 ? 'Something went wrong. Please try again.' : fallback);
 }
 
@@ -337,7 +369,9 @@ export async function updateProfile(patch: Record<string, unknown>): Promise<Api
       // Non-JSON error body
     }
 
-    const error = !res.ok ? (data as any)?.error || 'Update failed' : undefined;
+    const error = !res.ok
+      ? sanitizeApiError(res.status, (data as any)?.error) || 'Update failed'
+      : undefined;
     return { ok: res.ok, status: res.status, data, error };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server.' };
@@ -345,52 +379,9 @@ export async function updateProfile(patch: Record<string, unknown>): Promise<Api
 }
 
 // ═══ OAUTH / SOCIAL LOGIN ═══
-
-export interface OAuthLoginResult {
-  /** URL to redirect the user to for OAuth consent/authorization. */
-  url?: string;
-  /** Error message if the OAuth initiation failed. */
-  error?: string;
-  /** OAuth state parameter (for CSRF protection). */
-  state?: string;
-}
-
-/**
- * Initiate social login with a provider. Returns a URL to redirect the user to.
- * The API handles the OAuth flow and returns a session cookie.
- * @param provider - 'github' | 'google' | 'discord'
- * @param redirectUri - Where to redirect after OAuth completes (defaults to current origin)
- */
-export async function initiateOAuthLogin(
-  provider: 'github' | 'google' | 'discord',
-  redirectUri?: string
-): Promise<{ ok: boolean; status: number; data: OAuthLoginResult | null; error?: string }> {
-  const redirectUriParam = redirectUri || window.location.origin;
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/${provider}?redirect_to=${encodeURIComponent(redirectUriParam)}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    if (res.redirected) {
-      return { ok: true, status: res.status, data: { url: res.url } };
-    }
-    let data: { url?: string; error?: string } | null = null;
-    try {
-      const json = await res.json();
-      if (json.url) {
-        return { ok: true, status: res.status, data: { url: json.url } };
-      }
-      return { ok: false, status: res.status, data: null, error: json.error || 'OAuth initiation failed' };
-    } catch {
-      if (res.ok && res.url) {
-        return { ok: true, status: res.status, data: { url: res.url } };
-      }
-      return { ok: false, status: res.status, data: null, error: 'OAuth initiation failed' };
-    }
-  } catch {
-    return { ok: false, status: 0, data: null, error: 'Could not reach the server.' };
-  }
-}
+// Moved to ./oauth.ts — social sign-in uses direct full-page navigation to
+// `${API}/auth/{provider}` instead of fetch(), which cannot follow the API's
+// cross-origin redirect to the provider (CORS) and added a needless round trip.
 
 // Types are exported inline above with each function/type declaration.
 

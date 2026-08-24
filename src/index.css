@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TIRBEO — Dark Charcoal Auth Theme (matches dashboard aesthetic)
+   TIRBEO — OBSIDIAN AUTH THEME
+   Pure black canvas, hairline borders, white light.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
-    --wave-bg: #080809;
-    --wave-surface: #0F1012;
-    --wave-charcoal: #181819;
-    --wave-gray: #858589;
-    --wave-highlight: #F5F5F5;
+    --wave-bg: #000000;
+    --wave-surface: #0A0A0B;
+    --wave-charcoal: #111113;
+    --wave-gray: #8A8A90;
+    --wave-highlight: #FFFFFF;
     --wave-accent: #FFFFFF;
     --wave-accent-bright: #FFFFFF;
-    --wave-accent-deep: #A0A0A8;
-    --wave-card: rgba(15, 16, 18, 0.85);
-    --wave-text: #F5F5F5;
-    --wave-text-dim: #A0A0A8;
-    --wave-border: rgba(255, 255, 255, 0.08);
-    --wave-glow: rgba(255, 255, 255, 0.06);
-    --wave-glow-soft: rgba(255, 255, 255, 0.03);
-    --wave-success: #6FBF8F;
-    --wave-danger: #D87575;
-    --wave-warning: #D6A65B;
+    --wave-accent-deep: #9A9AA2;
+    --wave-card: rgba(10, 10, 11, 0.92);
+    --wave-text: #F2F2F2;
+    --wave-text-dim: #9A9AA2;
+    --wave-border: rgba(255, 255, 255, 0.09);
+    --wave-glow: rgba(255, 255, 255, 0.05);
+    --wave-glow-soft: rgba(255, 255, 255, 0.02);
+    --wave-success: #34D399;
+    --wave-danger: #F87171;
+    --wave-warning: #FBBF24;
   }
 
   html, body, #root {
@@ -31,8 +32,8 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    background: #080809;
-    color: #F5F5F5;
+    background: #000000;
+    color: var(--wave-text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -40,24 +41,60 @@
 
   * { box-sizing: border-box; }
 
+  ::selection {
+    background: rgba(255, 255, 255, 0.9);
+    color: #000000;
+  }
+
   *:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline: 1px solid rgba(255, 255, 255, 0.45);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 }
 
-/* ═══ GLASS CARD ═══ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   OBSIDIAN BACKGROUND — static layers (no JS, no animation)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ob-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #000000;
+}
+
+/* Hairline grid, fading out toward the edges. */
+.ob-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, black 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, black 30%, transparent 100%);
+}
+
+/* Single soft light source behind the card + edge vignette. */
+.ob-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 42% at 50% 38%, rgba(255, 255, 255, 0.05), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+/* ═══ CARD — frosted glass slab on pure black ═══ */
 .wave-card {
-  background: linear-gradient(180deg, rgba(20, 20, 22, 0.9) 0%, rgba(10, 10, 12, 0.95) 100%);
-  backdrop-filter: blur(40px) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: rgba(12, 12, 14, 0.55);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 40px 80px -20px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 30px 80px -20px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   position: relative;
   overflow: hidden;
 }
@@ -66,88 +103,84 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 10%;
+  right: 10%;
   height: 1px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.06) 30%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.14) 50%,
     transparent 100%
   );
+  pointer-events: none;
 }
 
-.wave-card::after {
-  display: none;
-}
+.wave-card::after { display: none; }
 
-/* ═══ INPUT ═══ */
+/* ═══ INPUT — recessed black well ═══ */
 .wave-input {
   width: 100%;
-  height: 44px;
+  height: 46px;
   padding: 0 14px;
-  background: #151618;
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
-  color: #F5F5F5;
-  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+  color: var(--wave-text);
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
   outline: none;
 }
 
 .wave-input:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: #1A1B1D;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .wave-input:focus {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: #1A1B1D;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
 }
 
 .wave-input::placeholder {
-  color: #5F6063;
+  color: #55555C;
 }
 
 .wave-input:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 /* ═══ BUTTONS ═══ */
 .wave-btn {
   width: 100%;
-  height: 44px;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 120ms, transform 120ms, opacity 120ms;
+  font-weight: 600;
   letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease, opacity 140ms ease, box-shadow 140ms ease;
   position: relative;
   overflow: hidden;
 }
 
 .wave-btn-primary {
-  background: #F5F5F5;
-  color: #080809;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: #FFFFFF;
+  color: #000000;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 8px 28px -8px rgba(255, 255, 255, 0.25);
 }
 
 .wave-btn-primary::before { display: none; }
 
 .wave-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   background: #FFFFFF;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 12px 36px -8px rgba(255, 255, 255, 0.35);
 }
 
 .wave-btn-primary span, .wave-btn-primary svg {
@@ -160,43 +193,57 @@
 }
 
 .wave-btn-primary:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .wave-btn-secondary {
   background: transparent;
-  color: #F5F5F5;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--wave-text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .wave-btn-secondary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-/* ═══ OAUTH BUTTONS ═══ */
+/* Ghost link-button (e.g. magic-link shortcut) */
+.wave-btn-ghost {
+  background: transparent;
+  color: var(--wave-text-dim);
+  border: none;
+  height: 40px;
+  font-weight: 500;
+}
+
+.wave-btn-ghost:hover:not(:disabled) {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ═══ OAUTH BUTTONS — hairline slabs that ignite on hover ═══ */
 .wave-oauth-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  height: 46px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #F5F5F5;
+  color: var(--wave-text);
   cursor: pointer;
-  transition: all 120ms;
+  transition: all 140ms ease;
 }
 
 .wave-oauth-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.28);
   transform: translateY(-1px);
 }
 
@@ -207,63 +254,96 @@
 .wave-divider {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 14px;
 }
 .wave-divider::before, .wave-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
 }
 .wave-divider span {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: #5F6063;
+  color: #55555C;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
 }
 
-/* ═══ LABEL ═══ */
+/* ═══ LABEL — micro caps ═══ */
 .wave-label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #A0A0A8;
-  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #77777E;
+  margin-bottom: 7px;
 }
 
-/* ═══ TOAST ═══ */
+/* ═══ TOAST — bottom-center pill ═══ */
 .wave-toast {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
   z-index: 100;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: rgba(15, 16, 18, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 12px 18px;
+  background: rgba(8, 8, 9, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   font-size: 13px;
   font-weight: 500;
-  color: #F5F5F5;
-  animation: toastSlide 0.3s ease-out;
-  max-width: 400px;
+  color: var(--wave-text);
+  animation: toastRise 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: min(420px, calc(100vw - 48px));
 }
 
-@keyframes toastSlide {
-  from { transform: translateY(12px); opacity: 0; }
+@keyframes toastRise {
+  from { transform: translateY(16px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Toast variants — frosted color glass */
+.wave-toast .wave-toast-icon { flex-shrink: 0; }
+
+.wave-toast--success {
+  background: rgba(16, 46, 34, 0.6);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #D9F7EA;
+}
+.wave-toast--success .wave-toast-dot,
+.wave-toast--success .wave-toast-icon { color: #34D399; }
+
+.wave-toast--error {
+  background: rgba(58, 18, 22, 0.6);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #FDE2E2;
+}
+.wave-toast--error .wave-toast-dot,
+.wave-toast--error .wave-toast-icon { color: #F87171; }
+
+.wave-toast--info {
+  background: rgba(14, 32, 54, 0.6);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #DBEAFE;
+}
+.wave-toast--info .wave-toast-dot,
+.wave-toast--info .wave-toast-icon { color: #60A5FA; }
 
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3A3B3E; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #4A4B4F; }
+::-webkit-scrollbar-thumb { background: #232326; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #333338; }
 
 /* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {
@@ -273,35 +353,47 @@
   }
 }
 
-/* ═══ STEP RAIL ═══ */
+/* ═══ STEP RAIL — thin white progress line ═══ */
 .wave-rail {
   position: relative;
-  height: 3px;
+  height: 2px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
   overflow: visible;
 }
 .wave-rail-fill {
   position: absolute;
   top: 0; left: 0; height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #A0A0A8, #F5F5F5);
+  background: #FFFFFF;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
   transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .wave-rail-dot {
   position: absolute;
-  top: 50%; width: 10px; height: 10px;
+  top: 50%; width: 8px; height: 8px;
   border-radius: 50%;
-  background: #F5F5F5;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08), 0 0 12px rgba(255, 255, 255, 0.15);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 0 16px rgba(255, 255, 255, 0.25);
   transform: translate(-50%, -50%);
   transition: left 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══ ICON BADGE — circular ring ═══ */
+.wave-icon-badge {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 40px -8px rgba(255, 255, 255, 0.08);
 }
 
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 640px) {
   .wave-card {
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 24px 20px;
   }
   .wave-btn {
@@ -317,20 +409,6 @@
     font-size: 15px;
   }
   .wave-toast {
-    left: 12px;
-    right: 12px;
-    max-width: none;
     bottom: 16px;
   }
-}
-
-/* ═══ ICON BADGE ═══ */
-.wave-icon-badge {
-  width: 56px; height: 56px;
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
