@@ -24,10 +24,20 @@ export interface ApiResult<T = unknown> {
   error?: string;
 }
 
+function getCsrfToken(): string {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(/(?:^|;\s*)__csrf=([^;]+)/);
+  return match?.[1] || '';
+}
+
 async function postJson<T>(path: string, body: unknown): Promise<{ status: number; data: T | null }> {
+  const csrf = getCsrfToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+    },
     // Send/receive cookies so the __session cookie set by the API is stored
     // for the API domain (shared with the dashboard on .tirbeo.app).
     credentials: 'include',
@@ -280,6 +290,7 @@ export interface CurrentUserData {
   name?: string | null;
   username?: string | null;
   photoUrl?: string | null;
+  loginCount?: number | null;
 }
 
 // Dedupe concurrent 401-triggered refreshes (e.g. mount + session polls firing
@@ -376,6 +387,23 @@ export async function updateProfile(patch: Record<string, unknown>): Promise<Api
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server.' };
   }
+}
+
+// ═══ OAUTH CONSENT ═══
+// Record policy consent for an OAuth-created account. The API marks the
+// account as emailVerified and stores the consent record.
+
+export interface OAuthConsentData {
+  ok: boolean;
+  message?: string;
+}
+
+export async function oauthConsent(payload: {
+  policyAccepted: boolean;
+  adminDataAccess?: boolean;
+  signatureName?: string;
+}): Promise<ApiResult<OAuthConsentData>> {
+  return apiPost<OAuthConsentData>('/api/auth/oauth/consent', payload);
 }
 
 // ═══ OAUTH / SOCIAL LOGIN ═══

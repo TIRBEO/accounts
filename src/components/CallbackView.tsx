@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Camera, Loader2, ShieldCheck } from 'lucide-react';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
-import { getCurrentUser, updateProfile, apiPost } from '../lib/api';
+import { ImageCropEditor } from './ImageCropEditor';
+import { uploadAvatar } from '../lib/supabase';
+import { getCurrentUser, oauthConsent, updateProfile, apiPost } from '../lib/api';
 import type { CurrentUserData } from '../lib/api';
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -79,6 +81,13 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [pwDone, setPwDone] = useState(false);
   const [pwError, setPwError] = useState('');
 
+  // Profile picture
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [uploadingPic, setUploadingPic] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (isMerge) { setChecking(false); return; } // merge screen needs no session check
     let cancelled = false;
@@ -141,9 +150,11 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const handleContinue = async () => {
     setError('');
     setSaving(true);
-    // Record policy consent on preferences so future logins skip this screen.
-    const result = await updateProfile({
-      preferences: { signupConsent: { policyAccepted: true, acceptedAt: new Date().toISOString() } },
+    // Record policy consent via the dedicated OAuth consent endpoint, which
+    // also marks the account as emailVerified (social providers already
+    // verified the email).
+    const result = await oauthConsent({
+      policyAccepted: true,
     });
     setSaving(false);
     if (!result.ok) {
@@ -152,8 +163,54 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       onToast?.(msg, 'error');
       return;
     }
+    // Upload profile picture if one was selected (best-effort, don't block redirect)
+    if (profilePic && user?.id) {
+      try {
+        const { url, error: uploadErr } = await uploadAvatar(user.id, profilePic);
+        if (url) {
+          await updateProfile({ photoUrl: url }).catch(() => {});
+        } else if (uploadErr) {
+          console.warn('Avatar upload error:', uploadErr);
+        }
+      } catch (err) {
+        console.warn('Avatar upload failed:', err);
+      }
+    }
     window.location.href = redirectTo;
   };
+
+  // ═══ PROFILE PICTURE HANDLERS ═══
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) { onToast?.('Please select a JPEG, PNG, GIF, or WebP image.', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) { onToast?.('Image must be less than 5MB.', 'error'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      if (!url || url.length < 100) { onToast?.('Failed to read image file.', 'error'); return; }
+      setTempImageUrl(url);
+      setShowImageEditor(true);
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [onToast]);
+
+  const handleCropImage = useCallback((cropped: string) => {
+    setProfilePic(cropped);
+    setShowImageEditor(false);
+    setTempImageUrl(null);
+  }, []);
+
+  const handleCancelCrop = useCallback(() => {
+    setTempImageUrl(null);
+    setShowImageEditor(false);
+  }, []);
+
+  const handleRemovePic = useCallback(() => {
+    setProfilePic(null);
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden flex items-center justify-center p-6">
@@ -256,6 +313,57 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               </span>
             </button>
 
+            {/* ── Profile picture (new OAuth users) ── */}
+            {isNewOAuthUser && (
+              <div className="mt-4">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative group shrink-0"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.04)] border-2 border-dashed border-[rgba(255,255,255,0.12)] flex items-center justify-center overflow-hidden group-hover:border-white transition-all">
+                      {uploadingPic ? (
+                        <Loader2 className="w-6 h-6 text-[#F5F5F5] animate-spin" />
+                      ) : profilePic ? (
+                        <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera className="w-6 h-6 text-[#5F6063] group-hover:text-[#F5F5F5] transition-colors" />
+                      )}
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#F5F5F5] flex items-center justify-center shadow-lg">
+                      {uploadingPic ? (
+                        <Loader2 className="w-3 h-3 text-black animate-spin" />
+                      ) : (
+                        <Camera className="w-3 h-3 text-black" />
+                      )}
+                    </span>
+                  </button>
+                  <div className="text-left">
+                    <p className="text-sm text-[#AAAAAA]">Profile photo</p>
+                    <p className="text-xs text-[#666666] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
+                    {profilePic && (
+                      <button
+                        type="button"
+                        onClick={handleRemovePic}
+                        className="mt-1 text-xs text-[#EF4444] hover:text-[#F87171] font-medium cursor-pointer transition-colors"
+                      >
+                        Remove photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isNewOAuthUser && (
               <div className="mt-4">
                 {!pwOpen ? (
@@ -347,6 +455,16 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
           </>
         )}
       </motion.div>
+
+      {/* Image Crop Editor */}
+      {showImageEditor && tempImageUrl && (
+        <ImageCropEditor
+          imageUrl={tempImageUrl}
+          onCrop={handleCropImage}
+          onCancel={handleCancelCrop}
+          outputSize={512}
+        />
+      )}
     </div>
   );
 };

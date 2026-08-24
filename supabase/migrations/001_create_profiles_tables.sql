@@ -270,12 +270,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Uncomment and run after creating the bucket:
 
 /*
--- Allow authenticated users to upload avatars
+-- Allow anyone to upload avatars (bucket is public for reading)
 CREATE POLICY "Avatar upload policy"
     ON storage.objects FOR INSERT
     WITH CHECK (
         bucket_id = 'avatars'
-        AND auth.role() = 'authenticated'
     );
 
 -- Allow anyone to view avatars

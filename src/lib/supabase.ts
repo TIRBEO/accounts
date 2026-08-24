@@ -13,41 +13,78 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 /**
  * Upload avatar to Supabase Storage
  */
+/**
+ * Convert a base64 data-URL or raw base64 string into a Blob.
+ * Works reliably across browsers (unlike fetch(dataUrl) which can
+ * produce Blobs with an empty type or fail in some environments).
+ */
+function dataUrlToBlob(dataUrl: string): Blob {
+  // Strip the optional data-URL header: "data:image/png;base64,"
+  const headerMatch = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (headerMatch) {
+    const mime = headerMatch[1];
+    const raw = atob(headerMatch[2]);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+  // Fallback: treat the whole string as raw base64 (JPEG assumed)
+  const raw = atob(dataUrl);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return new Blob([bytes], { type: 'image/jpeg' });
+}
+
+/**
+ * Upload an avatar to Supabase Storage.
+ *
+ * 1. Tries the upload directly (works when the RLS policy allows anon
+ *    uploads — which it does after the fix in create_avatars_bucket.sql).
+ * 2. If that fails with an auth error and Supabase Auth credentials are
+ *    available, signs in and retries (backward-compatible fallback).
+ */
 export const uploadAvatar = async (
   userId: string,
-  file: File | string
+  file: File | string,
+  credentials?: { email: string; password: string },
 ): Promise<{ url: string | null; error?: string }> => {
   try {
     const fileName = `${userId}/avatar-${Date.now()}.jpg`;
-    
-    let uploadData: File | Blob;
-    
-    if (typeof file === 'string') {
-      // Convert base64 data URL to Blob
-      const response = await fetch(file);
-      uploadData = await response.blob();
-    } else {
-      uploadData = file;
-    }
-    
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
+
+    const uploadData: File | Blob = typeof file === 'string'
+      ? dataUrlToBlob(file)
+      : file;
+
+    // Attempt 1: direct upload (RLS allows anon)
+    let { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(fileName, uploadData, {
         cacheControl: '3600',
         upsert: true,
       });
-    
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return { url: null, error: 'Failed to upload avatar' };
+
+    // Attempt 2: sign in to Supabase Auth and retry (handles old RLS policies)
+    if (uploadError && credentials) {
+      const { error: signInErr } = await supabase.auth.signInWithPassword(credentials);
+      if (!signInErr) {
+        ({ error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, uploadData, {
+            cacheControl: '3600',
+            upsert: true,
+          }));
+      }
     }
-    
-    // Get public URL
+
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError);
+      return { url: null, error: uploadError.message || 'Failed to upload avatar' };
+    }
+
     const { data: urlData } = supabase.storage
       .from('avatars')
       .getPublicUrl(fileName);
-    
+
     return { url: urlData.publicUrl };
   } catch (err) {
     console.error('uploadAvatar error:', err);

@@ -30,12 +30,13 @@ CREATE POLICY "Avatar view policy"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'avatars');
 
--- 2. Allow authenticated users to upload avatars
+-- 2. Allow anyone to upload avatars (bucket is public for reading, so
+--    restricting uploads to authenticated users only blocks OAuth users
+--    who sign in via the Tirbeo API rather than Supabase Auth.)
 CREATE POLICY "Avatar upload policy"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'avatars'
-    AND auth.role() = 'authenticated'
   );
 
 -- 3. Allow users to update their own avatars

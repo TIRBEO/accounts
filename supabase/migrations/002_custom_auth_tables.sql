@@ -364,12 +364,11 @@ CREATE POLICY "Avatar view policy"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'avatars');
 
--- Allow authenticated users to upload avatars
+-- Allow anyone to upload avatars (bucket is public for reading)
 CREATE POLICY "Avatar upload policy"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'avatars'
-    AND auth.role() = 'authenticated'
   );
 
 -- Allow users to update their own avatars

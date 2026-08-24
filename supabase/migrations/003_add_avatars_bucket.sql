@@ -31,7 +31,6 @@ CREATE POLICY "Avatar upload policy"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'avatars'
-    AND auth.role() = 'authenticated'
   );
 
 CREATE POLICY "Avatar update policy"

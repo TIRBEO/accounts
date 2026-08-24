@@ -591,9 +591,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         const userId = result.data?.id;
         if (userId && profilePic) {
           try {
-            const { url } = await uploadAvatar(userId, profilePic);
+            // Pass credentials so uploadAvatar can fall back to Supabase Auth
+            // sign-in if the RLS policy still requires an authenticated session.
+            const { url, error: uploadErr } = await uploadAvatar(userId, profilePic, { email, password });
             if (url) {
               await updateProfile({ photoUrl: url }).catch(() => {});
+            } else if (uploadErr) {
+              console.warn('Avatar upload error:', uploadErr);
             }
           } catch (err) {
             console.warn('Avatar upload after signup failed:', err);
