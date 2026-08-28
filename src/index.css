@@ -10,7 +10,7 @@
     --wave-bg: #000000;
     --wave-surface: #0A0A0B;
     --wave-charcoal: #111113;
-    --wave-gray: #8A8A90;
+    --wave-gray: #333333;
     --wave-highlight: #FFFFFF;
     --wave-accent: #FFFFFF;
     --wave-accent-bright: #FFFFFF;
@@ -51,6 +51,88 @@
     outline-offset: 2px;
     border-radius: 6px;
   }
+}
+
+/* ── LIGHT THEME ── */
+:root.wave-light,
+:root[data-theme="light"],
+body.wave-light {
+  --wave-bg: #ffffff;
+  --wave-surface: #f5f5f5;
+  --wave-charcoal: #eeeeee;
+  --wave-gray: #bbbbbb;
+  --wave-highlight: #000000;
+  --wave-accent: #000000;
+  --wave-accent-bright: #000000;
+  --wave-accent-deep: #444444;
+  --wave-card: rgba(255, 255, 255, 0.95);
+  --wave-text: #000000;
+  --wave-text-dim: #444444;
+  --wave-border: rgba(0, 0, 0, 0.15);
+  --wave-glow: rgba(0, 0, 0, 0.06);
+  --wave-glow-soft: rgba(0, 0, 0, 0.03);
+  --wave-success: #16a34a;
+  --wave-danger: #dc2626;
+  --wave-warning: #ca8a04;
+}
+
+body.wave-light,
+:root[data-theme="light"] body,
+body:has(:root[data-theme="light"]) {
+  background: #ffffff;
+  color: #000000;
+}
+
+.wave-light .wave-card,
+:root[data-theme="light"] .wave-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.wave-light .wave-input,
+:root[data-theme="light"] .wave-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  color: #000000;
+}
+
+.wave-light .wave-input::placeholder,
+:root[data-theme="light"] .wave-input::placeholder {
+  color: #888888;
+}
+
+.wave-light .wave-input:focus,
+:root[data-theme="light"] .wave-input:focus {
+  border-color: rgba(0, 0, 0, 0.5);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.wave-light .wave-btn-primary,
+:root[data-theme="light"] .wave-btn-primary {
+  background: #000000;
+  color: #ffffff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5) inset, 0 8px 28px -8px rgba(0, 0, 0, 0.3);
+}
+
+.wave-light .ob-bg,
+:root[data-theme="light"] .ob-bg {
+  background: #ffffff;
+}
+
+.wave-light .ob-grid,
+:root[data-theme="light"] .ob-grid {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+}
+
+.wave-light .ob-glow,
+:root[data-theme="light"] .ob-glow {
+  background:
+    radial-gradient(ellipse 60% 42% at 50% 38%, rgba(0, 0, 0, 0.04), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(255, 255, 255, 0.8) 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
