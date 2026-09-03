@@ -81,7 +81,7 @@ export const CooldownTimer: React.FC<CooldownTimerProps> = ({
         initial={{ opacity: 0, scale: 0.8, y: -5 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8 }}
-        className={`inline-flex items-center gap-1.5 text-xs text-[#22c55e] bg-[rgba(34,197,94,0.15)] px-2.5 py-1 rounded-md border border-[rgba(34,197,94,0.3)] ${className}`}
+        className={`inline-flex items-center gap-1.5 text-xs text-[var(--wave-success)] bg-[var(--wave-success-container)] px-2.5 py-1 rounded-md border border-[var(--wave-success)]/40 ${className}`}
       >
         <motion.span
           initial={{ rotate: -180, scale: 0 }}
@@ -99,7 +99,7 @@ export const CooldownTimer: React.FC<CooldownTimerProps> = ({
 
   if (!isLocked) {
     return (
-      <span className={`inline-flex items-center gap-1 text-xs text-[#22c55e] bg-[rgba(34,197,94,0.1)] px-2 py-1 rounded ${className}`}>
+      <span className={`inline-flex items-center gap-1 text-xs text-[var(--wave-success)] bg-[var(--wave-success-container)] px-2 py-1 rounded ${className}`}>
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
@@ -113,31 +113,31 @@ export const CooldownTimer: React.FC<CooldownTimerProps> = ({
       <div className={`inline-flex items-center gap-2 ${className}`}>
         <div className="flex items-center gap-1">
           <div className="text-center">
-            <div className="text-lg font-semibold text-white tabular-nums">
+            <div className="text-lg font-semibold text-[var(--wave-text)] tabular-nums">
               {String(timeLeft.days).padStart(2, '0')}
             </div>
-            <div className="text-[10px] text-[#666666] uppercase">Days</div>
+            <div className="text-[10px] text-[var(--wave-on-surface-variant)] uppercase">Days</div>
           </div>
-          <span className="text-white text-lg font-light">:</span>
+          <span className="text-[var(--wave-text)] text-lg font-light">:</span>
           <div className="text-center">
-            <div className="text-lg font-semibold text-white tabular-nums">
+            <div className="text-lg font-semibold text-[var(--wave-text)] tabular-nums">
               {String(timeLeft.hours).padStart(2, '0')}
             </div>
-            <div className="text-[10px] text-[#666666] uppercase">Hrs</div>
+            <div className="text-[10px] text-[var(--wave-on-surface-variant)] uppercase">Hrs</div>
           </div>
-          <span className="text-white text-lg font-light">:</span>
+          <span className="text-[var(--wave-text)] text-lg font-light">:</span>
           <div className="text-center">
-            <div className="text-lg font-semibold text-white tabular-nums">
+            <div className="text-lg font-semibold text-[var(--wave-text)] tabular-nums">
               {String(timeLeft.minutes).padStart(2, '0')}
             </div>
-            <div className="text-[10px] text-[#666666] uppercase">Min</div>
+            <div className="text-[10px] text-[var(--wave-on-surface-variant)] uppercase">Min</div>
           </div>
-          <span className="text-white text-lg font-light">:</span>
+          <span className="text-[var(--wave-text)] text-lg font-light">:</span>
           <div className="text-center">
-            <div className="text-lg font-semibold text-white tabular-nums">
+            <div className="text-lg font-semibold text-[var(--wave-text)] tabular-nums">
               {String(timeLeft.seconds).padStart(2, '0')}
             </div>
-            <div className="text-[10px] text-[#666666] uppercase">Sec</div>
+            <div className="text-[10px] text-[var(--wave-on-surface-variant)] uppercase">Sec</div>
           </div>
         </div>
       </div>
@@ -148,7 +148,7 @@ export const CooldownTimer: React.FC<CooldownTimerProps> = ({
     <motion.span
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`inline-flex items-center gap-1 text-xs text-white bg-[rgba(255,255,255,0.06)] px-2 py-1 rounded ${className}`}
+      className={`inline-flex items-center gap-1 text-xs text-[var(--wave-text)] bg-[var(--wave-surface-container)] px-2 py-1 rounded ${className}`}
     >
       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

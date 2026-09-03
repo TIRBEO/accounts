@@ -124,7 +124,7 @@ const ErrorMessage: React.FC<{ error?: string; field: string; touched: Record<st
     <motion.p
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="text-xs text-[#EF4444] mt-1.5 flex items-center gap-1"
+      className="text-xs text-[var(--wave-error)] mt-1.5 flex items-center gap-1"
     >
       <AlertCircle className="w-3 h-3" />
       {error}
@@ -143,7 +143,7 @@ const InputWrapper: React.FC<{
 }> = ({ label, required, children, error, field, touched }) => (
   <div>
     <label className="wave-label">
-      {label} {required && <span className="text-[#F5F5F5]">*</span>}
+      {label} {required && <span className="text-[var(--wave-text)]">*</span>}
     </label>
     {children}
     <ErrorMessage error={error} field={field} touched={touched} />
@@ -1059,7 +1059,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   // Get input error class
   const getInputClass = (field: string, baseClass: string = 'wave-input') => {
     if (errors[field] && touched[field]) {
-      return `${baseClass} border-[#EF4444] focus:border-[#EF4444] focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]`;
+      return `${baseClass} border-[var(--wave-error)] focus:border-[var(--wave-error)] focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]`;
     }
     return baseClass;
   };
@@ -1094,7 +1094,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none"
         >
           <img src="/logo.png" alt="Tirbeo" className="h-8 w-auto" />
-          <span className="text-lg font-semibold tracking-tight text-white">Tirbeo</span>
+          <span className="text-lg font-semibold tracking-tight text-[var(--wave-text)]">Tirbeo</span>
         </button>
       </header>
 
@@ -1108,22 +1108,22 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 lg:gap-16 items-center">
             {/* Left — heading zone */}
             <div className="text-center lg:text-left">
-              <h1 className="text-3xl lg:text-[34px] font-bold tracking-tight leading-tight text-white mb-2">
+              <h1 className="text-3xl lg:text-[34px] font-bold tracking-tight leading-tight text-[var(--wave-text)] mb-2">
                 {mode === 'signup' ? 'Create your account' : 'Welcome back'}
               </h1>
-              <p className="text-sm text-[#8A8A90]">
+              <p className="text-sm text-[var(--wave-on-surface-variant)]">
                 {mode === 'signup' ? (
                   signupStep === 3 || signupStep === 4 ? (
                     <span className="inline-flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                      Signing up with <span className="text-white font-medium">{getProviderDisplayName()}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--wave-primary)]" />
+                      Signing up with <span className="text-[var(--wave-text)] font-medium">{getProviderDisplayName()}</span>
                     </span>
                   ) : (
                     <span>
                       Already have an account?{' '}
                       <button
                         onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                        className="text-white hover:text-[#BFBFC6] font-medium cursor-pointer transition-colors"
+                        className="text-[var(--wave-text)] hover:text-[var(--wave-on-surface-variant)] font-medium cursor-pointer transition-colors"
                       >
                         Sign in
                       </button>
@@ -1134,7 +1134,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     Need an account?{' '}
                     <button
                       onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                      className="text-white hover:text-[#BFBFC6] font-medium cursor-pointer transition-colors"
+                      className="text-[var(--wave-text)] hover:text-[var(--wave-on-surface-variant)] font-medium cursor-pointer transition-colors"
                     >
                       Sign up for free
                     </button>
@@ -1151,7 +1151,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       <span
                         key={label}
                         className={`h-0.5 flex-1 rounded-full transition-colors duration-300 ${
-                          n < signupStep ? 'bg-white' : n === signupStep ? 'bg-[rgba(255,255,255,0.45)]' : 'bg-[rgba(255,255,255,0.1)]'
+                          n < signupStep ? 'bg-[var(--wave-primary)]' : n === signupStep ? 'bg-[var(--wave-surface-container-high)]' : 'bg-[var(--wave-surface-container)]'
                         }`}
                       />
                     );
@@ -1176,7 +1176,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               >
                 <InputWrapper label="Username" required error={errors.username} field="username" touched={touched}>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6063] text-sm">@</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--wave-on-surface-variant)] text-sm">@</span>
                     <input
                       type="text"
                       value={username}
@@ -1194,13 +1194,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     {username.length >= 3 && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2">
                         {usernameStatus === 'checking' && (
-                          <Loader2 className="w-4 h-4 text-[#858589] animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[var(--wave-on-surface-variant)] animate-spin" />
                         )}
                         {usernameStatus === 'available' && (
-                          <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                          <CheckCircle2 className="w-4 h-4 text-[var(--wave-success)]" />
                         )}
                         {usernameStatus === 'taken' && (
-                          <AlertCircle className="w-4 h-4 text-[#EF4444]" />
+                          <AlertCircle className="w-4 h-4 text-[var(--wave-error)]" />
                         )}
                       </span>
                     )}
@@ -1211,12 +1211,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       className={`text-xs mt-1.5 flex items-center gap-1.5 ${
                         usernameStatus === 'available'
-                          ? 'text-[#22C55E]'
+                          ? 'text-[var(--wave-success)]'
                           : usernameStatus === 'taken'
-                            ? 'text-[#EF4444]'
+                            ? 'text-[var(--wave-error)]'
                             : usernameStatus === 'checking'
-                              ? 'text-[#858589]'
-                              : 'text-[#EF4444]'
+                              ? 'text-[var(--wave-on-surface-variant)]'
+                              : 'text-[var(--wave-error)]'
                       }`}
                     >
                       {usernameMessage}
@@ -1229,7 +1229,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       className="mt-2"
                     >
-                      <p className="text-xs text-[#858589] mb-1.5">Available alternatives:</p>
+                      <p className="text-xs text-[var(--wave-on-surface-variant)] mb-1.5">Available alternatives:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {usernameSuggestions.map((suggestion) => (
                           <button
@@ -1239,7 +1239,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                               setUsername(suggestion);
                               checkUsername(suggestion);
                             }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[rgba(255,255,255,0.06)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.08)] transition-all cursor-pointer border border-[rgba(255,255,255,0.12)] hover:border-[rgba(255,255,255,0.2)]"
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--wave-surface-container)] text-[var(--wave-text)] hover:bg-[var(--wave-surface-container)] transition-all cursor-pointer border border-[var(--wave-outline-variant)] hover:border-[var(--wave-outline-variant)]"
                           >
                             @{suggestion}
                           </button>
@@ -1249,7 +1249,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   )}
 
                   {username.length < 3 && (
-                    <span className="text-xs text-[#5F6063] mt-1.5 block">
+                    <span className="text-xs text-[var(--wave-on-surface-variant)] mt-1.5 block">
                       Your unique handle. Letters, numbers, hyphens only.
                     </span>
                   )}
@@ -1294,13 +1294,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     {email && !validateEmail(email) && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2">
                         {emailCheckStatus === 'checking' && (
-                          <Loader2 className="w-4 h-4 text-[#858589] animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[var(--wave-on-surface-variant)] animate-spin" />
                         )}
                         {emailCheckStatus === 'available' && (
-                          <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                          <CheckCircle2 className="w-4 h-4 text-[var(--wave-success)]" />
                         )}
                         {emailCheckStatus === 'taken' && (
-                          <AlertCircle className="w-4 h-4 text-[#EF4444]" />
+                          <AlertCircle className="w-4 h-4 text-[var(--wave-error)]" />
                         )}
                       </span>
                     )}
@@ -1311,7 +1311,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
                     >
-                      <span className="text-xs text-[#EF4444]">This email is already registered</span>
+                      <span className="text-xs text-[var(--wave-error)]">This email is already registered</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -1320,7 +1320,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                           switchMode('login');
                           setLoginStep('password');
                         }}
-                        className="text-xs font-semibold text-[#F5F5F5] hover:text-white underline underline-offset-2 cursor-pointer transition-colors"
+                        className="text-xs font-semibold text-[var(--wave-text)] hover:text-[var(--wave-text)] underline underline-offset-2 cursor-pointer transition-colors"
                       >
                         Sign in instead →
                       </button>
@@ -1334,7 +1334,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   className="wave-btn wave-btn-primary mt-2"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <>
                       <span className="relative z-10">Continue</span>
@@ -1375,9 +1375,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 {/* Profile Picture Display */}
                 <div className="flex items-center justify-center gap-4">
                   <button type="button" onClick={handleProfilePicClick} className="relative group shrink-0">
-                    <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.04)] border-2 border-dashed border-[rgba(255,255,255,0.12)] flex items-center justify-center overflow-hidden group-hover:border-white transition-all">
+                    <div className="w-16 h-16 rounded-full bg-[var(--wave-surface-container-low)] border-2 border-dashed border-[var(--wave-outline-variant)] flex items-center justify-center overflow-hidden group-hover:border-[var(--wave-primary)] transition-all">
                       {isUploadingAvatar ? (
-                        <Loader2 className="w-6 h-6 text-[#F5F5F5] animate-spin" />
+                        <Loader2 className="w-6 h-6 text-[var(--wave-text)] animate-spin" />
                       ) : profilePic ? (
                         <img
                           src={profilePic}
@@ -1385,25 +1385,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <Camera className="w-6 h-6 text-[#5F6063] group-hover:text-[#F5F5F5] transition-colors" />
+                        <Camera className="w-6 h-6 text-[var(--wave-on-surface-variant)] group-hover:text-[var(--wave-text)] transition-colors" />
                       )}
                     </div>
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#F5F5F5] flex items-center justify-center shadow-lg">
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--wave-primary)] flex items-center justify-center shadow-lg">
                       {isUploadingAvatar ? (
-                        <Loader2 className="w-3 h-3 text-black animate-spin" />
+                        <Loader2 className="w-3 h-3 text-[var(--wave-on-primary)] animate-spin" />
                       ) : (
-                        <Camera className="w-3 h-3 text-black" />
+                        <Camera className="w-3 h-3 text-[var(--wave-on-primary)]" />
                       )}
                     </span>
                   </button>
                   <div className="text-left">
-                    <p className="text-sm text-[#AAAAAA]">Profile photo</p>
-                    <p className="text-xs text-[#666666] mt-0.5">JPEG, PNG, GIF, WebP • Max 5MB</p>
+                    <p className="text-sm text-[var(--wave-on-surface-variant)]">Profile photo</p>
+                    <p className="text-xs text-[var(--wave-on-surface-variant)] mt-0.5">JPEG, PNG, GIF, WebP • Max 5MB</p>
                     {profilePic && (
                       <button
                         type="button"
                         onClick={handleRemoveProfilePic}
-                        className="mt-1 text-xs text-[#EF4444] hover:text-[#F87171] font-medium cursor-pointer transition-colors"
+                        className="mt-1 text-xs text-[var(--wave-error)] hover:text-[var(--wave-error)] font-medium cursor-pointer transition-colors"
                       >
                         Remove photo
                       </button>
@@ -1419,11 +1419,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       onBlur={() => handleBlur('gender')}
                       className="wave-input appearance-none cursor-pointer"
                     >
-                      <option value="" className="bg-[#0a0a0c]">Select</option>
-                      <option value="male" className="bg-[#0a0a0c]">Male</option>
-                      <option value="female" className="bg-[#0a0a0c]">Female</option>
-                      <option value="non-binary" className="bg-[#0a0a0c]">Non-binary</option>
-                      <option value="prefer-not" className="bg-[#0a0a0c]">Prefer not to say</option>
+                      <option value="" className="bg-[var(--wave-surface-container-low)]">Select</option>
+                      <option value="male" className="bg-[var(--wave-surface-container-low)]">Male</option>
+                      <option value="female" className="bg-[var(--wave-surface-container-low)]">Female</option>
+                      <option value="non-binary" className="bg-[var(--wave-surface-container-low)]">Non-binary</option>
+                      <option value="prefer-not" className="bg-[var(--wave-surface-container-low)]">Prefer not to say</option>
                     </select>
                   </InputWrapper>
                   <InputWrapper label="Date of Birth" required error={errors.dob} field="dob" touched={touched}>
@@ -1477,7 +1477,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 <div className="flex gap-3 mt-1">
                   <button type="submit" disabled={isSubmitting || !step2Complete} className="wave-btn wave-btn-primary flex-1">
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                     ) : (
                       <>
                         <span className="relative z-10">Continue</span>
@@ -1501,13 +1501,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="text-center mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
-                    <Mail className="w-7 h-7 text-[#F5F5F5]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] flex items-center justify-center mx-auto mb-3">
+                    <Mail className="w-7 h-7 text-[var(--wave-text)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">Verify your email</h3>
-                  <p className="text-sm text-[#858589] mt-1">
+                  <h3 className="text-lg font-semibold text-[var(--wave-text)]">Verify your email</h3>
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-1">
                     We sent a 6-digit code to<br />
-                    <span className="text-white font-medium">{email}</span>
+                    <span className="text-[var(--wave-text)] font-medium">{email}</span>
                   </p>
                 </div>
 
@@ -1537,14 +1537,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   type="button"
                   onClick={handleResendCode}
                   disabled={resendCooldown > 0}
-                  className="w-full text-center text-sm text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-center text-sm text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
                 </button>
 
                 <button type="submit" disabled={isSubmitting || verificationCode.length !== 6} className="wave-btn wave-btn-primary w-full">
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <>
                       <span className="relative z-10">Continue</span>
@@ -1567,11 +1567,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="text-center mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
-                    <Lock className="w-7 h-7 text-[#F5F5F5]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] flex items-center justify-center mx-auto mb-3">
+                    <Lock className="w-7 h-7 text-[var(--wave-text)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">Set your password</h3>
-                  <p className="text-sm text-[#858589] mt-1">
+                  <h3 className="text-lg font-semibold text-[var(--wave-text)]">Set your password</h3>
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-1">
                     Create a strong password to secure your account
                   </p>
                 </div>
@@ -1590,7 +1590,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5F6063] hover:text-[#F5F5F5] transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -1604,16 +1604,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                             className={`h-1 flex-1 rounded-full transition-all duration-300 ${
                               password.length >= i * 3
                                 ? password.length >= 12
-                                  ? 'bg-[#22C55E]'
+                                  ? 'bg-[var(--wave-success)]'
                                   : password.length >= 8
-                                    ? 'bg-[#F5F5F5]'
-                                    : 'bg-white'
-                                : 'bg-[rgba(255,255,255,0.08)]'
+                                    ? 'bg-[var(--wave-primary)]'
+                                    : 'bg-[var(--wave-primary)]'
+                                : 'bg-[var(--wave-surface-container)]'
                             }`}
                           />
                         ))}
                       </div>
-                      <p className="text-xs text-[#5F6063] mt-1">
+                      <p className="text-xs text-[var(--wave-on-surface-variant)] mt-1">
                         {password.length < 8
                           ? 'At least 8 characters'
                           : password.length < 12
@@ -1637,62 +1637,62 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </InputWrapper>
 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] cursor-pointer hover:bg-[rgba(255,255,255,0.04)] transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)] cursor-pointer hover:bg-[var(--wave-surface-container-low)] transition-all">
                     <input
                       type="checkbox"
                       checked={consentTerms}
                       onChange={(e) => { setConsentTerms(e.target.checked); setErrors(prev => ({ ...prev, consentTerms: undefined })); }}
-                      className="w-5 h-5 mt-0.5 rounded border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] text-[#F5F5F5] focus:ring-white focus:ring-offset-0 cursor-pointer"
+                      className="w-5 h-5 mt-0.5 rounded border-[var(--wave-outline-variant)] bg-[var(--wave-surface-container-low)] text-[var(--wave-text)] focus:ring-white focus:ring-offset-0 cursor-pointer"
                     />
-                    <span className="text-sm text-[#AAAAAA] leading-relaxed">
+                    <span className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                       I agree to the{' '}
-                      <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[#F5F5F5] hover:text-white font-medium underline underline-offset-2">
+                      <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium underline underline-offset-2">
                         Terms of Service
                       </button>{' '}
-                      <span className="text-[#F5F5F5]">*</span>
+                      <span className="text-[var(--wave-text)]">*</span>
                     </span>
                   </label>
                   <ErrorMessage error={errors.consentTerms} field="consentTerms" touched={touched} />
 
-                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] cursor-pointer hover:bg-[rgba(255,255,255,0.04)] transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)] cursor-pointer hover:bg-[var(--wave-surface-container-low)] transition-all">
                     <input
                       type="checkbox"
                       checked={consentPrivacy}
                       onChange={(e) => { setConsentPrivacy(e.target.checked); setErrors(prev => ({ ...prev, consentPrivacy: undefined })); }}
-                      className="w-5 h-5 mt-0.5 rounded border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] text-[#F5F5F5] focus:ring-white focus:ring-offset-0 cursor-pointer"
+                      className="w-5 h-5 mt-0.5 rounded border-[var(--wave-outline-variant)] bg-[var(--wave-surface-container-low)] text-[var(--wave-text)] focus:ring-white focus:ring-offset-0 cursor-pointer"
                     />
-                    <span className="text-sm text-[#AAAAAA] leading-relaxed">
+                    <span className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                       I acknowledge the{' '}
-                      <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[#F5F5F5] hover:text-white font-medium underline underline-offset-2">
+                      <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium underline underline-offset-2">
                         Privacy Policy
                       </button>{' '}
-                      and consent to data processing <span className="text-[#F5F5F5]">*</span>
+                      and consent to data processing <span className="text-[var(--wave-text)]">*</span>
                     </span>
                   </label>
                   <ErrorMessage error={errors.consentPrivacy} field="consentPrivacy" touched={touched} />
 
-                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] cursor-pointer hover:bg-[rgba(255,255,255,0.04)] transition-all">
+                  <label className="flex items-start gap-3 p-3 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)] cursor-pointer hover:bg-[var(--wave-surface-container-low)] transition-all">
                     <input
                       type="checkbox"
                       checked={consentMarketing}
                       onChange={(e) => setConsentMarketing(e.target.checked)}
-                      className="w-5 h-5 mt-0.5 rounded border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] text-[#F5F5F5] focus:ring-white focus:ring-offset-0 cursor-pointer"
+                      className="w-5 h-5 mt-0.5 rounded border-[var(--wave-outline-variant)] bg-[var(--wave-surface-container-low)] text-[var(--wave-text)] focus:ring-white focus:ring-offset-0 cursor-pointer"
                     />
-                    <span className="text-sm text-[#AAAAAA] leading-relaxed">
+                    <span className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                       Send me product updates and marketing emails (optional)
                     </span>
                   </label>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]">
-                  <p className="text-xs text-[#858589] leading-relaxed">
-                    Your account will be created with <span className="text-white font-medium">{email}</span>.
+                <div className="p-4 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)]">
+                  <p className="text-xs text-[var(--wave-on-surface-variant)] leading-relaxed">
+                    Your account will be created with <span className="text-[var(--wave-text)] font-medium">{email}</span>.
                   </p>
                 </div>
 
                 <button type="submit" disabled={isSubmitting || !step4Complete} className="wave-btn wave-btn-primary w-full">
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 relative z-10" />
@@ -1746,7 +1746,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
                 <button type="submit" disabled={isSubmitting} className="wave-btn wave-btn-primary">
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <>
                       <span className="relative z-10">Continue</span>
@@ -1773,13 +1773,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   <span className="relative z-10">Email me a magic link</span>
                 </button>
 
-                <p className="text-xs text-[#55555C] text-center leading-relaxed pt-1">
+                <p className="text-xs text-[var(--wave-on-surface-variant)] text-center leading-relaxed pt-1">
                   You agree to our{' '}
-                  <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[#8A8A90] hover:text-white underline underline-offset-2 transition-colors cursor-pointer">
+                  <button type="button" onClick={() => onOpenLegalModal('terms')} className="text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] underline underline-offset-2 transition-colors cursor-pointer">
                     Terms
                   </button>{' '}
                   and{' '}
-                  <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[#8A8A90] hover:text-white underline underline-offset-2 transition-colors cursor-pointer">
+                  <button type="button" onClick={() => onOpenLegalModal('privacy')} className="text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] underline underline-offset-2 transition-colors cursor-pointer">
                     Privacy Policy
                   </button>
                 </p>
@@ -1798,11 +1798,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="flex flex-col items-center text-center mb-3">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg shadow-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)]">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[var(--wave-primary)] shadow-lg shadow-[rgba(255,255,255,0.1)] bg-[var(--wave-surface-container)]">
                     {loginProfile?.photoUrl ? (
                       <img src={loginProfile.photoUrl} alt={loginProfile.name || 'Profile'} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#F5F5F5]">
+                      <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[var(--wave-text)]">
                         {(() => {
                           const name = loginProfile?.name?.trim();
                           if (name) {
@@ -1816,15 +1816,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-[#AAAAAA] mt-3">
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-3">
                     Signing in with{' '}
-                    <span className="text-white font-semibold">{getProviderDisplayName()}</span>
+                    <span className="text-[var(--wave-text)] font-semibold">{getProviderDisplayName()}</span>
                   </p>
-                  <p className="text-sm text-[#858589] mt-0.5">{email}</p>
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-0.5">{email}</p>
                   <button
                     type="button"
                     onClick={() => { setPassword(''); setLoginProfile(null); setLoginStep('email'); setErrors({}); setTouched({}); }}
-                    className="text-xs text-[#858589] hover:text-white underline underline-offset-2 mt-1.5 cursor-pointer transition-colors"
+                    className="text-xs text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] underline underline-offset-2 mt-1.5 cursor-pointer transition-colors"
                   >
                     Not you? Use another account
                   </button>
@@ -1846,7 +1846,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#858589] hover:text-[#F5F5F5] transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] transition-colors"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -1860,25 +1860,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       type="button"
                       onClick={() => handleRequestRecovery('code')}
                       disabled={isSubmitting}
-                      className="text-xs text-[#858589] hover:text-white cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Forgot password
                     </button>
-                    <span className="text-xs text-[#3A3A3A] select-none">|</span>
+                    <span className="text-xs text-[var(--wave-on-surface-variant)] select-none">|</span>
                     <button
                       type="button"
                       onClick={() => handleRequestRecovery('code')}
                       disabled={isSubmitting}
-                      className="text-xs text-[#858589] hover:text-white cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       One-time code
                     </button>
-                    <span className="text-xs text-[#3A3A3A] select-none">|</span>
+                    <span className="text-xs text-[var(--wave-on-surface-variant)] select-none">|</span>
                     <button
                       type="button"
                       onClick={() => handleRequestRecovery('magic-link')}
                       disabled={isSubmitting}
-                      className="text-xs text-[#858589] hover:text-white cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Magic link
                     </button>
@@ -1888,7 +1888,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       type="button"
                       onClick={() => handleRequestRecovery('recovery')}
                       disabled={isSubmitting}
-                      className="w-full text-center text-xs text-white hover:text-[#F5F5F5] cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full text-center text-xs text-[var(--wave-text)] hover:text-[var(--wave-text)] cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Send recovery mail{loginProfile.recoveryEmail ? ` (${loginProfile.recoveryEmail})` : ''}
                     </button>
@@ -1897,7 +1897,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
                 <button type="submit" disabled={isSubmitting} className="wave-btn wave-btn-primary w-full">
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <span className="relative z-10">Sign In</span>
                   )}
@@ -1917,13 +1917,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="text-center mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
-                    <Mail className="w-7 h-7 text-[#F5F5F5]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] flex items-center justify-center mx-auto mb-3">
+                    <Mail className="w-7 h-7 text-[var(--wave-text)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">Verify it's you</h3>
-                  <p className="text-sm text-[#858589] mt-1">
+                  <h3 className="text-lg font-semibold text-[var(--wave-text)]">Verify it's you</h3>
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-1">
                     We noticed a new sign-in. A code was sent to<br />
-                    <span className="text-white font-medium">{email}</span>
+                    <span className="text-[var(--wave-text)] font-medium">{email}</span>
                     {loginPending2fa && (
                       <>
                         <br />Then enter your authenticator 2FA code.
@@ -1958,14 +1958,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   type="button"
                   onClick={handleLoginOtpResend}
                   disabled={isSubmitting}
-                  className="w-full text-center text-sm text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-center text-sm text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Resend code
                 </button>
 
                 <button type="submit" disabled={isSubmitting || loginOtpCode.length !== 6} className="wave-btn wave-btn-primary w-full">
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <span className="relative z-10">Continue</span>
                   )}
@@ -1985,11 +1985,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="text-center mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
-                    <Shield className="w-7 h-7 text-[#F5F5F5]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] flex items-center justify-center mx-auto mb-3">
+                    <Shield className="w-7 h-7 text-[var(--wave-text)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">Two-Factor Authentication</h3>
-                  <p className="text-sm text-[#858589] mt-1">
+                  <h3 className="text-lg font-semibold text-[var(--wave-text)]">Two-Factor Authentication</h3>
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-1">
                     Enter the code from your authenticator app
                   </p>
                 </div>
@@ -2026,7 +2026,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       maxLength={14}
                       className={`${getInputClass('twoFactorCode')} text-center text-lg tracking-wider font-mono`}
                     />
-                    <p className="text-xs text-[#5F6063] mt-1.5">
+                    <p className="text-xs text-[var(--wave-on-surface-variant)] mt-1.5">
                       Enter one of your backup codes (e.g., ABCD-EFGH-IJKL)
                     </p>
                   </InputWrapper>
@@ -2036,7 +2036,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setLoginWithBackup(!loginWithBackup)}
-                    className="w-full text-left text-sm text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors flex items-center gap-2"
+                    className="w-full text-left text-sm text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium cursor-pointer transition-colors flex items-center gap-2"
                   >
                     <Key className="w-4 h-4" />
                     {loginWithBackup ? 'Use authenticator app' : 'Use backup code'}
@@ -2044,7 +2044,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   <button
                     type="button"
                     onClick={() => { setRecoveryMethod('magic-link'); setLoginStep('recovery'); }}
-                    className="w-full text-left text-sm text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors flex items-center gap-2"
+                    className="w-full text-left text-sm text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium cursor-pointer transition-colors flex items-center gap-2"
                   >
                     <Link2 className="w-4 h-4" />
                     Send magic link instead
@@ -2057,7 +2057,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   className="wave-btn wave-btn-primary w-full"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                   ) : (
                     <span className="relative z-10">Continue</span>
                   )}
@@ -2076,33 +2076,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 className="space-y-5"
               >
                 <div className="text-center mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] flex items-center justify-center mx-auto mb-3">
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] flex items-center justify-center mx-auto mb-3">
                     {recoveryMethod === 'code' || recoveryMethod === 'recovery' ? (
-                      <Key className="w-7 h-7 text-[#F5F5F5]" />
+                      <Key className="w-7 h-7 text-[var(--wave-text)]" />
                     ) : (
-                      <Link2 className="w-7 h-7 text-[#F5F5F5]" />
+                      <Link2 className="w-7 h-7 text-[var(--wave-text)]" />
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-[var(--wave-text)]">
                     {recoveryMethod === 'code' || recoveryMethod === 'recovery'
                       ? (recoveryStage === 'password' ? 'Choose a new password' : 'Recovery Code')
                       : 'Magic Link'}
                   </h3>
-                  <p className="text-sm text-[#858589] mt-1">
+                  <p className="text-sm text-[var(--wave-on-surface-variant)] mt-1">
                     {recoveryMethod === 'code' ? (
                       recoveryStage === 'password' ? (
-                        <>Enter a new password for <span className="text-white">{email}</span></>
+                        <>Enter a new password for <span className="text-[var(--wave-text)]">{email}</span></>
                       ) : (
-                        <>A one-time code has been sent to <span className="text-white">{email}</span></>
+                        <>A one-time code has been sent to <span className="text-[var(--wave-text)]">{email}</span></>
                       )
                     ) : recoveryMethod === 'recovery' ? (
                       recoveryStage === 'password' ? (
-                        <>Enter a new password for <span className="text-white">{email}</span></>
+                        <>Enter a new password for <span className="text-[var(--wave-text)]">{email}</span></>
                       ) : (
-                        <>A one-time code has been sent to your recovery email <span className="text-white">{loginProfile?.recoveryEmail || 'on file'}</span></>
+                        <>A one-time code has been sent to your recovery email <span className="text-[var(--wave-text)]">{loginProfile?.recoveryEmail || 'on file'}</span></>
                       )
                     ) : (
-                      <>A magic link has been sent to <span className="text-white">{email}</span></>
+                      <>A magic link has been sent to <span className="text-[var(--wave-text)]">{email}</span></>
                     )}
                   </p>
                 </div>
@@ -2135,14 +2135,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                       type="button"
                       onClick={handleResendRecoveryCode}
                       disabled={isSubmitting}
-                      className="w-full text-center text-sm text-[#F5F5F5] hover:text-white font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full text-center text-sm text-[var(--wave-text)] hover:text-[var(--wave-text)] font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Resend code
                     </button>
 
                     <button type="submit" disabled={isSubmitting || recoveryCode.length !== 6} className="wave-btn wave-btn-primary w-full">
                       {isSubmitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                        <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                       ) : (
                         <span className="relative z-10">Continue</span>
                       )}
@@ -2167,7 +2167,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5F6063] hover:text-[#F5F5F5] transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] transition-colors"
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
@@ -2188,7 +2188,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
                     <button type="submit" disabled={isSubmitting} className="wave-btn wave-btn-primary w-full">
                       {isSubmitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                        <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                       ) : (
                         <span className="relative z-10">Reset Password</span>
                       )}
@@ -2197,15 +2197,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 )}
 
                 {recoveryMethod === 'magic-link' && (
-                  <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]">
-                    <p className="text-xs text-[#858589] leading-relaxed">
+                  <div className="p-4 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)]">
+                    <p className="text-xs text-[var(--wave-on-surface-variant)] leading-relaxed">
                       Click the link in your email to sign in. The link expires in 15 minutes.
                     </p>
                   </div>
                 )}
 
-                <div className="p-4 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]">
-                  <p className="text-xs text-[#858589] leading-relaxed">
+                <div className="p-4 rounded-xl bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)]">
+                  <p className="text-xs text-[var(--wave-on-surface-variant)] leading-relaxed">
                     {recoveryMethod === 'code' || recoveryMethod === 'recovery' ? (
                       recoveryStage === 'password' ? (
                         <>Your password will be reset and all existing sessions will be signed out.</>
@@ -2226,7 +2226,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     className="wave-btn wave-btn-primary w-full"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 relative z-10" />
@@ -2239,7 +2239,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 <button
                   type="button"
                   onClick={goBack}
-                  className="w-full text-center text-xs text-[#858589] hover:text-white transition-colors cursor-pointer"
+                  className="w-full text-center text-xs text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] transition-colors cursor-pointer"
                 >
                   Back to sign in
                 </button>
@@ -2250,13 +2250,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           </div>
 
           {/* Bottom switch */}
-          <div className="mt-8 pt-6 border-t border-[rgba(255,255,255,0.06)] text-sm text-[#8A8A90] text-center">
+          <div className="mt-8 pt-6 border-t border-[var(--wave-outline-variant)] text-sm text-[var(--wave-on-surface-variant)] text-center">
             {mode === 'signup' ? (
               <p>
                 Already have an account?{' '}
                 <button
                   onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                  className="text-white font-medium hover:text-[#BFBFC6] transition-colors cursor-pointer"
+                  className="text-[var(--wave-text)] font-medium hover:text-[var(--wave-on-surface-variant)] transition-colors cursor-pointer"
                 >
                   Log in
                 </button>
@@ -2266,7 +2266,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 Don&apos;t have an account?{' '}
                 <button
                   onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                  className="text-white font-medium hover:text-[#BFBFC6] transition-colors cursor-pointer"
+                  className="text-[var(--wave-text)] font-medium hover:text-[var(--wave-on-surface-variant)] transition-colors cursor-pointer"
                 >
                   Sign up
                 </button>
@@ -2277,9 +2277,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="shrink-0 pt-4 pb-8 flex items-center justify-center gap-5 text-xs text-[#55555C]">
-        <button type="button" onClick={() => onOpenLegalModal('terms')} className="uppercase tracking-wider hover:text-white transition-colors cursor-pointer">Terms</button>
-        <button type="button" onClick={() => onOpenLegalModal('privacy')} className="uppercase tracking-wider hover:text-white transition-colors cursor-pointer">Privacy</button>
+      <footer className="shrink-0 pt-4 pb-8 flex items-center justify-center gap-5 text-xs text-[var(--wave-on-surface-variant)]">
+        <button type="button" onClick={() => onOpenLegalModal('terms')} className="uppercase tracking-wider hover:text-[var(--wave-text)] transition-colors cursor-pointer">Terms</button>
+        <button type="button" onClick={() => onOpenLegalModal('privacy')} className="uppercase tracking-wider hover:text-[var(--wave-text)] transition-colors cursor-pointer">Privacy</button>
       </footer>
 
       {/* Image Crop Editor */}

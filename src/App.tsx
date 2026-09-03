@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { AuthCard } from './components/AuthCard';
 import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
+import { HalftoneBackground } from './components/HalftoneBackground';
 import { getCurrentUser, verifyMagicLink } from './lib/api';
 import { preconnectOAuthProviders } from './lib/oauth';
 import { getRedirectTarget } from './lib/redirect';
@@ -83,7 +84,8 @@ export default function App() {
   // Callback route — OAuth post-login / new-user welcome.
   if (isCallbackPath()) {
     return (
-      <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden">
+      <div className="relative min-h-screen bg-[var(--wave-bg)] text-[var(--wave-text)] overflow-hidden">
+        <HalftoneBackground />
         <CallbackView onToast={showToast} />
         <AnimatePresence>
           {toast && (
@@ -106,21 +108,22 @@ export default function App() {
   // Loading state
   if (isLoading || isAuthenticated) {
     return (
-      <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden flex items-center justify-center">
+      <div className="relative min-h-screen bg-[var(--wave-bg)] text-[var(--wave-text)] overflow-hidden flex items-center justify-center">
+        <HalftoneBackground />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="relative z-10 flex flex-col items-center gap-5"
         >
           <img src="/logo.png" alt="Tirbeo" className="h-12 w-auto" />
-          <span className="relative flex h-1.5 w-28 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+          <span className="relative flex h-1.5 w-28 overflow-hidden rounded-full bg-[var(--wave-surface-container-highest)]">
             <motion.span
-              className="absolute inset-y-0 w-1/3 rounded-full bg-white"
+              className="absolute inset-y-0 w-1/3 rounded-full bg-[var(--wave-primary)]"
               animate={{ x: ['-100%', '300%'] }}
               transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
             />
           </span>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#77777E]">
+          <p className="text-xs uppercase tracking-[0.18em] text-[var(--wave-on-surface-variant)]">
             {isAuthenticated ? 'Redirecting to dashboard' : 'Loading'}
           </p>
         </motion.div>
@@ -129,8 +132,8 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden">
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
+    <div className="relative min-h-screen bg-[var(--wave-bg)] text-[var(--wave-text)] overflow-hidden">
+      <HalftoneBackground />
 
       <AnimatePresence mode="wait">
         <AuthCard

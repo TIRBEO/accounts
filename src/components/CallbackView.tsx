@@ -14,7 +14,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 const PROVIDER_ICONS: Record<string, React.ReactNode> = {
-  github: <GitHubIcon className="w-6 h-6 text-white" />,
+  github: <GitHubIcon className="w-6 h-6 text-[var(--wave-text)]" />,
   google: <GoogleIcon className="w-6 h-6" />,
   discord: <DiscordIcon className="w-6 h-6 text-[#5865F2]" />,
 };
@@ -213,7 +213,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-black text-[#F2F2F2] overflow-hidden flex items-center justify-center p-6">
+    <div className="relative min-h-screen bg-[var(--wave-bg)] text-[var(--wave-text)] overflow-hidden flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -222,30 +222,30 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       >
         {checking ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[#F5F5F5]" />
-            <p className="text-sm text-[#858589]">Finishing sign-in…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--wave-text)]" />
+            <p className="text-sm text-[var(--wave-on-surface-variant)]">Finishing sign-in…</p>
           </div>
         ) : isMerge ? (
           <>
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <ShieldCheck className="w-6 h-6 text-white" />}
+              <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] border border-[var(--wave-outline-variant)] flex items-center justify-center mb-4">
+                {PROVIDER_ICONS[provider] || <ShieldCheck className="w-6 h-6 text-[var(--wave-text)]" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--wave-text)] mb-1.5">
                 {mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}
               </h1>
-              <p className="text-sm text-[#858589] leading-relaxed">
+              <p className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                 {mergeMode === 'transfer'
                   ? `This ${providerLabel} account is currently linked to a different Tirbeo account. Transferring moves the sign-in to your current account and disconnects it there.`
                   : `We found an existing Tirbeo account with the same email as your ${providerLabel} account. Merging links ${providerLabel} sign-in to that account — nothing else changes.`}
               </p>
             </div>
 
-            {error && <p className="text-xs text-[#EF4444] mb-3 text-center">{error}</p>}
+            {error && <p className="text-xs text-[var(--wave-error)] mb-3 text-center">{error}</p>}
 
             <button type="button" onClick={handleMergeConfirm} disabled={merging} className="wave-btn wave-btn-primary">
               {merging ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
               ) : (
                 <>
                   <span className="relative z-10">{mergeMode === 'transfer' ? 'Transfer here' : 'Merge & continue'}</span>
@@ -258,20 +258,20 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               Cancel
             </button>
 
-            <p className="text-xs text-[#5F6063] text-center leading-relaxed mt-4">
+            <p className="text-xs text-[var(--wave-on-surface-variant)] text-center leading-relaxed mt-4">
               Accounts are only ever merged when the email addresses match exactly.
             </p>
           </>
         ) : (
           <>
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <CheckCircle2 className="w-6 h-6 text-white" />}
+              <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] border border-[var(--wave-outline-variant)] flex items-center justify-center mb-4">
+                {PROVIDER_ICONS[provider] || <CheckCircle2 className="w-6 h-6 text-[var(--wave-text)]" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--wave-text)] mb-1.5">
                 {isNewOAuthUser ? 'Create your Tirbeo account' : "You're signed in"}
               </h1>
-              <p className="text-sm text-[#858589] leading-relaxed">
+              <p className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                 {isNewOAuthUser ? (
                   <>
                     No Tirbeo account exists for this email yet — continuing will
@@ -279,7 +279,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                     {user?.email && (
                       <>
                         <br />
-                        <span className="text-white font-medium">{user.email}</span>
+                        <span className="text-[var(--wave-text)] font-medium">{user.email}</span>
                       </>
                     )}
                   </>
@@ -294,22 +294,22 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               onClick={() => setConsent(!consent)}
               className={`w-full flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all text-left ${
                 consent
-                  ? 'bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.16)]'
-                  : 'bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)]'
+                  ? 'bg-[var(--wave-surface-container-low)] border-[var(--wave-outline-variant)]'
+                  : 'bg-[var(--wave-surface-container-low)] border-[var(--wave-outline-variant)] hover:bg-[var(--wave-surface-container-low)]'
               }`}
               role="checkbox"
               aria-checked={consent}
             >
               <span
                 className={`mt-0.5 w-5 h-5 shrink-0 rounded flex items-center justify-center border transition-colors ${
-                  consent ? 'bg-[#F5F5F5] border-[#F5F5F5]' : 'border-[rgba(255,255,255,0.24)]'
+                  consent ? 'bg-[var(--wave-primary)] border-[var(--wave-primary)]' : 'border-[var(--wave-outline-variant)]'
                 }`}
               >
-                {consent && <CheckCircle2 className="w-4 h-4 text-black" />}
+                {consent && <CheckCircle2 className="w-4 h-4 text-[var(--wave-on-primary)]" />}
               </span>
-              <span className="text-sm text-[#AAAAAA] leading-relaxed">
+              <span className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
                 I agree to the Tirbeo Terms of Service and acknowledge the Privacy Policy,
-                including data processing for my account. <span className="text-[#F5F5F5]">*</span>
+                including data processing for my account. <span className="text-[var(--wave-text)]">*</span>
               </span>
             </button>
 
@@ -330,31 +330,31 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                     onClick={() => fileInputRef.current?.click()}
                     className="relative group shrink-0"
                   >
-                    <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.04)] border-2 border-dashed border-[rgba(255,255,255,0.12)] flex items-center justify-center overflow-hidden group-hover:border-white transition-all">
+                    <div className="w-16 h-16 rounded-full bg-[var(--wave-surface-container-low)] border-2 border-dashed border-[var(--wave-outline-variant)] flex items-center justify-center overflow-hidden group-hover:border-[var(--wave-primary)] transition-all">
                       {uploadingPic ? (
-                        <Loader2 className="w-6 h-6 text-[#F5F5F5] animate-spin" />
+                        <Loader2 className="w-6 h-6 text-[var(--wave-text)] animate-spin" />
                       ) : profilePic ? (
                         <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <Camera className="w-6 h-6 text-[#5F6063] group-hover:text-[#F5F5F5] transition-colors" />
+                        <Camera className="w-6 h-6 text-[var(--wave-on-surface-variant)] group-hover:text-[var(--wave-text)] transition-colors" />
                       )}
                     </div>
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#F5F5F5] flex items-center justify-center shadow-lg">
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--wave-primary)] flex items-center justify-center shadow-lg">
                       {uploadingPic ? (
-                        <Loader2 className="w-3 h-3 text-black animate-spin" />
+                        <Loader2 className="w-3 h-3 text-[var(--wave-on-primary)] animate-spin" />
                       ) : (
-                        <Camera className="w-3 h-3 text-black" />
+                        <Camera className="w-3 h-3 text-[var(--wave-on-primary)]" />
                       )}
                     </span>
                   </button>
                   <div className="text-left">
-                    <p className="text-sm text-[#AAAAAA]">Profile photo</p>
-                    <p className="text-xs text-[#666666] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
+                    <p className="text-sm text-[var(--wave-on-surface-variant)]">Profile photo</p>
+                    <p className="text-xs text-[var(--wave-on-surface-variant)] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
                     {profilePic && (
                       <button
                         type="button"
                         onClick={handleRemovePic}
-                        className="mt-1 text-xs text-[#EF4444] hover:text-[#F87171] font-medium cursor-pointer transition-colors"
+                        className="mt-1 text-xs text-[var(--wave-error)] hover:text-[var(--wave-error)] font-medium cursor-pointer transition-colors"
                       >
                         Remove photo
                       </button>
@@ -368,9 +368,9 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               <div className="mt-4">
                 {!pwOpen ? (
                   pwDone ? (
-                    <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[rgba(74,222,128,0.25)] bg-[rgba(74,222,128,0.06)]">
-                      <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      <span className="text-sm text-green-300">Password added to your account</span>
+                    <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--wave-success)]/30 bg-[var(--wave-success-container)]">
+                      <CheckCircle2 className="w-4 h-4 text-[var(--wave-success)]" />
+                      <span className="text-sm text-[var(--wave-success)]">Password added to your account</span>
                     </div>
                   ) : (
                     <button type="button" onClick={() => setPwOpen(true)} className="wave-btn wave-btn-secondary">
@@ -378,10 +378,10 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                     </button>
                   )
                 ) : (
-                  <div className="p-4 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] space-y-3">
+                  <div className="p-4 rounded-xl border border-[var(--wave-outline-variant)] bg-[var(--wave-surface-container-low)] space-y-3">
                     {!otpSent ? (
                       <>
-                        <p className="text-xs text-[#858589]">We'll email you a 6-digit code to verify it's you.</p>
+                        <p className="text-xs text-[var(--wave-on-surface-variant)]">We'll email you a 6-digit code to verify it's you.</p>
                         <button type="button" onClick={handleSendCode} disabled={sendingCode} className="wave-btn wave-btn-secondary">
                           {sendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Email me a verification code'}
                         </button>
@@ -412,11 +412,11 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                         />
                       </>
                     )}
-                    {pwError && <p className="text-xs text-[#EF4444]">{pwError}</p>}
+                    {pwError && <p className="text-xs text-[var(--wave-error)]">{pwError}</p>}
                     {otpSent && (
                       <div className="flex gap-2">
                         <button type="button" onClick={handleSavePassword} disabled={savingPw} className="wave-btn wave-btn-primary flex-1">
-                          {savingPw ? <Loader2 className="w-4 h-4 animate-spin text-black relative z-10" /> : <span className="relative z-10">Save password</span>}
+                          {savingPw ? <Loader2 className="w-4 h-4 animate-spin text-[var(--wave-on-primary)] relative z-10" /> : <span className="relative z-10">Save password</span>}
                         </button>
                         <button type="button" onClick={() => { setPwOpen(false); setOtpSent(false); setOtp(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} className="wave-btn wave-btn-secondary flex-1">
                           Cancel
@@ -429,7 +429,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
             )}
 
             {error && (
-              <p className="text-xs text-[#EF4444] mt-3">{error}</p>
+              <p className="text-xs text-[var(--wave-error)] mt-3">{error}</p>
             )}
 
             <button
@@ -439,7 +439,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               className="wave-btn wave-btn-primary mt-5"
             >
               {saving ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black relative z-10" />
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
               ) : (
                 <>
                   <span className="relative z-10">{isNewOAuthUser ? 'Create account & continue' : 'Continue'}</span>
@@ -448,7 +448,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               )}
             </button>
 
-            <p className="text-xs text-[#5F6063] text-center leading-relaxed mt-4">
+            <p className="text-xs text-[var(--wave-on-surface-variant)] text-center leading-relaxed mt-4">
               You can set a password and manage connected services anytime from your
               dashboard settings.
             </p>

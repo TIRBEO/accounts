@@ -14,7 +14,7 @@ interface SocialAuthButtonsProps {
 }
 
 const PROVIDER_META: Record<OAuthProvider, { label: string; icon: React.ReactNode }> = {
-  github: { label: 'GitHub', icon: <GitHubIcon className="w-5 h-5 text-white" /> },
+  github: { label: 'GitHub', icon: <GitHubIcon className="w-5 h-5 text-[var(--wave-text)]" /> },
   google: { label: 'Google', icon: <GoogleIcon className="w-5 h-5" /> },
   discord: { label: 'Discord', icon: <DiscordIcon className="w-5 h-5 text-[#5865F2]" /> },
 };

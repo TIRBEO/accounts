@@ -502,35 +502,35 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Edit Photo</h3>
-            <p className="text-xs text-[#888888]">Drag to reposition, pinch to zoom</p>
+            <h3 className="text-lg font-semibold text-[var(--wave-text)]">Edit Photo</h3>
+            <p className="text-xs text-[var(--wave-on-surface-variant)]">Drag to reposition, pinch to zoom</p>
           </div>
           {imageInfo && (
             <div className="text-right">
-              <p className="text-xs text-[#555555]">{imageInfo.dimensions}</p>
-              <p className="text-xs text-[#555555]">{imageInfo.type} • ~{formatSize(imageInfo.originalSize * 1024)}</p>
+              <p className="text-xs text-[var(--wave-on-surface-variant)]">{imageInfo.dimensions}</p>
+              <p className="text-xs text-[var(--wave-on-surface-variant)]">{imageInfo.type} • ~{formatSize(imageInfo.originalSize * 1024)}</p>
             </div>
           )}
         </div>
         
         {/* Error Display */}
         {imageError && (
-          <div className="mb-4 p-4 rounded-xl bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)]">
+          <div className="mb-4 p-4 rounded-xl bg-[var(--wave-error-container)] border border-[var(--wave-error)]/40">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[rgba(239,68,68,0.2)] flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 rounded-full bg-[var(--wave-error)]/20 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-[var(--wave-error)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-[#EF4444]">Image Error</p>
-                <p className="text-xs text-[#888888] mt-0.5">{imageError}</p>
+                <p className="text-sm font-medium text-[var(--wave-error)]">Image Error</p>
+                <p className="text-xs text-[var(--wave-on-surface-variant)] mt-0.5">{imageError}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onCancel}
-              className="mt-3 w-full py-2 rounded-lg bg-[rgba(239,68,68,0.1)] hover:bg-[rgba(239,68,68,0.2)] text-[#EF4444] text-xs font-medium transition-all"
+              className="mt-3 w-full py-2 rounded-lg bg-[var(--wave-error-container)] hover:bg-[var(--wave-error)]/20 text-[var(--wave-error)] text-xs font-medium transition-all"
             >
               Try Another Image
             </button>
@@ -561,7 +561,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
           {!isDragging && imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
               <div className="p-3 rounded-full bg-[rgba(0,0,0,0.6)] backdrop-blur-sm">
-                <Move className="w-6 h-6 text-white" />
+                <Move className="w-6 h-6 text-[var(--wave-text)]" />
               </div>
             </div>
           )}
@@ -581,8 +581,8 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             onClick={() => setActiveTab('adjust')}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'adjust'
-                ? 'bg-white text-black'
-                : 'bg-[rgba(255,255,255,0.05)] text-[#888888] hover:bg-[rgba(255,255,255,0.1)]'
+                ? 'bg-[var(--wave-primary)] text-[var(--wave-on-primary)]'
+                : 'bg-[var(--wave-surface-container-low)] text-[var(--wave-on-surface-variant)] hover:bg-[var(--wave-surface-container)]'
             }`}
           >
             <RotateCw className="w-3.5 h-3.5 inline mr-1.5" />
@@ -593,8 +593,8 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             onClick={() => setActiveTab('filters')}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'filters'
-                ? 'bg-white text-black'
-                : 'bg-[rgba(255,255,255,0.05)] text-[#888888] hover:bg-[rgba(255,255,255,0.1)]'
+                ? 'bg-[var(--wave-primary)] text-[var(--wave-on-primary)]'
+                : 'bg-[var(--wave-surface-container-low)] text-[var(--wave-on-surface-variant)] hover:bg-[var(--wave-surface-container)]'
             }`}
           >
             <Sun className="w-3.5 h-3.5 inline mr-1.5" />
@@ -608,11 +608,11 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             {/* Zoom Control */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#888888] font-medium flex items-center gap-1.5">
+                <label className="text-xs text-[var(--wave-on-surface-variant)] font-medium flex items-center gap-1.5">
                   <ZoomIn className="w-3.5 h-3.5" />
                   Zoom
                 </label>
-                <span className="text-xs text-white font-mono">{Math.round(zoom * 100)}%</span>
+                <span className="text-xs text-[var(--wave-text)] font-mono">{Math.round(zoom * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -625,18 +625,18 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setZoom(newZoom);
                   pushHistory(captureSnapshot());
                 }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[rgba(255,255,255,0.1)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--wave-surface-container)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--wave-primary)] [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
               />
             </div>
             
             {/* Rotation Control */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#888888] font-medium flex items-center gap-1.5">
+                <label className="text-xs text-[var(--wave-on-surface-variant)] font-medium flex items-center gap-1.5">
                   <RotateCw className="w-3.5 h-3.5" />
                   Rotation
                 </label>
-                <span className="text-xs text-white font-mono">{rotation}°</span>
+                <span className="text-xs text-[var(--wave-text)] font-mono">{rotation}°</span>
               </div>
               <input
                 type="range"
@@ -649,7 +649,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setRotation(newRotation);
                   pushHistory(captureSnapshot());
                 }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[rgba(255,255,255,0.1)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--wave-surface-container)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--wave-primary)] [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
               />
             </div>
             
@@ -662,7 +662,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setRotation(newRot);
                   pushHistory(captureSnapshot());
                 }}
-                className="p-2.5 rounded-lg bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white transition-all"
+                className="p-2.5 rounded-lg bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)] transition-all"
                 title="Rotate left 90°"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -674,12 +674,12 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setRotation(newRot);
                   pushHistory(captureSnapshot());
                 }}
-                className="p-2.5 rounded-lg bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white transition-all"
+                className="p-2.5 rounded-lg bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)] transition-all"
                 title="Rotate right 90°"
               >
                 <RotateCw className="w-4 h-4" />
               </button>
-              <div className="w-px h-6 bg-[rgba(255,255,255,0.1)]" />
+              <div className="w-px h-6 bg-[var(--wave-surface-container)]" />
               <button
                 type="button"
                 onClick={() => {
@@ -689,8 +689,8 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                 }}
                 className={`p-2.5 rounded-lg transition-all ${
                   flipH 
-                    ? 'bg-white text-black' 
-                    : 'bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white'
+                    ? 'bg-[var(--wave-primary)] text-[var(--wave-on-primary)]' 
+                    : 'bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)]'
                 }`}
                 title="Flip horizontal"
               >
@@ -705,23 +705,23 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                 }}
                 className={`p-2.5 rounded-lg transition-all ${
                   flipV 
-                    ? 'bg-white text-black' 
-                    : 'bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white'
+                    ? 'bg-[var(--wave-primary)] text-[var(--wave-on-primary)]' 
+                    : 'bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)]'
                 }`}
                 title="Flip vertical"
               >
                 <FlipVertical className="w-4 h-4" />
               </button>
-              <div className="w-px h-6 bg-[rgba(255,255,255,0.1)]" />
+              <div className="w-px h-6 bg-[var(--wave-surface-container)]" />
               <button
                 type="button"
                 onClick={handleReset}
-                className="p-2.5 rounded-lg bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white transition-all"
+                className="p-2.5 rounded-lg bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)] transition-all"
                 title="Reset all"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <div className="w-px h-6 bg-[rgba(255,255,255,0.1)]" />
+              <div className="w-px h-6 bg-[var(--wave-surface-container)]" />
               {/* Undo Button */}
               <button
                 type="button"
@@ -729,8 +729,8 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                 disabled={!canUndo}
                 className={`p-2.5 rounded-lg transition-all ${
                   canUndo
-                    ? 'bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white'
-                    : 'bg-[rgba(255,255,255,0.02)] text-[#333333] cursor-not-allowed'
+                    ? 'bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)]'
+                    : 'bg-[var(--wave-surface-container-low)] text-[var(--wave-on-surface-variant)] cursor-not-allowed'
                 }`}
                 title="Undo (Ctrl+Z)"
               >
@@ -743,8 +743,8 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                 disabled={!canRedo}
                 className={`p-2.5 rounded-lg transition-all ${
                   canRedo
-                    ? 'bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white/70 hover:text-white'
-                    : 'bg-[rgba(255,255,255,0.02)] text-[#333333] cursor-not-allowed'
+                    ? 'bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-text)]/70 hover:text-[var(--wave-text)]'
+                    : 'bg-[var(--wave-surface-container-low)] text-[var(--wave-on-surface-variant)] cursor-not-allowed'
                 }`}
                 title="Redo (Ctrl+Shift+Z)"
               >
@@ -760,11 +760,11 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             {/* Brightness */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#888888] font-medium flex items-center gap-1.5">
+                <label className="text-xs text-[var(--wave-on-surface-variant)] font-medium flex items-center gap-1.5">
                   <Sun className="w-3.5 h-3.5" />
                   Brightness
                 </label>
-                <span className="text-xs text-white font-mono">{brightness}%</span>
+                <span className="text-xs text-[var(--wave-text)] font-mono">{brightness}%</span>
               </div>
               <input
                 type="range"
@@ -777,18 +777,18 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setBrightness(newBrightness);
                   pushHistory(captureSnapshot());
                 }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[rgba(255,255,255,0.1)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--wave-surface-container)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--wave-primary)] [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
               />
             </div>
             
             {/* Contrast */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#888888] font-medium flex items-center gap-1.5">
+                <label className="text-xs text-[var(--wave-on-surface-variant)] font-medium flex items-center gap-1.5">
                   <Contrast className="w-3.5 h-3.5" />
                   Contrast
                 </label>
-                <span className="text-xs text-white font-mono">{contrast}%</span>
+                <span className="text-xs text-[var(--wave-text)] font-mono">{contrast}%</span>
               </div>
               <input
                 type="range"
@@ -801,18 +801,18 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setContrast(newContrast);
                   pushHistory(captureSnapshot());
                 }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[rgba(255,255,255,0.1)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--wave-surface-container)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--wave-primary)] [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
               />
             </div>
             
             {/* Saturation */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-[#888888] font-medium flex items-center gap-1.5">
+                <label className="text-xs text-[var(--wave-on-surface-variant)] font-medium flex items-center gap-1.5">
                   <Droplets className="w-3.5 h-3.5" />
                   Saturation
                 </label>
-                <span className="text-xs text-white font-mono">{saturation}%</span>
+                <span className="text-xs text-[var(--wave-text)] font-mono">{saturation}%</span>
               </div>
               <input
                 type="range"
@@ -825,7 +825,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                   setSaturation(newSaturation);
                   pushHistory(captureSnapshot());
                 }}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[rgba(255,255,255,0.1)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--wave-surface-container)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--wave-primary)] [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,255,255,0.2)]"
               />
             </div>
             
@@ -837,7 +837,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
                 setContrast(100);
                 setSaturation(100);
               }}
-              className="w-full py-2 rounded-lg bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-[#888888] hover:text-white text-xs font-medium transition-all"
+              className="w-full py-2 rounded-lg bg-[var(--wave-surface-container-low)] hover:bg-[var(--wave-surface-container)] text-[var(--wave-on-surface-variant)] hover:text-[var(--wave-text)] text-xs font-medium transition-all"
             >
               Reset Filters
             </button>
@@ -845,9 +845,9 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         )}
         
         {/* Output Size Info */}
-        <div className="flex items-center gap-2 mt-4 p-2.5 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]">
-          <Info className="w-3.5 h-3.5 text-[#888888]" />
-          <p className="text-xs text-[#888888]">
+        <div className="flex items-center gap-2 mt-4 p-2.5 rounded-lg bg-[var(--wave-surface-container-low)] border border-[var(--wave-outline-variant)]">
+          <Info className="w-3.5 h-3.5 text-[var(--wave-on-surface-variant)]" />
+          <p className="text-xs text-[var(--wave-on-surface-variant)]">
             Output: {outputSize}×{outputSize}px • Max {maxFileSizeKB}KB (auto-compressed)
           </p>
         </div>
