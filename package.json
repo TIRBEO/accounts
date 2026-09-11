@@ -8,9 +8,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^9.0.0",
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.1.14",
     "@vercel/analytics": "^2.0.1",
@@ -20,12 +23,25 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "vite": "^6.2.3"
+    "react-easy-crop": "^6.2.3",
+    "vite": "^6.2.3",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.13.0",
+    "@sentry/react": "^9.0.0",
+    "@storybook/addon-essentials": "^8.6.18",
+    "@storybook/addon-interactions": "^8.6.18",
+    "@storybook/blocks": "^8.6.18",
+    "@storybook/react": "^8.6.18",
+    "@storybook/react-vite": "^8.6.18",
+    "@storybook/test": "^8.6.18",
     "@types/node": "^22.14.0",
+    "@types/zxcvbn": "^4.4.5",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.13.0",
     "esbuild": "^0.25.0",
+    "rollup-plugin-visualizer": "^7.1.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

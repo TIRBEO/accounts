@@ -1,86 +1,206 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
-import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
-import { startOAuth, type OAuthProvider } from '../lib/oauth';
+import React from "react";
+import { Loader2 } from "lucide-react";
+import { GitHubIcon, GoogleIcon, DiscordIcon } from "./SocialIcons";
+import { startOAuth, type OAuthProvider } from "../lib/oauth";
+import { GoogleOneTap } from "./auth/GoogleOneTap";
 
 interface SocialAuthButtonsProps {
-  /**
-   * stack — full-width buttons stacked vertically (default)
-   * row   — three compact, equal-width buttons side by side
-   */
-  variant?: 'stack' | 'row';
-  /** Shown before the provider name in `stack` variant. */
+  variant?: "stack" | "row";
   verb?: string;
+  onSuccessAuth?: (email: string, provider: "google") => void;
 }
 
-const PROVIDER_META: Record<OAuthProvider, { label: string; icon: React.ReactNode }> = {
-  github: { label: 'GitHub', icon: <GitHubIcon className="w-5 h-5 text-[var(--wave-text)]" /> },
-  google: { label: 'Google', icon: <GoogleIcon className="w-5 h-5" /> },
-  discord: { label: 'Discord', icon: <DiscordIcon className="w-5 h-5 text-[#5865F2]" /> },
+interface ProviderMeta {
+  label: string;
+  icon: React.ReactNode;
+}
+
+const PROVIDER_META: Record<OAuthProvider, ProviderMeta> = {
+  github: { label: "GitHub", icon: <GitHubIcon className="h-5 w-5" /> },
+  google: { label: "Google", icon: <GoogleIcon className="h-5 w-5" /> },
+  discord: { label: "Discord", icon: <DiscordIcon className="h-5 w-5 text-[#5865F2]" /> },
 };
 
-/**
- * One-click social sign-in. Clicking navigates the whole tab straight to the
- * API's /auth/{provider} route — the fastest possible hand-off (no fetch,
- * no CORS, no intermediate screen). The clicked button keeps its spinner for
- * the ~300ms until the browser commits the navigation.
- */
-export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ variant = 'stack', verb = 'Continue with' }) => {
+const PROVIDERS: OAuthProvider[] = ["github", "google", "discord"];
+
+export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
+  variant = "stack",
+  verb = "Continue with",
+  onSuccessAuth,
+}) => {
   const [pending, setPending] = React.useState<OAuthProvider | null>(null);
 
   React.useEffect(() => {
-    // Safety valve: if navigation is blocked (popup blocker edge cases), reset.
     if (!pending) return;
-    const t = setTimeout(() => setPending(null), 5000);
-    return () => clearTimeout(t);
+    const timeout = window.setTimeout(() => setPending(null), 5000);
+    return () => window.clearTimeout(timeout);
   }, [pending]);
 
-  if (variant === 'row') {
+  const handleOAuth = (provider: OAuthProvider) => {
+    if (pending) return;
+    setPending(provider);
+    startOAuth(provider);
+  };
+
+  const baseStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    width: '100%',
+    minHeight: '49px',
+    borderRadius: '12px',
+    fontSize: '15px',
+    fontWeight: 500,
+    fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    padding: '14px 24px',
+    cursor: 'pointer',
+    transition: 'background-color 150ms ease, border-color 150ms ease, color 150ms ease, background 150ms ease',
+  };
+
+  const googleStyles = {
+    ...baseStyles,
+    background: '#FFFFFF',
+    color: '#1F1F1F',
+    border: '1px solid rgba(0,0,0,0.1)',
+    '&:hover': { background: '#F5F5F5' },
+  };
+
+  const githubStyles = {
+    ...baseStyles,
+    background: '#1F1F1F',
+    color: '#FFFFFF',
+    border: '1px solid rgba(255,255,255,0.1)',
+    '&:hover': { background: '#2A2A2A' },
+  };
+
+  const discordStyles = {
+    ...baseStyles,
+    background: '#5865F2',
+    color: '#FFFFFF',
+    border: 'none',
+    '&:hover': { background: '#4752C4' },
+  };
+
+  const baseStackStyles = {
+    ...baseStyles,
+    background: '#0D0D0D',
+    color: '#F5F5F5',
+    border: '1px solid rgba(245,245,245,0.13)',
+    '&:hover': { background: '#1F1F1F', borderColor: 'rgba(245,245,245,0.20)' },
+  };
+
+  if (variant === "row") {
     return (
-      <div className="grid grid-cols-3 gap-2">
-        {(['github', 'google', 'discord'] as OAuthProvider[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            disabled={!!pending}
-            onClick={() => { setPending(id); startOAuth(id); }}
-            className="wave-oauth-btn !px-2 gap-2"
-            aria-label={`${verb} ${PROVIDER_META[id].label}`}
-            aria-busy={pending === id}
-          >
-            {pending === id ? (
-              <Loader2 className="w-[18px] h-[18px] animate-spin shrink-0" />
-            ) : (
-              PROVIDER_META[id].icon
-            )}
-            <span className="text-[13px] font-medium truncate">{PROVIDER_META[id].label}</span>
-          </button>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {onSuccessAuth && <GoogleOneTap onSuccessAuth={onSuccessAuth} />}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }} role="group" aria-label="Social sign in">
+          {PROVIDERS.map((provider) => {
+            const meta = PROVIDER_META[provider];
+            const isPending = pending === provider;
+            const isDisabled = pending !== null || isPending;
+            const styles = provider === 'google' ? googleStyles : provider === 'github' ? githubStyles : discordStyles;
+            return (
+              <button
+                key={provider}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => handleOAuth(provider)}
+                aria-label={`${verb} ${meta.label}`}
+                aria-busy={isPending}
+                style={{
+                  ...styles,
+                  opacity: isDisabled ? 0.5 : 1,
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
+                }}
+                onMouseOver={(e) => {
+                  if (!isDisabled) {
+                    if (provider === 'google') e.currentTarget.style.background = '#F5F5F5';
+                    else if (provider === 'github') e.currentTarget.style.background = '#2A2A2A';
+                    else if (provider === 'discord') e.currentTarget.style.background = '#4752C4';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isDisabled) {
+                    if (provider === 'google') e.currentTarget.style.background = '#FFFFFF';
+                    else if (provider === 'github') e.currentTarget.style.background = '#1F1F1F';
+                    else if (provider === 'discord') e.currentTarget.style.background = '#5865F2';
+                  }
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-white/65" />
+                  ) : (
+                    meta.icon
+                  )}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                  {verb} {meta.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {(['github', 'google', 'discord'] as OAuthProvider[]).map((id) => (
-        <button
-          key={id}
-          type="button"
-          disabled={!!pending}
-          onClick={() => { setPending(id); startOAuth(id); }}
-          className="wave-oauth-btn"
-          aria-busy={pending === id}
-        >
-          {pending === id ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            PROVIDER_META[id].icon
-          )}
-          <span>
-            {verb} {PROVIDER_META[id].label}
-          </span>
-        </button>
-      ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {onSuccessAuth && <GoogleOneTap onSuccessAuth={onSuccessAuth} />}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="group" aria-label="Social sign in">
+        {PROVIDERS.map((provider) => {
+          const meta = PROVIDER_META[provider];
+          const isPending = pending === provider;
+          const isDisabled = pending !== null || isPending;
+          const styles = provider === 'google' ? googleStyles : provider === 'github' ? githubStyles : provider === 'discord' ? discordStyles : baseStackStyles;
+          return (
+            <button
+              key={provider}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => handleOAuth(provider)}
+              aria-label={`${verb} ${meta.label}`}
+              aria-busy={isPending}
+              style={{
+                ...baseStackStyles,
+                opacity: isDisabled ? 0.5 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+              }}
+              onMouseOver={(e) => {
+                if (!isDisabled) {
+                  if (provider === 'google') e.currentTarget.style.background = '#F5F5F5';
+                  else if (provider === 'github') e.currentTarget.style.background = '#2A2A2A';
+                  else if (provider === 'discord') e.currentTarget.style.background = '#4752C4';
+                  else e.currentTarget.style.background = '#1F1F1F';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!isDisabled) {
+                  if (provider === 'google') e.currentTarget.style.background = '#FFFFFF';
+                  else if (provider === 'github') e.currentTarget.style.background = '#1F1F1F';
+                  else if (provider === 'discord') e.currentTarget.style.background = '#5865F2';
+                  else e.currentTarget.style.background = '#0D0D0D';
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-white/65" />
+                ) : (
+                  meta.icon
+                )}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                {verb} {meta.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
+
+export default SocialAuthButtons;

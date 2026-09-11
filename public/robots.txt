@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://accounts.tirbeo.app/sitemap.xml

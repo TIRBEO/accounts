@@ -1,62 +1,60 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TIRBEO AUTH — MATERIAL 3 · PURE BLACK (no gray)
-   Monochrome black & white. All surfaces are pure black layered with white
-   alphas; text is white (dim = white at opacity); dividers/outlines are
-   white hairlines. M3 component structure retained. Same .wave-* vocabulary,
-   same layout/placements as the original design — UI-only restyle.
+   TIRBEO ACCOUNTS — PURE BLACK & WHITE
+   Monochrome authentication. Zero color.
+   Pure black surfaces, white text, white hairlines, white shadows.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
-    /* Base — pure black */
-    --wave-bg: #000000;
+    /* Surfaces — pure black */
+    --tb-bg: #000000;
+    --tb-card: #000000;
+    --tb-surface: #000000;
+    --tb-surface-dim: #000000;
+    --tb-surface-container-lowest: #000000;
+    --tb-surface-container-low: rgba(255, 255, 255, 0.04);
+    --tb-surface-container: #000000;
+    --tb-surface-container-high: rgba(255, 255, 255, 0.06);
+    --tb-surface-container-highest: rgba(255, 255, 255, 0.09);
 
-    /* Surfaces — all pure black; depth via white hairlines + white-alpha layers */
-    --wave-surface: #000000;
-    --wave-surface-dim: #000000;
-    --wave-surface-container-lowest: #000000;
-    --wave-surface-container-low: #000000;
-    --wave-surface-container: #000000;
-    --wave-surface-container-high: #000000;
-    --wave-surface-container-highest: #000000;
-    --wave-charcoal: rgba(255, 255, 255, 0.16);
+    /* Primary — white */
+    --tb-primary: #FFFFFF;
+    --tb-on-primary: #000000;
+    --tb-primary-container: rgba(255, 255, 255, 0.08);
+    --tb-on-primary-container: #FFFFFF;
+    --tb-accent: #FFFFFF;
+    --tb-accent-bright: #FFFFFF;
+    --tb-highlight: #FFFFFF;
 
-    /* Primary — pure white */
-    --wave-primary: #FFFFFF;
-    --wave-on-primary: #000000;
-    --wave-primary-container: #000000;
-    --wave-on-primary-container: #FFFFFF;
+    --tb-secondary: #FFFFFF;
+    --tb-on-secondary: #000000;
+    --tb-secondary-container: rgba(255, 255, 255, 0.08);
+    --tb-on-secondary-container: #FFFFFF;
 
-    --wave-secondary: #FFFFFF;
-    --wave-on-secondary: #000000;
-    --wave-secondary-container: #000000;
-    --wave-on-secondary-container: #FFFFFF;
+    /* Text — white, dim is white at opacity */
+    --tb-text: #FFFFFF;
+    --tb-on-surface: #FFFFFF;
+    --tb-on-surface-variant: rgba(255, 255, 255, 0.60);
+    --tb-text-dim: rgba(255, 255, 255, 0.60);
+    --tb-muted: rgba(255, 255, 255, 0.40);
+    --tb-outline: rgba(255, 255, 255, 0.20);
+    --tb-outline-variant: rgba(255, 255, 255, 0.10);
 
-    --wave-error: #FFB4AB;
-    --wave-on-error: #690005;
-    --wave-error-container: #93000A;
-    --wave-on-error-container: #FFDAD6;
-    --wave-success: #B7ECCB;
-    --wave-success-container: #0A3A18;
-    --wave-warning: #EDD9A6;
+    /* Semantic — all white */
+    --tb-error: #FFFFFF;
+    --tb-on-error: #000000;
+    --tb-error-container: rgba(255, 255, 255, 0.12);
+    --tb-success: #FFFFFF;
+    --tb-on-success: #000000;
+    --tb-success-container: rgba(255, 255, 255, 0.12);
+    --tb-warning: #FFFFFF;
 
-    /* Text — white, dim is white at opacity (not gray) */
-    --wave-on-surface: #FFFFFF;
-    --wave-on-surface-variant: rgba(255, 255, 255, 0.66);
-    --wave-outline: rgba(255, 255, 255, 0.28);
-    --wave-outline-variant: rgba(255, 255, 255, 0.14);
-
-    --wave-text: #FFFFFF;
-    --wave-text-dim: rgba(255, 255, 255, 0.66);
-    --wave-highlight: #FFFFFF;
-    --wave-accent: #FFFFFF;
-    --wave-accent-bright: #FFFFFF;
-
-    --wave-state-hover: rgba(255, 255, 255, 0.08);
-    --wave-state-pressed: rgba(255, 255, 255, 0.14);
-    --wave-glow: rgba(255, 255, 255, 0.05);
+    /* State — white alphas */
+    --tb-state-hover: rgba(255, 255, 255, 0.08);
+    --tb-state-pressed: rgba(255, 255, 255, 0.14);
+    --tb-glow: rgba(255, 255, 255, 0.06);
   }
 
   html, body, #root {
@@ -66,223 +64,175 @@
     padding: 0;
     overflow-x: hidden;
     background: #000000;
-    color: var(--wave-on-surface);
+    color: var(--tb-on-surface);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   * { box-sizing: border-box; }
 
-  ::selection { background: rgba(255, 255, 255, 0.9); color: #000; }
+  ::selection { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
-  *:focus-visible { outline: 2px solid var(--wave-primary); outline-offset: 2px; border-radius: 8px; }
+  *:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
 }
 
-/* ── LIGHT THEME (optional) ──────────────────────────────────────────── */
-:root.wave-light,
+/* ── LIGHT THEME ──────────────────────────────────────────────────────── */
+:root.tb-light,
 :root[data-theme="light"] {
-  --wave-bg: #FFFFFF;
-  --wave-surface: #FBFBFB;
-  --wave-surface-dim: #F0F0F0;
-  --wave-surface-container-lowest: #FFFFFF;
-  --wave-surface-container-low: #F7F7F7;
-  --wave-surface-container: #F0F0F0;
-  --wave-surface-container-high: #E8E8E8;
-  --wave-surface-container-highest: #E0E0E0;
-  --wave-charcoal: rgba(0, 0, 0, 0.14);
-  --wave-primary: #000000;
-  --wave-on-primary: #FFFFFF;
-  --wave-primary-container: #EDEDED;
-  --wave-on-primary-container: #000000;
-  --wave-on-surface: #000000;
-  --wave-on-surface-variant: rgba(0, 0, 0, 0.6);
-  --wave-outline: rgba(0, 0, 0, 0.32);
-  --wave-outline-variant: rgba(0, 0, 0, 0.12);
-  --wave-text: #000000;
-  --wave-text-dim: rgba(0, 0, 0, 0.6);
-  --wave-error: #BA1A1A;
-  --wave-success: #1B6E3A;
-  --wave-state-hover: rgba(0, 0, 0, 0.06);
-  --wave-state-pressed: rgba(0, 0, 0, 0.12);
-  --wave-glow: rgba(0, 0, 0, 0.05);
+  --tb-bg: #FFFFFF;
+  --tb-card: #FFFFFF;
+  --tb-surface-container: #F5F5F5;
+  --tb-surface-container-low: #FFFFFF;
+  --tb-surface-container-high: #E8E8E8;
+  --tb-surface-container-highest: #E0E0E0;
+  --tb-on-surface: #000000;
+  --tb-on-surface-variant: rgba(0, 0, 0, 0.55);
+  --tb-text-dim: rgba(0, 0, 0, 0.55);
+  --tb-outline: rgba(0, 0, 0, 0.16);
+  --tb-outline-variant: rgba(0, 0, 0, 0.08);
+  --tb-primary: #000000;
+  --tb-on-primary: #FFFFFF;
+  --tb-accent: #000000;
+  --tb-state-hover: rgba(0, 0, 0, 0.06);
+  --tb-state-pressed: rgba(0, 0, 0, 0.12);
+  --tb-glow: rgba(0, 0, 0, 0.04);
+  --tb-error: #000000;
+  --tb-success: #000000;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   BACKGROUND — pure black with a faint centered white light (no color)
-   ═══════════════════════════════════════════════════════════════════════════ */
-.ob-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 70% 48% at 50% 34%, rgba(255, 255, 255, 0.05), transparent 70%),
-    #000000;
-}
-.ob-grid,
-.ob-glow { display: none; }
-
-/* ═══ CARD — M3 black surface ═══ */
-.wave-card {
-  background: var(--wave-surface-container);
-  border: 1px solid var(--wave-outline-variant);
-  border-radius: 22px;
+/* ═══ CARD — pure black, white hairline border ═══ */
+.tb-card {
+  background: var(--tb-card);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
   box-shadow:
-    0 1px 2px 0 rgba(0, 0, 0, 0.6),
-    0 2px 6px 2px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
   position: relative;
 }
-.wave-card::before, .wave-card::after { display: none; }
+.tb-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+}
+.tb-card::after { display: none; }
 
-/* ═══ INPUT — M3 filled black field ═══ */
-.wave-input {
+/* ═══ INPUT — black field, white border, white focus ring ═══ */
+.tb-input {
   width: 100%;
   height: 54px;
   padding: 0 16px;
   background: #000000;
-  border: 2px solid var(--wave-outline);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   font-size: 16px;
-  font-weight: 500;
-  color: var(--wave-on-surface);
-  transition: border-color 180ms, box-shadow 180ms, background 180ms;
+  font-weight: 450;
+  color: var(--tb-on-surface);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
   outline: none;
 }
-.wave-input:hover { border-color: rgba(255, 255, 255, 0.5); }
-.wave-input:focus {
-  border-color: var(--wave-primary);
-  background: #000000;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.16);
+.tb-input::placeholder { color: var(--tb-muted); font-weight: 400; }
+.tb-input:hover { border-color: rgba(255, 255, 255, 0.30); }
+.tb-input:focus {
+  border-color: rgba(255, 255, 255, 0.50);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
-.wave-input::placeholder { color: var(--wave-on-surface-variant); font-weight: 400; }
-.wave-input:disabled { opacity: 0.38; cursor: not-allowed; }
+.tb-input:disabled { opacity: 0.35; cursor: not-allowed; }
+.tb-input.has-icon { padding-left: 44px; }
 
-/* ═══ BUTTONS — M3 filled / tonal / outlined (black theme) ═══ */
-.wave-btn {
+/* ═══ BUTTONS ═══ */
+.tb-btn {
   width: 100%;
-  height: 50px;
+  height: 52px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: none;
-  border-radius: 25px;
-  font-size: 15px;
+  border-radius: 999px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
   cursor: pointer;
   padding: 0 24px;
   position: relative;
   overflow: hidden;
-  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms, background 200ms;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease, background 200ms ease, border-color 200ms ease;
 }
-.wave-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 160ms;
-  pointer-events: none;
-}
-.wave-btn:hover:not(:disabled)::after { opacity: 0.1; }
-.wave-btn:active:not(:disabled)::after { opacity: 0.16; }
-.wave-btn span, .wave-btn svg { position: relative; z-index: 1; }
-.wave-btn:active:not(:disabled) { transform: scale(0.99); }
-.wave-btn:disabled { opacity: 0.32; cursor: not-allowed; }
+.tb-btn span, .tb-btn svg { position: relative; z-index: 1; }
+.tb-btn:active:not(:disabled) { transform: scale(0.98); }
+.tb-btn:disabled { opacity: 0.30; cursor: not-allowed; }
 
-.wave-btn-primary {
+/* Primary — white pill, black text */
+.tb-btn-primary {
   background: #FFFFFF;
   color: #000000;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5), 0 2px 6px 2px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
-.wave-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5), 0 4px 12px 4px rgba(0, 0, 0, 0.3);
-}
-
-.wave-btn-tonal {
-  background: #000000;
-  color: #FFFFFF;
-  border: 2px solid var(--wave-outline-variant);
+.tb-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.12);
 }
 
-.wave-btn-secondary {
-  background: transparent;
-  color: var(--wave-primary);
-  border: 2px solid var(--wave-outline);
+/* Secondary — dark outlined */
+.tb-btn-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tb-on-surface);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.wave-btn-secondary:hover:not(:disabled) { background: var(--wave-state-hover); border-color: var(--wave-on-surface); }
+.tb-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.20);
+}
 
-.wave-btn-ghost {
-  background: transparent;
-  color: var(--wave-primary);
-  height: 44px;
-  font-weight: 600;
-}
-.wave-btn-ghost:hover:not(:disabled) { background: var(--wave-state-hover); }
-
-/* ═══ OAUTH — M3 tonal chips (black) ═══ */
-.wave-oauth-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  height: 50px;
-  background: #000000;
-  border: 2px solid var(--wave-outline-variant);
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--wave-on-surface);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: background 180ms, border-color 180ms;
-}
-.wave-oauth-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 160ms;
-  pointer-events: none;
-}
-.wave-oauth-btn:hover:not(:disabled)::after { opacity: 0.1; }
-.wave-oauth-btn:active:not(:disabled)::after { opacity: 0.16; }
-.wave-oauth-btn:active:not(:disabled) { transform: scale(0.99); }
-.wave-oauth-btn:disabled { opacity: 0.38; cursor: not-allowed; }
-
-/* ═══ DIVIDER / LABEL ═══ */
-.wave-divider { display: flex; align-items: center; gap: 14px; }
-.wave-divider::before, .wave-divider::after {
+/* ═══ DIVIDER ═══ */
+.tb-divider { display: flex; align-items: center; gap: 16px; }
+.tb-divider::before, .tb-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--wave-outline-variant);
+  background: rgba(255, 255, 255, 0.10);
 }
-.wave-divider span {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--wave-on-surface-variant);
-  text-transform: uppercase;
+.tb-divider span {
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tb-muted);
 }
 
-.wave-label {
+.tb-label {
   display: block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--wave-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--tb-on-surface);
   margin-bottom: 8px;
 }
+.tb-label .required-tag { color: var(--tb-on-surface); margin-left: 2px; }
 
-/* ═══ TOAST — M3 snackbar (black) ═══ */
-.wave-toast {
+/* ═══ LINKS ═══ */
+.tb-link {
+  color: var(--tb-on-surface);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.30);
+  transition: text-decoration-color 150ms ease;
+}
+.tb-link:hover { text-decoration-color: rgba(255, 255, 255, 0.70); }
+
+/* ═══ TOAST ═══ */
+.tb-toast {
   position: fixed;
   bottom: 28px;
   left: 0;
@@ -296,74 +246,50 @@
   gap: 10px;
   padding: 14px 20px;
   background: #000000;
-  border: 2px solid var(--wave-outline-variant);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.35), 0 6px 10px 0 rgba(0, 0, 0, 0.25), 0 1px 11px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 24px -6px rgba(0, 0, 0, 0.6);
   font-size: 14px;
-  color: var(--wave-on-surface);
+  color: var(--tb-on-surface);
 }
-.wave-toast .wave-toast-icon { flex-shrink: 0; }
-.wave-toast--success { color: var(--wave-success); }
-.wave-toast--success .wave-toast-icon { color: var(--wave-success); }
-.wave-toast--error { color: var(--wave-error); }
-.wave-toast--error .wave-toast-icon { color: var(--wave-error); }
-.wave-toast--info { color: var(--wave-on-surface); }
-.wave-toast--info .wave-toast-icon { color: var(--wave-on-surface); }
+.tb-toast .tb-toast-icon { flex-shrink: 0; }
+.tb-toast--success { color: var(--tb-success); }
+.tb-toast--success .tb-toast-icon { color: var(--tb-success); }
+.tb-toast--error { color: var(--tb-error); }
+.tb-toast--error .tb-toast-icon { color: var(--tb-error); }
+.tb-toast--info { color: var(--tb-on-surface); }
+.tb-toast--info .tb-toast-icon { color: var(--tb-on-surface); }
 
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-
-/* ═══ STEP RAIL ═══ */
-.wave-rail {
-  position: relative;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.16);
-  overflow: visible;
-}
-.wave-rail-fill {
-  position: absolute;
-  top: 0; left: 0; height: 100%;
-  border-radius: 4px;
-  background: var(--wave-primary);
-  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.wave-rail-dot {
-  position: absolute;
-  top: 50%; width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--wave-primary);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
-  transform: translate(-50%, -50%);
-  transition: left 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* ═══ ICON BADGE — M3 black tonal tile ═══ */
-.wave-icon-badge {
-  width: 60px; height: 60px;
-  border-radius: 20px;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 16px;
-  background: #000000;
-  border: 1px solid var(--wave-outline-variant);
-  color: var(--wave-on-primary-container);
-}
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.24); }
 
 /* ═══ REDUCED MOTION ═══ */
 @media (prefers-reduced-motion: reduce) {
-  .wave-toast, .wave-btn-primary, .wave-oauth-btn, .wave-input {
+  .tb-toast, .tb-btn-primary, .tb-btn-secondary, .tb-input {
     transition: none;
   }
 }
 
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 640px) {
-  .wave-card { border-radius: 18px; }
-  .wave-btn { height: 50px; font-size: 15px; }
-  .wave-input { height: 50px; font-size: 16px; }
-  .wave-oauth-btn { height: 50px; font-size: 15px; }
-  .wave-toast { bottom: 16px; }
+  .tb-card { border-radius: 20px; }
+  .tb-btn { height: 52px; font-size: 16px; }
+  .tb-input { height: 52px; font-size: 16px; }
+  .tb-toast { bottom: 16px; }
+}
+
+/* ═══ AUTH LAYOUT RESPONSIVE ═══ */
+@media (max-width: 640px) {
+  .auth-nav { padding: 14px 18px !important; }
+  .auth-nav .auth-logo { height: 32px !important; }
+  .auth-nav .auth-brand { font-size: 22px !important; }
+  .auth-main { padding: 16px 12px 48px !important; }
+  .auth-card { padding: 32px 24px !important; border-radius: 16px !important; }
+  .auth-card-bottom { padding: 20px 16px !important; border-radius: 16px !important; }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  .auth-card { padding: 44px 40px !important; }
 }

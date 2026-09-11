@@ -1,14 +1,31 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import {visualizer} from 'rollup-plugin-visualizer';
 import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), visualizer({
+      open: false,
+      filename: 'dist/bundle-analysis.html',
+      gzipSize: true,
+    })],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+      },
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'motion': ['motion/react'],
+            'supabase': ['@supabase/supabase-js'],
+            'lucide': ['lucide-react'],
+            'react-vendor': ['react', 'react-dom'],
+          },
+        },
       },
     },
     server: {

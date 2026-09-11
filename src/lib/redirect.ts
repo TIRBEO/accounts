@@ -1,3 +1,5 @@
+import type { BlockInfo } from './api';
+
 // ═══ POST-AUTH REDIRECT RESOLUTION ═══
 // Decides where to send the user after a successful auth flow:
 //   1. A validated `redirect`/`redirect_to`/`next`/`return_to` query param
@@ -6,7 +8,7 @@
 //   3. The default dashboard (https://dashboard.tirbeo.app in prod,
 //      http://localhost:3005 in dev).
 
-const APP_DOMAIN = 'tirbeo.app';
+const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.app';
 
 /** Localhost ports used by the monorepo apps during development. */
 const DEV_PORTS: Record<string, number> = {
@@ -16,6 +18,7 @@ const DEV_PORTS: Record<string, number> = {
   forms: 3004,
   support: 3004,
   admin: 4000,
+  cdn: 4400,
 };
 
 function getDashboardUrl(): string {
@@ -90,4 +93,30 @@ export function getRedirectTarget(): string {
   if (referrer && isAllowedRedirectTarget(referrer)) return referrer;
 
   return DEFAULT_DASHBOARD_URL;
+}
+
+/**
+ * Banned / suspended / deleted accounts are all surfaced on the DASHBOARD
+ * (single place), never on the accounts app. Jump straight there carrying the
+ * block info through the query string so the dashboard can render the
+ * interruption page even when there is no live session cookie.
+ *
+ * The payload is signed with BLOCK_REDIRECT_SECRET (shared with the dashboard
+ * middleware): any edit to the URL breaks the `sig` and the user is bounced
+ * back to the canonical blocked page.
+ */
+export async function redirectBlockedToDashboard(block: BlockInfo): Promise<void> {
+  const q = new URLSearchParams();
+  q.set('blocked', block.kind);
+  if (block.eventId) q.set('eventId', block.eventId);
+  if (block.reason) q.set('reason', block.reason);
+  if (block.until) q.set('until', block.until);
+  try {
+    const { signBlockRedirect } = await import('./blockSignature');
+    q.set('sig', await signBlockRedirect(block.kind, block.eventId || '', block.until || ''));
+  } catch {
+    // Signature is defense-in-depth — redirect unsigned on failure; the
+    // dashboard middleware signs on arrival and still pins the block.
+  }
+  window.location.replace(`${DEFAULT_DASHBOARD_URL}?${q.toString()}`);
 }

@@ -22,6 +22,21 @@ export interface ApiResult<T = unknown> {
   data: T | null;
   /** Human-readable error extracted from the response (when available). */
   error?: string;
+  /**
+   * Structured account-restriction info returned by the API as 401/403 when a
+   * login attempt hits a banned / suspended / deleted / deletion-pending
+   * account. When present the UI should show the dedicated interruption page
+   * instead of a generic "cannot sign in" message.
+   */
+  block?: BlockInfo | null;
+}
+
+export interface BlockInfo {
+  kind: 'banned' | 'suspended' | 'deleted';
+  reason?: string | null;
+  until?: string | null;
+  eventId?: string | null;
+  message?: string | null;
 }
 
 function getCsrfToken(): string {
@@ -74,6 +89,18 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
   if (msg.includes('csrf')) {
     return 'Your request could not be verified. Please refresh the page and try again.';
   }
+  if (msg === 'account_deleted') {
+    return 'Your account has been deleted. If this is a mistake, please contact support@tirbeo.app.';
+  }
+  if (msg === 'account_banned') {
+    return 'Your account has been permanently banned. Please contact support@tirbeo.app if you believe this is a mistake.';
+  }
+  if (msg === 'account_suspended') {
+    return 'Your account is temporarily suspended. You will be able to sign in again when the suspension ends.';
+  }
+  if (msg === 'account_deletion_scheduled' || msg.includes('deletion_scheduled')) {
+    return 'Your account is scheduled for deletion. You cannot sign in while deletion is pending.';
+  }
   if (status === 429 || msg.includes('rate limit') || msg.includes('too many')) {
     return 'Too many attempts. Please wait a moment and try again.';
   }
@@ -83,17 +110,50 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
   return raw;
 }
 
+/**
+ * Decode the API's structured account-restriction payloads (returned as 401/403
+ * from login-ish routes) into a UI BlockInfo. Shapes (see apps/api):
+ *   banned    → { error:'ACCOUNT_BANNED', banned:true, eventId, message }
+ *   suspended → { error:'ACCOUNT_SUSPENDED', suspended:true, eventId, reason, until, message }
+ *   deleted   → { error:'ACCOUNT_DELETED', deleted:true, message }
+ */
+function extractBlock(
+  status: number,
+  data: (Record<string, unknown> & {
+    error?: string;
+    banned?: boolean;
+    suspended?: boolean;
+    deleted?: boolean;
+    eventId?: string | null;
+    reason?: string | null;
+    until?: string | null;
+    message?: string | null;
+  }) | null,
+): BlockInfo | null {
+  if ((status !== 401 && status !== 403) || !data) return null;
+  if (data.banned) return { kind: 'banned', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
+  if (data.suspended) return { kind: 'suspended', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
+  if (data.deleted) return { kind: 'deleted', reason: data.reason, message: data.message };
+  const err = (data.error || '').toLowerCase();
+  if (err.includes('banned')) return { kind: 'banned', reason: data.reason, message: data.message };
+  if (err.includes('suspended')) return { kind: 'suspended', reason: data.reason, until: data.until, message: data.message };
+  if (err.includes('deleted')) return { kind: 'deleted', reason: data.reason, message: data.message };
+  return null;
+}
+
 export async function apiPost<T = Record<string, unknown>>(path: string, body: unknown): Promise<ApiResult<T>> {
   try {
     const { status, data } = await postJson<T>(path, body);
-    const error = sanitizeApiError(status, (data as { error?: string } | null)?.error);
-    return { ok: status >= 200 && status < 300, status, data, error };
+    const raw = data as (Record<string, unknown> & { error?: string }) | null;
+    const error = sanitizeApiError(status, raw?.error);
+    return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
   }
 }
 
 function readableError<T>(result: ApiResult<T>, fallback: string): string {
+  if (result.block) return result.block.message || result.error || fallback;
   if (result.status === 401 || result.status === 403) {
     return 'Your session has expired. Please sign in again.';
   }
@@ -203,8 +263,12 @@ export interface LoginOtpVerifyData {
   tempToken?: string;
 }
 
-export async function requestLoginOtp(email: string): Promise<ApiResult<{ message?: string }>> {
-  return apiPost<{ message?: string }>('/api/auth/login-otp/request', { email });
+export interface LoginOtpRequestData {
+  message?: string;
+  retryAfterMs?: number;
+}
+export async function requestLoginOtp(email: string): Promise<ApiResult<LoginOtpRequestData>> {
+  return apiPost<LoginOtpRequestData>('/api/auth/login-otp/request', { email });
 }
 
 export async function verifyLoginOtp(email: string, code: string): Promise<ApiResult<LoginOtpVerifyData>> {
@@ -242,12 +306,19 @@ export async function confirmPasswordReset(resetToken: string, newPassword: stri
   return apiPost<{ message?: string }>('/api/auth/password-reset/confirm', { resetToken, newPassword });
 }
 
+/** Quick login via OTP — verify code and get session directly (no password change). */
+export async function quickLoginWithOtp(email: string, code: string): Promise<ApiResult<{ userId?: string }>> {
+  return apiPost<{ userId?: string }>('/api/auth/password-reset/quick-login', { email, code });
+}
+
 // ═══ MAGIC LINK ═══
 
 export interface MagicLinkRequestResult {
   ok: boolean;
+  status?: number;
   message?: string;
   error?: string;
+  retryAfterMs?: number;
 }
 
 /**
@@ -256,9 +327,9 @@ export interface MagicLinkRequestResult {
  * (prevents account enumeration), so the UI should show a generic message.
  */
 export async function requestMagicLink(email: string): Promise<MagicLinkRequestResult> {
-  const result = await apiPost<{ message?: string }>('/api/auth/magic-link/request', { email });
+  const result = await apiPost<{ message?: string; retryAfterMs?: number }>('/api/auth/magic-link/request', { email });
   if (!result.ok) {
-    return { ok: false, error: readableError(result, 'Failed to send magic link. Please try again.') };
+    return { ok: false, status: result.status, error: readableError(result, 'Failed to send magic link. Please try again.'), retryAfterMs: result.data?.retryAfterMs };
   }
   return { ok: true, message: result.data?.message };
 }
@@ -267,6 +338,7 @@ export interface MagicLinkVerifyResult {
   ok: boolean;
   email?: string;
   error?: string;
+  block?: BlockInfo | null;
 }
 
 /**
@@ -276,6 +348,9 @@ export interface MagicLinkVerifyResult {
  */
 export async function verifyMagicLink(token: string): Promise<MagicLinkVerifyResult> {
   const result = await apiPost<{ email?: string }>('/api/auth/magic-link/verify', { token });
+  if (result.block) {
+    return { ok: false, block: result.block, error: result.block.message || result.error };
+  }
   if (!result.ok || !result.data?.email) {
     return { ok: false, error: readableError(result, 'This magic link is invalid or has expired.') };
   }
@@ -302,7 +377,7 @@ let refreshPromise: Promise<boolean> | null = null;
  * On success the API re-issues __session/__csrf/__refresh cookies. Returns
  * false when the refresh cookie is missing/expired/spent.
  */
-function refreshSession(): Promise<boolean> {
+export function refreshSession(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
@@ -330,6 +405,10 @@ function refreshSession(): Promise<boolean> {
  * the user as signed out.
  */
 export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
+  // If there's no session cookie at all, don't even try — avoids 401 → refresh → 401 cascade.
+  if (typeof document !== 'undefined' && !document.cookie.includes('__session=')) {
+    return { ok: false, status: 401, data: null };
+  }
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/me`, { credentials: 'include' });
@@ -343,6 +422,8 @@ export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
       } catch {
         // Non-JSON error body
       }
+      const block = extractBlock(res.status, data as unknown as Parameters<typeof extractBlock>[1]);
+      if (block) return { ok: false, status: res.status, data: null, block };
       return { ok: res.ok, status: res.status, data };
     } catch {
       return { ok: false, status: 0, data: null, error: 'Could not reach the server.' };
@@ -352,6 +433,37 @@ export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
 }
 
 // ═══ PROFILE UPDATE ═══
+
+/**
+ * Upload an avatar via the API's media endpoint (cookie-authed).
+ * Returns the public URL of the uploaded file.
+ */
+export async function uploadAvatarViaApi(file: File | Blob): Promise<{ url: string | null; error?: string }> {
+  try {
+    const csrf = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith('__csrf='))
+      ?.split('=')[1] || '';
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_BASE_URL}/api/media/upload`, {
+      method: 'POST',
+      headers: {
+        ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+      },
+      credentials: 'include',
+      body: formData,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { url: null, error: (data as any)?.error || 'Upload failed' };
+    }
+    const data = await res.json();
+    return { url: (data as any)?.url || null };
+  } catch {
+    return { url: null, error: 'Upload failed' };
+  }
+}
 
 /**
  * Update the current user's profile (cookie-authed, requires the CSRF header).

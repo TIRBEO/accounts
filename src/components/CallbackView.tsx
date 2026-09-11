@@ -2,10 +2,13 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, CheckCircle2, Camera, Loader2, ShieldCheck } from 'lucide-react';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
-import { ImageCropEditor } from './ImageCropEditor';
-import { uploadAvatar } from '../lib/supabase';
+import { MobileConsentSheet } from './auth/MobileConsentSheet';
+const ImageCropEditor = React.lazy(() => import('./ImageCropEditor'));
+import { uploadAvatarViaApi } from '../lib/api';
 import { getCurrentUser, oauthConsent, updateProfile, apiPost } from '../lib/api';
 import type { CurrentUserData } from '../lib/api';
+import { isAllowedRedirectTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
+import { haptic } from '../lib/haptics';
 
 const PROVIDER_LABELS: Record<string, string> = {
   github: 'GitHub',
@@ -14,7 +17,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 const PROVIDER_ICONS: Record<string, React.ReactNode> = {
-  github: <GitHubIcon className="w-6 h-6 text-[var(--wave-text)]" />,
+  github: <GitHubIcon className="w-6 h-6 text-[var(--tb-text)]" />,
   google: <GoogleIcon className="w-6 h-6" />,
   discord: <DiscordIcon className="w-6 h-6 text-[#5865F2]" />,
 };
@@ -24,18 +27,9 @@ function getParam(key: string): string {
 }
 
 function sanitizeTarget(raw: string): string {
-  const fallback = import.meta.env.VITE_DASHBOARD_URL || 'https://dashboard.tirbeo.app';
-  if (!raw) return fallback;
-  try {
-    const u = new URL(raw);
-    const isLocal = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
-    const isTirbeo = u.hostname === 'tirbeo.app' || u.hostname.endsWith('.tirbeo.app');
-    if (!isLocal && !isTirbeo) return fallback;
-    if (!isLocal && u.protocol !== 'https:') return fallback;
-    return u.toString();
-  } catch {
-    return fallback;
-  }
+  if (!raw) return DEFAULT_DASHBOARD_URL;
+  if (isAllowedRedirectTarget(raw)) return raw;
+  return DEFAULT_DASHBOARD_URL;
 }
 
 /**
@@ -60,6 +54,13 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState('');
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Merge flow: API redirected here with ?oauth=merge&mode=login|transfer&provider=…&token=…
   const isMerge = getParam('oauth') === 'merge';
   const mergeMode: 'login' | 'transfer' = getParam('mode') === 'transfer' ? 'transfer' : 'login';
@@ -67,7 +68,6 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const provider = getParam('provider') || '';
   const providerLabel = PROVIDER_LABELS[provider] || provider || 'sign-in';
   const redirectTo = sanitizeTarget(getParam('redirect_to'));
-  const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL || 'https://dashboard.tirbeo.app';
   const isNewOAuthUser = getParam('oauth') === 'new';
 
   // Optional password setup for freshly-created OAuth accounts.
@@ -85,7 +85,6 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
-  const [uploadingPic, setUploadingPic] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -117,12 +116,12 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       return;
     }
     window.location.href = mergeMode === 'transfer'
-      ? `${dashboardUrl}/account/apps?connected=${provider}`
-      : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || dashboardUrl);
+      ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps?connected=${provider}`
+      : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || DEFAULT_DASHBOARD_URL);
   };
 
   const handleMergeCancel = () => {
-    window.location.href = mergeMode === 'transfer' ? `${dashboardUrl}/account/apps` : '/';
+    window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps` : '/';
   };
 
   const handleSendCode = async () => {
@@ -161,12 +160,26 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       const msg = result.error || 'Could not save your consent. Please try again.';
       setError(msg);
       onToast?.(msg, 'error');
+      haptic('error');
       return;
     }
+    haptic('success');
     // Upload profile picture if one was selected (best-effort, don't block redirect)
     if (profilePic && user?.id) {
       try {
-        const { url, error: uploadErr } = await uploadAvatar(user.id, profilePic);
+        // Convert data URL to Blob for API upload
+        const headerMatch = profilePic.match(/^data:([^;]+);base64,(.+)$/);
+        let uploadFile: Blob;
+        if (headerMatch) {
+          const mime = headerMatch[1];
+          const raw = atob(headerMatch[2]);
+          const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          uploadFile = new Blob([bytes], { type: mime });
+        } else {
+          uploadFile = new Blob([profilePic], { type: 'image/jpeg' });
+        }
+        const { url, error: uploadErr } = await uploadAvatarViaApi(uploadFile);
         if (url) {
           await updateProfile({ photoUrl: url }).catch(() => {});
         } else if (uploadErr) {
@@ -213,39 +226,39 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[var(--wave-bg)] text-[var(--wave-text)] overflow-hidden flex items-center justify-center p-6">
+    <div className="relative min-h-screen bg-[var(--tb-bg)] text-[var(--tb-text)] overflow-hidden flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[440px] wave-card p-7 sm:p-8"
+        className="relative z-10 w-full max-w-[440px] tb-card p-7 sm:p-8"
       >
         {checking ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[var(--wave-text)]" />
-            <p className="text-sm text-[var(--wave-on-surface-variant)]">Finishing sign-in…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--tb-text)]" />
+            <p className="text-sm text-[var(--tb-on-surface-variant)]">Finishing sign-in…</p>
           </div>
         ) : isMerge ? (
           <>
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] border border-[var(--wave-outline-variant)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <ShieldCheck className="w-6 h-6 text-[var(--wave-text)]" />}
+              <div className="w-14 h-14 rounded-2xl bg-[var(--tb-surface-container)] border border-[var(--tb-outline-variant)] flex items-center justify-center mb-4">
+                {PROVIDER_ICONS[provider] || <ShieldCheck className="w-6 h-6 text-[var(--tb-text)]" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--wave-text)] mb-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--tb-text)] mb-1.5">
                 {mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}
               </h1>
-              <p className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
+              <p className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
                 {mergeMode === 'transfer'
                   ? `This ${providerLabel} account is currently linked to a different Tirbeo account. Transferring moves the sign-in to your current account and disconnects it there.`
                   : `We found an existing Tirbeo account with the same email as your ${providerLabel} account. Merging links ${providerLabel} sign-in to that account — nothing else changes.`}
               </p>
             </div>
 
-            {error && <p className="text-xs text-[var(--wave-error)] mb-3 text-center">{error}</p>}
+            {error && <p className="text-xs text-[var(--tb-error)] mb-3 text-center">{error}</p>}
 
-            <button type="button" onClick={handleMergeConfirm} disabled={merging} className="wave-btn wave-btn-primary">
+            <button type="button" onClick={handleMergeConfirm} disabled={merging} className="tb-btn tb-btn-primary">
               {merging ? (
-                <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--tb-on-primary)] relative z-10" />
               ) : (
                 <>
                   <span className="relative z-10">{mergeMode === 'transfer' ? 'Transfer here' : 'Merge & continue'}</span>
@@ -254,24 +267,24 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               )}
             </button>
 
-            <button type="button" onClick={handleMergeCancel} disabled={merging} className="wave-btn wave-btn-secondary mt-3">
+            <button type="button" onClick={handleMergeCancel} disabled={merging} className="tb-btn tb-btn-secondary mt-3">
               Cancel
             </button>
 
-            <p className="text-xs text-[var(--wave-on-surface-variant)] text-center leading-relaxed mt-4">
+            <p className="text-xs text-[var(--tb-on-surface-variant)] text-center leading-relaxed mt-4">
               Accounts are only ever merged when the email addresses match exactly.
             </p>
           </>
         ) : (
           <>
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--wave-surface-container)] border border-[var(--wave-outline-variant)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <CheckCircle2 className="w-6 h-6 text-[var(--wave-text)]" />}
+              <div className="w-14 h-14 rounded-2xl bg-[var(--tb-surface-container)] border border-[var(--tb-outline-variant)] flex items-center justify-center mb-4">
+                {PROVIDER_ICONS[provider] || <CheckCircle2 className="w-6 h-6 text-[var(--tb-text)]" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--wave-text)] mb-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--tb-text)] mb-1.5">
                 {isNewOAuthUser ? 'Create your Tirbeo account' : "You're signed in"}
               </h1>
-              <p className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
+              <p className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
                 {isNewOAuthUser ? (
                   <>
                     No Tirbeo account exists for this email yet — continuing will
@@ -279,7 +292,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                     {user?.email && (
                       <>
                         <br />
-                        <span className="text-[var(--wave-text)] font-medium">{user.email}</span>
+                        <span className="text-[var(--tb-text)] font-medium">{user.email}</span>
                       </>
                     )}
                   </>
@@ -289,181 +302,196 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setConsent(!consent)}
-              className={`w-full flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all text-left ${
-                consent
-                  ? 'bg-[var(--wave-surface-container-low)] border-[var(--wave-outline-variant)]'
-                  : 'bg-[var(--wave-surface-container-low)] border-[var(--wave-outline-variant)] hover:bg-[var(--wave-surface-container-low)]'
-              }`}
-              role="checkbox"
-              aria-checked={consent}
-            >
-              <span
-                className={`mt-0.5 w-5 h-5 shrink-0 rounded flex items-center justify-center border transition-colors ${
-                  consent ? 'bg-[var(--wave-primary)] border-[var(--wave-primary)]' : 'border-[var(--wave-outline-variant)]'
-                }`}
-              >
-                {consent && <CheckCircle2 className="w-4 h-4 text-[var(--wave-on-primary)]" />}
-              </span>
-              <span className="text-sm text-[var(--wave-on-surface-variant)] leading-relaxed">
-                I agree to the Tirbeo Terms of Service and acknowledge the Privacy Policy,
-                including data processing for my account. <span className="text-[var(--wave-text)]">*</span>
-              </span>
-            </button>
-
-            {/* ── Profile picture (new OAuth users) ── */}
-            {isNewOAuthUser && (
-              <div className="mt-4">
-                {/* Hidden file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="relative group shrink-0"
+            {isMobile ? (
+              <MobileConsentSheet
+                isOpen={true}
+                onClose={handleMergeCancel}
+                provider={provider}
+                isNewOAuthUser={isNewOAuthUser}
+                email={user?.email}
+                saving={saving}
+                error={error}
+                onContinue={({ consent: c, profilePic: pic }) => {
+                  setConsent(c);
+                  if (pic) setProfilePic(pic);
+                  handleContinue();
+                }}
+              />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setConsent(!consent)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all text-left ${
+                    consent
+                      ? 'bg-[var(--tb-surface-container-low)] border-[var(--tb-outline-variant)]'
+                      : 'bg-[var(--tb-surface-container-low)] border-[var(--tb-outline-variant)] hover:bg-[var(--tb-surface-container-low)]'
+                  }`}
+                  role="checkbox"
+                  aria-checked={consent}
+                >
+                  <span
+                    className={`mt-0.5 w-5 h-5 shrink-0 rounded flex items-center justify-center border transition-colors ${
+                      consent ? 'bg-[var(--tb-primary)] border-[var(--tb-primary)]' : 'border-[var(--tb-outline-variant)]'
+                    }`}
                   >
-                    <div className="w-16 h-16 rounded-full bg-[var(--wave-surface-container-low)] border-2 border-dashed border-[var(--wave-outline-variant)] flex items-center justify-center overflow-hidden group-hover:border-[var(--wave-primary)] transition-all">
-                      {uploadingPic ? (
-                        <Loader2 className="w-6 h-6 text-[var(--wave-text)] animate-spin" />
-                      ) : profilePic ? (
-                        <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <Camera className="w-6 h-6 text-[var(--wave-on-surface-variant)] group-hover:text-[var(--wave-text)] transition-colors" />
-                      )}
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--wave-primary)] flex items-center justify-center shadow-lg">
-                      {uploadingPic ? (
-                        <Loader2 className="w-3 h-3 text-[var(--wave-on-primary)] animate-spin" />
-                      ) : (
-                        <Camera className="w-3 h-3 text-[var(--wave-on-primary)]" />
-                      )}
-                    </span>
-                  </button>
-                  <div className="text-left">
-                    <p className="text-sm text-[var(--wave-on-surface-variant)]">Profile photo</p>
-                    <p className="text-xs text-[var(--wave-on-surface-variant)] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
-                    {profilePic && (
+                    {consent && <CheckCircle2 className="w-4 h-4 text-[var(--tb-on-primary)]" />}
+                  </span>
+                  <span className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
+                    I agree to the Tirbeo Terms of Service and acknowledge the Privacy Policy,
+                    including data processing for my account. <span className="text-[var(--tb-text)]">*</span>
+                  </span>
+                </button>
+
+                {/* ── Profile picture (new OAuth users) ── */}
+                {isNewOAuthUser && (
+                  <div className="mt-4">
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-4">
                       <button
                         type="button"
-                        onClick={handleRemovePic}
-                        className="mt-1 text-xs text-[var(--wave-error)] hover:text-[var(--wave-error)] font-medium cursor-pointer transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="relative group shrink-0"
                       >
-                        Remove photo
+                        <div className="w-16 h-16 rounded-full bg-[var(--tb-surface-container-low)] border-2 border-dashed border-[var(--tb-outline-variant)] flex items-center justify-center overflow-hidden group-hover:border-[var(--tb-primary)] transition-all">
+                          {profilePic ? (
+                            <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <Camera className="w-6 h-6 text-[var(--tb-on-surface-variant)] group-hover:text-[var(--tb-text)] transition-colors" />
+                          )}
+                        </div>
+                        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--tb-primary)] flex items-center justify-center shadow-lg">
+                          <Camera className="w-3 h-3 text-[var(--tb-on-primary)]" />
+                        </span>
                       </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isNewOAuthUser && (
-              <div className="mt-4">
-                {!pwOpen ? (
-                  pwDone ? (
-                    <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--wave-success)]/30 bg-[var(--wave-success-container)]">
-                      <CheckCircle2 className="w-4 h-4 text-[var(--wave-success)]" />
-                      <span className="text-sm text-[var(--wave-success)]">Password added to your account</span>
+                      <div className="text-left">
+                        <p className="text-sm text-[var(--tb-on-surface-variant)]">Profile photo</p>
+                        <p className="text-xs text-[var(--tb-on-surface-variant)] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
+                        {profilePic && (
+                          <button
+                            type="button"
+                            onClick={handleRemovePic}
+                            className="mt-1 text-xs text-[var(--tb-error)] hover:text-[var(--tb-error)] font-medium cursor-pointer transition-colors"
+                          >
+                            Remove photo
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <button type="button" onClick={() => setPwOpen(true)} className="wave-btn wave-btn-secondary">
-                      Add a password (optional)
-                    </button>
-                  )
-                ) : (
-                  <div className="p-4 rounded-xl border border-[var(--wave-outline-variant)] bg-[var(--wave-surface-container-low)] space-y-3">
-                    {!otpSent ? (
-                      <>
-                        <p className="text-xs text-[var(--wave-on-surface-variant)]">We'll email you a 6-digit code to verify it's you.</p>
-                        <button type="button" onClick={handleSendCode} disabled={sendingCode} className="wave-btn wave-btn-secondary">
-                          {sendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Email me a verification code'}
+                  </div>
+                )}
+
+                {isNewOAuthUser && (
+                  <div className="mt-4">
+                    {!pwOpen ? (
+                      pwDone ? (
+                        <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--tb-success)]/30 bg-[var(--tb-success-container)]">
+                          <CheckCircle2 className="w-4 h-4 text-[var(--tb-success)]" />
+                          <span className="text-sm text-[var(--tb-success)]">Password added to your account</span>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setPwOpen(true)} className="tb-btn tb-btn-secondary">
+                          Add a password (optional)
                         </button>
-                      </>
+                      )
                     ) : (
-                      <>
-                        <input
-                          className="wave-input text-center tracking-[0.3em]"
-                          placeholder="••••••"
-                          inputMode="numeric"
-                          maxLength={6}
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                        />
-                        <input
-                          className="wave-input"
-                          type="password"
-                          placeholder="New password (min 8 characters)"
-                          value={newPw}
-                          onChange={(e) => setNewPw(e.target.value)}
-                        />
-                        <input
-                          className="wave-input"
-                          type="password"
-                          placeholder="Confirm password"
-                          value={confirmPw}
-                          onChange={(e) => setConfirmPw(e.target.value)}
-                        />
-                      </>
-                    )}
-                    {pwError && <p className="text-xs text-[var(--wave-error)]">{pwError}</p>}
-                    {otpSent && (
-                      <div className="flex gap-2">
-                        <button type="button" onClick={handleSavePassword} disabled={savingPw} className="wave-btn wave-btn-primary flex-1">
-                          {savingPw ? <Loader2 className="w-4 h-4 animate-spin text-[var(--wave-on-primary)] relative z-10" /> : <span className="relative z-10">Save password</span>}
-                        </button>
-                        <button type="button" onClick={() => { setPwOpen(false); setOtpSent(false); setOtp(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} className="wave-btn wave-btn-secondary flex-1">
-                          Cancel
-                        </button>
+                      <div className="p-4 rounded-xl border border-[var(--tb-outline-variant)] bg-[var(--tb-surface-container-low)] space-y-3">
+                        {!otpSent ? (
+                          <>
+                            <p className="text-xs text-[var(--tb-on-surface-variant)]">We'll email you a 6-digit code to verify it's you.</p>
+                            <button type="button" onClick={handleSendCode} disabled={sendingCode} className="tb-btn tb-btn-secondary">
+                              {sendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Email me a verification code'}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <input
+                              className="tb-input text-center tracking-[0.3em]"
+                              placeholder="••••••"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={otp}
+                              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                            />
+                            <input
+                              className="tb-input"
+                              type="password"
+                              placeholder="New password (min 8 characters)"
+                              value={newPw}
+                              onChange={(e) => setNewPw(e.target.value)}
+                            />
+                            <input
+                              className="tb-input"
+                              type="password"
+                              placeholder="Confirm password"
+                              value={confirmPw}
+                              onChange={(e) => setConfirmPw(e.target.value)}
+                            />
+                          </>
+                        )}
+                        {pwError && <p className="text-xs text-[var(--tb-error)]">{pwError}</p>}
+                        {otpSent && (
+                          <div className="flex gap-2">
+                            <button type="button" onClick={handleSavePassword} disabled={savingPw} className="tb-btn tb-btn-primary flex-1">
+                              {savingPw ? <Loader2 className="w-4 h-4 animate-spin text-[var(--tb-on-primary)] relative z-10" /> : <span className="relative z-10">Save password</span>}
+                            </button>
+                            <button type="button" onClick={() => { setPwOpen(false); setOtpSent(false); setOtp(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} className="tb-btn tb-btn-secondary flex-1">
+                              Cancel
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+
+                {error && (
+                  <p className="text-xs text-[var(--tb-error)] mt-3">{error}</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={!consent || saving}
+                  className="tb-btn tb-btn-primary mt-5"
+                >
+                  {saving ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-[var(--tb-on-primary)] relative z-10" />
+                  ) : (
+                    <>
+                      <span className="relative z-10">{isNewOAuthUser ? 'Create account & continue' : 'Continue'}</span>
+                      <ArrowRight className="w-4 h-4 stroke-[2.5] relative z-10" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-[var(--tb-on-surface-variant)] text-center leading-relaxed mt-4">
+                  You can set a password and manage connected services anytime from your
+                  dashboard settings.
+                </p>
+              </>
             )}
-
-            {error && (
-              <p className="text-xs text-[var(--wave-error)] mt-3">{error}</p>
-            )}
-
-            <button
-              type="button"
-              onClick={handleContinue}
-              disabled={!consent || saving}
-              className="wave-btn wave-btn-primary mt-5"
-            >
-              {saving ? (
-                <Loader2 className="w-5 h-5 animate-spin text-[var(--wave-on-primary)] relative z-10" />
-              ) : (
-                <>
-                  <span className="relative z-10">{isNewOAuthUser ? 'Create account & continue' : 'Continue'}</span>
-                  <ArrowRight className="w-4 h-4 stroke-[2.5] relative z-10" />
-                </>
-              )}
-            </button>
-
-            <p className="text-xs text-[var(--wave-on-surface-variant)] text-center leading-relaxed mt-4">
-              You can set a password and manage connected services anytime from your
-              dashboard settings.
-            </p>
           </>
         )}
       </motion.div>
 
       {/* Image Crop Editor */}
       {showImageEditor && tempImageUrl && (
-        <ImageCropEditor
-          imageUrl={tempImageUrl}
-          onCrop={handleCropImage}
-          onCancel={handleCancelCrop}
-          outputSize={512}
-        />
+        <React.Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--tb-text)]" /></div>}>
+          <ImageCropEditor
+            imageUrl={tempImageUrl}
+            onCrop={handleCropImage}
+            onCancel={handleCancelCrop}
+            outputSize={512}
+          />
+        </React.Suspense>
       )}
     </div>
   );
