@@ -23,10 +23,10 @@ interface LoginRecoveryProps {
 const codeInput: React.CSSProperties = {
   width: '52px',
   height: '60px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '28px',
   fontWeight: 700,
   fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
@@ -39,10 +39,10 @@ const codeInput: React.CSSProperties = {
 const inputBase: React.CSSProperties = {
   width: '100%',
   height: '56px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 24px',
@@ -53,25 +53,26 @@ const inputBase: React.CSSProperties = {
 
 const primaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '56px',
-  background: '#0095f6',
-  color: '#ffffff',
+  height: '44px',
+  background: '#0095F6',
+  color: '#FFFFFF',
   border: 'none',
-  borderRadius: '14px',
+  borderRadius: '8px',
   fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
-  transition: 'opacity 150ms ease',
+  transition: 'all 150ms ease',
+  boxShadow: 'none',
 };
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
   height: '48px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#a0a0a0',
+  color: '#A1A1AA',
   fontSize: '15px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
@@ -96,13 +97,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   if (recoveryStage === 'password') {
     const canSubmit = newPassword.length >= 8 && confirmPassword === newPassword && !isSubmitting;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
             Create new password
           </h2>
-          <p style={{ fontSize: '15px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
-            Choose a strong password for <span style={{ color: '#a0a0a0' }}>{email}</span>.
+          <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+            Choose a strong password for <span style={{ color: '#A1A1AA' }}>{email}</span>.
           </p>
         </div>
 
@@ -111,13 +112,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
             <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
               placeholder="New password" autoComplete="new-password"
               style={inputBase}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.boxShadow = 'none'; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)}
               style={{
                 position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', color: '#707070', cursor: 'pointer',
+                background: 'none', border: 'none', color: '#71717A', cursor: 'pointer',
                 padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
@@ -131,18 +132,20 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
           <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password" autoComplete="new-password"
             style={inputBase}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.boxShadow = 'none'; }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p style={{ fontSize: '14px', color: '#ed4956', marginTop: '-4px' }}>Passwords don&apos;t match</p>
+            <p style={{ fontSize: '14px', color: '#f43f5e', marginTop: '-4px' }}>Passwords don&apos;t match</p>
           )}
         </div>
 
         <button type="button" onClick={() => onSubmitNewPassword(newPassword)} disabled={!canSubmit}
           style={{
             ...primaryBtn,
-            opacity: canSubmit ? 1 : 0.5,
+            background: canSubmit ? '#0095F6' : 'rgba(255,255,255,0.08)',
+            color: canSubmit ? '#FFFFFF' : '#71717A',
+            opacity: 1,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
           }}
         >
@@ -155,8 +158,8 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
         </button>
 
         <button type="button" onClick={onBack} style={secondaryBtn}
-          onMouseOver={e => { e.currentTarget.style.background = '#161616'; e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#f5f5f5'; }}
-          onMouseOut={e => { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#a0a0a0'; }}
+          onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; }}
+          onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; }}
         >
           Back
         </button>
@@ -165,24 +168,24 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
           {recoveryMethod === 'magic-link' ? 'Check your email' : 'Enter verification code'}
         </h2>
-        <p style={{ fontSize: '15px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
           {recoveryMethod === 'magic-link'
-            ? <>We sent a magic link to <span style={{ color: '#a0a0a0' }}>{email}</span>.</>
+            ? <>We sent a magic link to <span style={{ color: '#A1A1AA' }}>{email}</span>.</>
             : recoveryMethod === 'recovery'
-              ? <>We sent a code to <span style={{ color: '#a0a0a0' }}>{loginProfile?.recoveryEmail || 'your recovery email'}</span>.</>
-              : <>We sent a code to <span style={{ color: '#a0a0a0' }}>{email}</span>.</>
+              ? <>We sent a code to <span style={{ color: '#A1A1AA' }}>{loginProfile?.recoveryEmail || 'your recovery email'}</span>.</>
+              : <>We sent a code to <span style={{ color: '#A1A1AA' }}>{email}</span>.</>
           }
         </p>
       </div>
 
       {recoveryMethod !== 'magic-link' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+          <div className="otp-grid" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
             {[...Array(codeLength)].map((_, i) => (
               <input key={i} type="text" inputMode="numeric" maxLength={1} value={recoveryCode[i] || ''}
                 onChange={(e) => {
@@ -197,12 +200,12 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
                 onPaste={(e) => { e.preventDefault(); const p = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, codeLength); if (p.length === codeLength) setRecoveryCode(p); }}
                 style={{
                   ...codeInput,
-                  borderColor: recoveryCode[i] ? '#3a3a3a' : '#2a2a2a',
+                  borderColor: recoveryCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)',
                 }}
                 data-recovery-index={i}
-                onFocus={(e) => { e.currentTarget.style.borderColor = '#0095f6'; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#FFFFFF'; }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = recoveryCode[i] ? '#3a3a3a' : '#2a2a2a';
+                  e.currentTarget.style.borderColor = recoveryCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
@@ -211,13 +214,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
 
           <div style={{ textAlign: 'center' }}>
             {isInCooldown(cooldownKey) ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#707070', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
                 <span>Resend in {getCooldownRemaining(cooldownKey)}s</span>
                 <span style={{
                   padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-                  background: sendsRemaining === 0 ? 'rgba(237,73,86,0.1)' : '#1a1a1a',
-                  color: sendsRemaining === 0 ? '#ed4956' : '#a0a0a0',
-                  border: `1px solid ${sendsRemaining === 0 ? 'rgba(237,73,86,0.2)' : '#2a2a2a'}`,
+                  background: sendsRemaining === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
+                  color: sendsRemaining === 0 ? '#f43f5e' : '#A1A1AA',
+                  border: `1px solid ${sendsRemaining === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
                 }}>
                   {sendsRemaining === 0 ? 'limit reached' : `${sendsRemaining} left`}
                 </span>
@@ -226,20 +229,20 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                 <button type="button" onClick={onResend}
                   style={{
-                    background: 'none', border: 'none', color: '#707070', fontSize: '14px',
+                    background: 'none', border: 'none', color: '#71717A', fontSize: '14px',
                     fontFamily: TYPOGRAPHY.fontFamily, cursor: 'pointer', padding: 0,
                     transition: 'color 150ms ease',
                   }}
-                  onMouseOver={e => { e.currentTarget.style.color = '#a0a0a0'; }}
-                  onMouseOut={e => { e.currentTarget.style.color = '#707070'; }}
+                  onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; }}
+                  onMouseOut={e => { e.currentTarget.style.color = '#71717A'; }}
                 >
                   Resend {methodLabel}
                 </button>
                 <span style={{
                   padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-                  background: sendsRemaining === 0 ? 'rgba(237,73,86,0.1)' : '#1a1a1a',
-                  color: sendsRemaining === 0 ? '#ed4956' : '#a0a0a0',
-                  border: `1px solid ${sendsRemaining === 0 ? 'rgba(237,73,86,0.2)' : '#2a2a2a'}`,
+                  background: sendsRemaining === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
+                  color: sendsRemaining === 0 ? '#f43f5e' : '#A1A1AA',
+                  border: `1px solid ${sendsRemaining === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
                 }}>
                   {sendsRemaining === 0 ? 'limit reached' : `${sendsRemaining} left`}
                 </span>
@@ -250,7 +253,9 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
           <button type="button" onClick={() => onSubmitCode(recoveryCode)} disabled={recoveryCode.length !== codeLength || isSubmitting}
             style={{
               ...primaryBtn,
-              opacity: recoveryCode.length === codeLength && !isSubmitting ? 1 : 0.5,
+              background: recoveryCode.length === codeLength && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.08)',
+              color: recoveryCode.length === codeLength && !isSubmitting ? '#FFFFFF' : '#71717A',
+              opacity: 1,
               cursor: recoveryCode.length === codeLength && !isSubmitting ? 'pointer' : 'not-allowed',
             }}
           >
@@ -267,18 +272,18 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
       {recoveryMethod === 'magic-link' && (
         <div style={{ textAlign: 'center' }}>
           {isInCooldown(cooldownKey) ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#707070', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
               <span>Resend in {getCooldownRemaining(cooldownKey)}s</span>
             </div>
           ) : (
             <button type="button" onClick={onResend}
               style={{
-                background: 'none', border: 'none', color: '#707070', fontSize: '14px',
+                background: 'none', border: 'none', color: '#71717A', fontSize: '14px',
                 fontFamily: TYPOGRAPHY.fontFamily, cursor: 'pointer', padding: 0,
                 transition: 'color 150ms ease',
               }}
-              onMouseOver={e => { e.currentTarget.style.color = '#a0a0a0'; }}
-              onMouseOut={e => { e.currentTarget.style.color = '#707070'; }}
+              onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; }}
+              onMouseOut={e => { e.currentTarget.style.color = '#71717A'; }}
             >
               Resend magic link
             </button>
@@ -287,8 +292,8 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
       )}
 
       <button type="button" onClick={onBack} style={secondaryBtn}
-        onMouseOver={e => { e.currentTarget.style.background = '#161616'; e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#f5f5f5'; }}
-        onMouseOut={e => { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#a0a0a0'; }}
+        onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; }}
+        onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; }}
       >
         Back to sign in
       </button>

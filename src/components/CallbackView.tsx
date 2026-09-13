@@ -1,50 +1,27 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, CheckCircle2, Camera, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Camera, ShieldCheck, Mail, Sparkles } from 'lucide-react';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { MobileConsentSheet } from './auth/MobileConsentSheet';
 const ImageCropEditor = React.lazy(() => import('./ImageCropEditor'));
 import { uploadAvatarViaApi } from '../lib/api';
-import { getCurrentUser, oauthConsent, updateProfile, apiPost } from '../lib/api';
+import { getCurrentUser, oauthConsent, updateProfile, apiPost, verifyMagicLink } from '../lib/api';
 import type { CurrentUserData } from '../lib/api';
 import { isAllowedRedirectTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
 import { haptic } from '../lib/haptics';
 
-const PROVIDER_LABELS: Record<string, string> = {
-  github: 'GitHub',
-  google: 'Google',
-  discord: 'Discord',
-};
-
+const PROVIDER_LABELS: Record<string, string> = { github: 'GitHub', google: 'Google', discord: 'Discord' };
 const PROVIDER_ICONS: Record<string, React.ReactNode> = {
-  github: <GitHubIcon className="w-6 h-6 text-[var(--tb-text)]" />,
-  google: <GoogleIcon className="w-6 h-6" />,
-  discord: <DiscordIcon className="w-6 h-6 text-[#5865F2]" />,
+  github: <GitHubIcon className="w-5 h-5 text-[#FAFAFA]" />,
+  google: <GoogleIcon className="w-5 h-5" />,
+  discord: <DiscordIcon className="w-5 h-5 text-[#5865F2]" />,
 };
 
-function getParam(key: string): string {
-  return new URLSearchParams(window.location.search).get(key) || '';
-}
+function getParam(key: string): string { return new URLSearchParams(window.location.search).get(key) || ''; }
+function sanitizeTarget(raw: string): string { if (!raw) return DEFAULT_DASHBOARD_URL; if (isAllowedRedirectTarget(raw)) return raw; return DEFAULT_DASHBOARD_URL; }
+const verifiedMagicTokens = new Set<string>();
 
-function sanitizeTarget(raw: string): string {
-  if (!raw) return DEFAULT_DASHBOARD_URL;
-  if (isAllowedRedirectTarget(raw)) return raw;
-  return DEFAULT_DASHBOARD_URL;
-}
-
-/**
- * Landing view after an OAuth provider returns the user to the accounts app
- * (the API redirects here with ?oauth=new&provider=…&redirect_to=…).
- *
- * Brand-new social accounts arrive without recorded policy consent — this
- * screen collects it (required) and then releases the user to their redirect
- * target. Optional password setup is intentionally left to dashboard settings;
- * the goal here is to get the user through in one click.
- */
-interface CallbackViewProps {
-  /** Shared toast emitter (message, optional explicit type). */
-  onToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
-}
+interface CallbackViewProps { onToast?: (msg: string, type?: 'success' | 'error' | 'info') => void; }
 
 export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [user, setUser] = useState<CurrentUserData | null>(null);
@@ -53,15 +30,9 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [saving, setSaving] = useState(false);
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState('');
-
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  useEffect(() => { const onResize = () => setIsMobile(window.innerWidth < 640); window.addEventListener('resize', onResize); return () => window.removeEventListener('resize', onResize); }, []);
 
-  // Merge flow: API redirected here with ?oauth=merge&mode=login|transfer&provider=…&token=…
   const isMerge = getParam('oauth') === 'merge';
   const mergeMode: 'login' | 'transfer' = getParam('mode') === 'transfer' ? 'transfer' : 'login';
   const mergeToken = getParam('token');
@@ -69,428 +40,227 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const providerLabel = PROVIDER_LABELS[provider] || provider || 'sign-in';
   const redirectTo = sanitizeTarget(getParam('redirect_to'));
   const isNewOAuthUser = getParam('oauth') === 'new';
+  const magicToken = getParam('magic_token');
 
-  // Optional password setup for freshly-created OAuth accounts.
-  const [pwOpen, setPwOpen] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [newPw, setNewPw] = useState('');
-  const [confirmPw, setConfirmPw] = useState('');
-  const [sendingCode, setSendingCode] = useState(false);
-  const [savingPw, setSavingPw] = useState(false);
-  const [pwDone, setPwDone] = useState(false);
-  const [pwError, setPwError] = useState('');
-
-  // Profile picture
+  const [magicStatus, setMagicStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
+  const [magicError, setMagicError] = useState('');
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isMerge) { setChecking(false); return; } // merge screen needs no session check
+    if (magicToken) {
+      if (verifiedMagicTokens.has(magicToken)) return;
+      verifiedMagicTokens.add(magicToken);
+      setChecking(true); setMagicStatus('verifying');
+      try { window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[\?&]magic_token=[^&]+/, '').replace(/^\?$/, '')); } catch {}
+      verifyMagicLink(magicToken).then((res) => {
+        if (res.ok) {
+          setMagicStatus('success'); haptic('success');
+          onToast?.(`Magic link verified${res.email ? ' for ' + res.email : ''} — redirecting...`, 'success');
+          try { localStorage.setItem('tirbeo_session', JSON.stringify({ type: 'login', ts: Date.now() })); } catch {}
+          try { new BroadcastChannel('tirbeo:session')?.postMessage({ type: 'login', ts: Date.now() }); } catch {}
+          setTimeout(() => { window.location.href = redirectTo; }, 900);
+        } else {
+          if (res.error && res.error.includes('already been used') && verifiedMagicTokens.size === 1) {
+            getCurrentUser().then((s) => {
+              if (s.ok && s.data) { setMagicStatus('success'); setTimeout(() => { window.location.href = redirectTo; }, 900); }
+              else { const msg = res.error || 'This magic link is invalid, expired, or already used.'; setMagicStatus('error'); setMagicError(msg); onToast?.(msg, 'error'); haptic('error'); }
+              setChecking(false);
+            }); return;
+          }
+          const msg = res.error || 'This magic link is invalid, expired, or already used. Please request a new one.';
+          setMagicStatus('error'); setMagicError(msg); onToast?.(msg, 'error'); haptic('error');
+        }
+        setChecking(false);
+      }).catch(() => { setMagicStatus('error'); setMagicError('Could not verify magic link. Please try again.'); setChecking(false); });
+      return;
+    }
+    if (isMerge) { setChecking(false); return; }
     let cancelled = false;
     getCurrentUser().then((res) => {
       if (cancelled) return;
       if (res.ok && res.data) setUser(res.data);
-      else onToast?.('Your session could not be verified. Please sign in again.', 'error');
+      else { const status = (res as any)?.status; if (status === 401 || status === 403) onToast?.('Please sign in to continue.', 'info'); else onToast?.('Unable to verify session. Please sign in again.', 'error'); }
       setChecking(false);
     });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMergeConfirm = async () => {
-    setError('');
-    setMerging(true);
-    // login-merge: guest, authorized purely by the signed token.
-    // transfer: session-based → authed integrations endpoint (CSRF via apiPost).
-    const result = mergeMode === 'transfer'
-      ? await apiPost<{ ok: boolean }>('/api/integrations/merge', { merge_token: mergeToken, action: 'merge' })
-      : await apiPost<{ ok: boolean; redirect_to: string }>('/api/auth/oauth/merge', { token: mergeToken });
-    if (!result.ok) {
-      const msg = result.error || 'Could not complete the merge. Please sign in again.';
-      setError(msg);
-      onToast?.(msg, 'error');
-      setMerging(false);
-      return;
-    }
-    window.location.href = mergeMode === 'transfer'
-      ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps?connected=${provider}`
-      : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || DEFAULT_DASHBOARD_URL);
+    setError(''); setMerging(true);
+    const result = mergeMode === 'transfer' ? await apiPost<{ ok: boolean }>('/api/integrations/merge', { merge_token: mergeToken, action: 'merge' }) : await apiPost<{ ok: boolean; redirect_to: string }>('/api/auth/oauth/merge', { token: mergeToken });
+    if (!result.ok) { const msg = result.error || 'Could not complete the merge. Please sign in again.'; setError(msg); onToast?.(msg, 'error'); setMerging(false); return; }
+    window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps?connected=${provider}` : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || DEFAULT_DASHBOARD_URL);
   };
-
-  const handleMergeCancel = () => {
-    window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps` : '/';
-  };
-
-  const handleSendCode = async () => {
-    setPwError('');
-    setSendingCode(true);
-    const r = await apiPost('/api/auth/email-otp/request', {});
-    setSendingCode(false);
-    if (!r.ok) { setPwError(r.error || 'Could not send the verification code.'); return; }
-    setOtpSent(true);
-  };
-
-  const handleSavePassword = async () => {
-    setPwError('');
-    if (otp.trim().length !== 6) { setPwError('Enter the 6-digit code we emailed you.'); return; }
-    if (newPw.length < 8) { setPwError('Password must be at least 8 characters.'); return; }
-    if (newPw !== confirmPw) { setPwError('Passwords do not match.'); return; }
-    setSavingPw(true);
-    const r = await apiPost('/api/security/set-password', { password: newPw, otpCode: otp.trim() });
-    setSavingPw(false);
-    if (!r.ok) { setPwError(r.error || 'Could not set your password. Try again.'); return; }
-    setPwDone(true);
-    onToast?.('Password added — you can now sign in with email too.', 'success');
-  };
-
+  const handleMergeCancel = () => { window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps` : '/'; };
   const handleContinue = async () => {
-    setError('');
-    setSaving(true);
-    // Record policy consent via the dedicated OAuth consent endpoint, which
-    // also marks the account as emailVerified (social providers already
-    // verified the email).
-    const result = await oauthConsent({
-      policyAccepted: true,
-    });
+    setError(''); setSaving(true);
+    const result = await oauthConsent({ policyAccepted: true });
     setSaving(false);
-    if (!result.ok) {
-      const msg = result.error || 'Could not save your consent. Please try again.';
-      setError(msg);
-      onToast?.(msg, 'error');
-      haptic('error');
-      return;
-    }
+    if (!result.ok) { const msg = result.error || 'Could not save your consent. Please try again.'; setError(msg); onToast?.(msg, 'error'); haptic('error'); return; }
     haptic('success');
-    // Upload profile picture if one was selected (best-effort, don't block redirect)
     if (profilePic && user?.id) {
       try {
-        // Convert data URL to Blob for API upload
-        const headerMatch = profilePic.match(/^data:([^;]+);base64,(.+)$/);
-        let uploadFile: Blob;
-        if (headerMatch) {
-          const mime = headerMatch[1];
-          const raw = atob(headerMatch[2]);
-          const bytes = new Uint8Array(raw.length);
-          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-          uploadFile = new Blob([bytes], { type: mime });
-        } else {
-          uploadFile = new Blob([profilePic], { type: 'image/jpeg' });
-        }
-        const { url, error: uploadErr } = await uploadAvatarViaApi(uploadFile);
-        if (url) {
-          await updateProfile({ photoUrl: url }).catch(() => {});
-        } else if (uploadErr) {
-          console.warn('Avatar upload error:', uploadErr);
-        }
-      } catch (err) {
-        console.warn('Avatar upload failed:', err);
-      }
+        const m = profilePic.match(/^data:([^;]+);base64,(.+)$/);
+        let blob: Blob;
+        if (m) { const raw = atob(m[2]); const bytes = new Uint8Array(raw.length); for (let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i); blob = new Blob([bytes], { type: m[1] }); }
+        else blob = new Blob([profilePic], { type: 'image/jpeg' });
+        const { url } = await uploadAvatarViaApi(blob); if (url) await updateProfile({ photoUrl: url }).catch(()=>{});
+      } catch {}
     }
     window.location.href = redirectTo;
   };
-
-  // ═══ PROFILE PICTURE HANDLERS ═══
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const file = e.target.files?.[0]; if (!file) return;
+    const allowed = ['image/jpeg','image/png','image/gif','image/webp'];
     if (!allowed.includes(file.type)) { onToast?.('Please select a JPEG, PNG, GIF, or WebP image.', 'error'); return; }
-    if (file.size > 5 * 1024 * 1024) { onToast?.('Image must be less than 5MB.', 'error'); return; }
+    if (file.size > 5*1024*1024) { onToast?.('Image must be less than 5MB.', 'error'); return; }
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const url = ev.target?.result as string;
-      if (!url || url.length < 100) { onToast?.('Failed to read image file.', 'error'); return; }
-      setTempImageUrl(url);
-      setShowImageEditor(true);
-    };
+    reader.onload = (ev) => { const url = ev.target?.result as string; if (!url || url.length < 100) { onToast?.('Failed to read image file.', 'error'); return; } setTempImageUrl(url); setShowImageEditor(true); };
     reader.readAsDataURL(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [onToast]);
+  const handleCropImage = useCallback((cropped: string) => { setProfilePic(cropped); setShowImageEditor(false); setTempImageUrl(null); }, []);
+  const handleCancelCrop = useCallback(() => { setTempImageUrl(null); setShowImageEditor(false); }, []);
+  const handleRemovePic = useCallback(() => setProfilePic(null), []);
 
-  const handleCropImage = useCallback((cropped: string) => {
-    setProfilePic(cropped);
-    setShowImageEditor(false);
-    setTempImageUrl(null);
-  }, []);
+  const cardStyle: React.CSSProperties = {
+    position: 'relative', zIndex: 10, width: '100%', maxWidth: '440px',
+    background: 'rgba(20,20,22,0.94)', backdropFilter: 'blur(20px) saturate(1.15)',
+    border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px',
+    padding: '28px 24px', boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)',
+    overflow: 'hidden',
+  };
 
-  const handleCancelCrop = useCallback(() => {
-    setTempImageUrl(null);
-    setShowImageEditor(false);
-  }, []);
-
-  const handleRemovePic = useCallback(() => {
-    setProfilePic(null);
-  }, []);
+  if (magicToken) {
+    return (
+      <div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
+        <motion.div initial={{ opacity: 0, y: 12, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.45, ease: [0.16,1,0.3,1] }} style={cardStyle}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '62%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+          {magicStatus === 'verifying' || checking ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '20px 0' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#FFFFFF', display: 'grid', placeItems: 'center', boxShadow: '0 4px 16px rgba(255,255,255,0.08)' }}>
+                <Mail size={22} color="#09090B" style={{ animation: 'pulse-glow 1.6s ease infinite' }} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h1 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', color: '#FAFAFA', margin: 0 }}>Verifying magic link</h1>
+                <p style={{ fontSize: '13px', color: '#71717A', margin: '4px 0 0' }}>One-time link — please wait</p>
+              </div>
+              <p style={{ fontSize: '13px', color: '#71717A', margin: 0 }}>Verifying magic link…</p>
+            </div>
+          ) : magicStatus === 'success' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '8px 0' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#10B981', display: 'grid', placeItems: 'center', boxShadow: '0 8px 20px rgba(16,185,129,0.25)' }}>
+                <CheckCircle2 size={24} color="#fff" />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h1 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.02em', color: '#FAFAFA', margin: 0 }}>You&apos;re signed in</h1>
+                <p style={{ fontSize: '13px', color: '#A1A1AA', margin: '6px 0 0', lineHeight: 1.6 }}>Magic link verified — opening your workspace.</p>
+              </div>
+              <div style={{ width: '100%', height: '3px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginTop: '4px' }}>
+                <motion.div style={{ height: '100%', background: '#10B981', borderRadius: '999px' }} initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 0.85, ease: 'easeOut' }} />
+              </div>
+              <p style={{ fontSize: '11px', color: '#52525B' }}>Redirecting to {redirectTo.replace(/^https?:\/\//,'').slice(0,32)}…</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '8px 0' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.18)', display: 'grid', placeItems: 'center' }}>
+                <Mail size={22} color="#F43F5E" />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h1 style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', color: '#FAFAFA', margin: 0 }}>Link expired or already used</h1>
+                <p style={{ fontSize: '13px', color: '#A1A1AA', margin: '6px 0 0', lineHeight: 1.6 }}>{magicError || 'This magic link is invalid or already used. Each link works once only.'}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
+                <button onClick={() => window.location.href = '/'} style={{ flex: 1, height: '44px', borderRadius: '999px', background: '#FFFFFF', color: '#09090B', fontSize: '13.5px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Back to login</button>
+                <button onClick={() => window.location.href = `/login?email=${encodeURIComponent(getParam('email')||'')}`} style={{ flex: 1, height: '44px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', color: '#FAFAFA', fontSize: '13.5px', fontWeight: 600, border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>New link</button>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative min-h-screen bg-[var(--tb-bg)] text-[var(--tb-text)] overflow-hidden flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[440px] tb-card p-7 sm:p-8"
-      >
+    <div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
+      <motion.div initial={{ opacity: 0, y: 12, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.45, ease: [0.16,1,0.3,1] }} style={cardStyle}>
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '62%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
         {checking ? (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[var(--tb-text)]" />
-            <p className="text-sm text-[var(--tb-on-surface-variant)]">Finishing sign-in…</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '28px 0' }}>
+            <p style={{ fontSize: '13px', color: '#71717A' }}>Finishing sign-in…</p>
           </div>
         ) : isMerge ? (
           <>
-            <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--tb-surface-container)] border border-[var(--tb-outline-variant)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <ShieldCheck className="w-6 h-6 text-[var(--tb-text)]" />}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '18px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', placeItems: 'center', marginBottom: '12px' }}>
+                {PROVIDER_ICONS[provider] || <ShieldCheck size={20} color="#FAFAFA" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--tb-text)] mb-1.5">
-                {mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}
-              </h1>
-              <p className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
-                {mergeMode === 'transfer'
-                  ? `This ${providerLabel} account is currently linked to a different Tirbeo account. Transferring moves the sign-in to your current account and disconnects it there.`
-                  : `We found an existing Tirbeo account with the same email as your ${providerLabel} account. Merging links ${providerLabel} sign-in to that account — nothing else changes.`}
+              <h1 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', color: '#FAFAFA', margin: 0 }}>{mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}</h1>
+              <p style={{ fontSize: '13px', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '320px', margin: '8px 0 0' }}>
+                {mergeMode === 'transfer' ? `This ${providerLabel} account is linked to another account. Transfer moves sign-in to your current account.` : `An existing account shares this email. Merging links ${providerLabel} sign-in to it.`}
               </p>
             </div>
-
-            {error && <p className="text-xs text-[var(--tb-error)] mb-3 text-center">{error}</p>}
-
-            <button type="button" onClick={handleMergeConfirm} disabled={merging} className="tb-btn tb-btn-primary">
-              {merging ? (
-                <Loader2 className="w-5 h-5 animate-spin text-[var(--tb-on-primary)] relative z-10" />
-              ) : (
-                <>
-                  <span className="relative z-10">{mergeMode === 'transfer' ? 'Transfer here' : 'Merge & continue'}</span>
-                  <ArrowRight className="w-4 h-4 stroke-[2.5] relative z-10" />
-                </>
-              )}
+            {error && <p style={{ fontSize: '12px', color: '#F43F5E', textAlign: 'center', marginBottom: '10px' }}>{error}</p>}
+            <button type="button" onClick={handleMergeConfirm} disabled={merging} style={{ width: '100%', height: '46px', borderRadius: '999px', background: '#FFFFFF', color: '#09090B', fontSize: '14px', fontWeight: 700, border: 'none', cursor: merging ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: merging ? 0.6 : 1 }}>
+              {merging ? <span>Please wait…</span> : <><span>{mergeMode === 'transfer' ? 'Transfer here' : 'Merge & continue'}</span><ArrowRight size={16} /></>}
             </button>
-
-            <button type="button" onClick={handleMergeCancel} disabled={merging} className="tb-btn tb-btn-secondary mt-3">
-              Cancel
-            </button>
-
-            <p className="text-xs text-[var(--tb-on-surface-variant)] text-center leading-relaxed mt-4">
-              Accounts are only ever merged when the email addresses match exactly.
-            </p>
+            <button type="button" onClick={handleMergeCancel} disabled={merging} style={{ width: '100%', height: '46px', borderRadius: '999px', background: 'rgba(255,255,255,0.04)', color: '#A1A1AA', fontSize: '14px', fontWeight: 600, border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', marginTop: '8px' }}>Cancel</button>
+            <p style={{ fontSize: '11px', color: '#52525B', textAlign: 'center', lineHeight: 1.5, marginTop: '10px' }}>Accounts are only merged when emails match exactly.</p>
           </>
         ) : (
           <>
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--tb-surface-container)] border border-[var(--tb-outline-variant)] flex items-center justify-center mb-4">
-                {PROVIDER_ICONS[provider] || <CheckCircle2 className="w-6 h-6 text-[var(--tb-text)]" />}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '18px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', placeItems: 'center', marginBottom: '12px' }}>
+                {PROVIDER_ICONS[provider] || <Sparkles size={20} color="#FAFAFA" />}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--tb-text)] mb-1.5">
-                {isNewOAuthUser ? 'Create your Tirbeo account' : "You're signed in"}
-              </h1>
-              <p className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
-                {isNewOAuthUser ? (
-                  <>
-                    No Tirbeo account exists for this email yet — continuing will
-                    create one linked to your {providerLabel} sign-in.
-                    {user?.email && (
-                      <>
-                        <br />
-                        <span className="text-[var(--tb-text)] font-medium">{user.email}</span>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  'One last step before we take you to your workspace.'
-                )}
+              <p style={{ fontSize: '13px', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '320px', margin: 0 }}>
+                {isNewOAuthUser ? <>No account yet — continuing creates one linked to your {providerLabel} sign-in.{user?.email && <><br /><span style={{ color: '#FAFAFA', fontWeight: 600 }}>{user.email}</span></>}</> : 'One last step before your workspace.'}
               </p>
             </div>
-
             {isMobile ? (
-              <MobileConsentSheet
-                isOpen={true}
-                onClose={handleMergeCancel}
-                provider={provider}
-                isNewOAuthUser={isNewOAuthUser}
-                email={user?.email}
-                saving={saving}
-                error={error}
-                onContinue={({ consent: c, profilePic: pic }) => {
-                  setConsent(c);
-                  if (pic) setProfilePic(pic);
-                  handleContinue();
-                }}
-              />
+              <MobileConsentSheet isOpen={true} onClose={handleMergeCancel} provider={provider} isNewOAuthUser={isNewOAuthUser} email={user?.email} saving={saving} error={error} onContinue={({ consent: c, profilePic: pic }) => { setConsent(c); if (pic) setProfilePic(pic); handleContinue(); }} />
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => setConsent(!consent)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all text-left ${
-                    consent
-                      ? 'bg-[var(--tb-surface-container-low)] border-[var(--tb-outline-variant)]'
-                      : 'bg-[var(--tb-surface-container-low)] border-[var(--tb-outline-variant)] hover:bg-[var(--tb-surface-container-low)]'
-                  }`}
-                  role="checkbox"
-                  aria-checked={consent}
-                >
-                  <span
-                    className={`mt-0.5 w-5 h-5 shrink-0 rounded flex items-center justify-center border transition-colors ${
-                      consent ? 'bg-[var(--tb-primary)] border-[var(--tb-primary)]' : 'border-[var(--tb-outline-variant)]'
-                    }`}
-                  >
-                    {consent && <CheckCircle2 className="w-4 h-4 text-[var(--tb-on-primary)]" />}
+                <button type="button" onClick={() => setConsent(!consent)} style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px', borderRadius: '12px', border: `1px solid ${consent ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.07)'}`, background: consent ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ marginTop: '1px', width: '18px', height: '18px', borderRadius: '5px', display: 'grid', placeItems: 'center', flexShrink: 0, border: `1.5px solid ${consent ? '#FFFFFF' : 'rgba(255,255,255,0.18)'}`, background: consent ? '#FFFFFF' : 'transparent' }}>
+                    {consent && <CheckCircle2 size={12} color="#09090B" />}
                   </span>
-                  <span className="text-sm text-[var(--tb-on-surface-variant)] leading-relaxed">
-                    I agree to the Tirbeo Terms of Service and acknowledge the Privacy Policy,
-                    including data processing for my account. <span className="text-[var(--tb-text)]">*</span>
-                  </span>
+                  <span style={{ fontSize: '13px', color: '#A1A1AA', lineHeight: 1.6 }}>I agree to the Tirbeo Terms and Privacy Policy.<span style={{ color: '#F43F5E' }}>*</span></span>
                 </button>
-
-                {/* ── Profile picture (new OAuth users) ── */}
                 {isNewOAuthUser && (
-                  <div className="mt-4">
-                    {/* Hidden file input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                    <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="relative group shrink-0"
-                      >
-                        <div className="w-16 h-16 rounded-full bg-[var(--tb-surface-container-low)] border-2 border-dashed border-[var(--tb-outline-variant)] flex items-center justify-center overflow-hidden group-hover:border-[var(--tb-primary)] transition-all">
-                          {profilePic ? (
-                            <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                          ) : (
-                            <Camera className="w-6 h-6 text-[var(--tb-on-surface-variant)] group-hover:text-[var(--tb-text)] transition-colors" />
-                          )}
+                  <div style={{ marginTop: '14px' }}>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileSelect} style={{ display: 'none' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <button type="button" onClick={() => fileInputRef.current?.click()} style={{ position: 'relative', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+                          {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Camera size={20} color="#71717A" />}
                         </div>
-                        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--tb-primary)] flex items-center justify-center shadow-lg">
-                          <Camera className="w-3 h-3 text-[var(--tb-on-primary)]" />
-                        </span>
+                        <span style={{ position: 'absolute', right: '-4px', bottom: '-4px', width: '18px', height: '18px', borderRadius: '50%', background: '#FFFFFF', display: 'grid', placeItems: 'center', border: '2px solid #141416' }}><Camera size={9} color="#09090B" /></span>
                       </button>
-                      <div className="text-left">
-                        <p className="text-sm text-[var(--tb-on-surface-variant)]">Profile photo</p>
-                        <p className="text-xs text-[var(--tb-on-surface-variant)] mt-0.5">Optional — JPEG, PNG, GIF, WebP • Max 5MB</p>
-                        {profilePic && (
-                          <button
-                            type="button"
-                            onClick={handleRemovePic}
-                            className="mt-1 text-xs text-[var(--tb-error)] hover:text-[var(--tb-error)] font-medium cursor-pointer transition-colors"
-                          >
-                            Remove photo
-                          </button>
-                        )}
+                      <div style={{ textAlign: 'left' }}>
+                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#FAFAFA', margin: 0 }}>Profile photo</p>
+                        <p style={{ fontSize: '11.5px', color: '#71717A', margin: '2px 0 0' }}>Optional — JPG, PNG, GIF, WebP · 5MB</p>
+                        {profilePic && <button type="button" onClick={handleRemovePic} style={{ marginTop: '4px', fontSize: '11.5px', color: '#F43F5E', fontWeight: 600, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Remove photo</button>}
                       </div>
                     </div>
                   </div>
                 )}
-
-                {isNewOAuthUser && (
-                  <div className="mt-4">
-                    {!pwOpen ? (
-                      pwDone ? (
-                        <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--tb-success)]/30 bg-[var(--tb-success-container)]">
-                          <CheckCircle2 className="w-4 h-4 text-[var(--tb-success)]" />
-                          <span className="text-sm text-[var(--tb-success)]">Password added to your account</span>
-                        </div>
-                      ) : (
-                        <button type="button" onClick={() => setPwOpen(true)} className="tb-btn tb-btn-secondary">
-                          Add a password (optional)
-                        </button>
-                      )
-                    ) : (
-                      <div className="p-4 rounded-xl border border-[var(--tb-outline-variant)] bg-[var(--tb-surface-container-low)] space-y-3">
-                        {!otpSent ? (
-                          <>
-                            <p className="text-xs text-[var(--tb-on-surface-variant)]">We'll email you a 6-digit code to verify it's you.</p>
-                            <button type="button" onClick={handleSendCode} disabled={sendingCode} className="tb-btn tb-btn-secondary">
-                              {sendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Email me a verification code'}
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <input
-                              className="tb-input text-center tracking-[0.3em]"
-                              placeholder="••••••"
-                              inputMode="numeric"
-                              maxLength={6}
-                              value={otp}
-                              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                            />
-                            <input
-                              className="tb-input"
-                              type="password"
-                              placeholder="New password (min 8 characters)"
-                              value={newPw}
-                              onChange={(e) => setNewPw(e.target.value)}
-                            />
-                            <input
-                              className="tb-input"
-                              type="password"
-                              placeholder="Confirm password"
-                              value={confirmPw}
-                              onChange={(e) => setConfirmPw(e.target.value)}
-                            />
-                          </>
-                        )}
-                        {pwError && <p className="text-xs text-[var(--tb-error)]">{pwError}</p>}
-                        {otpSent && (
-                          <div className="flex gap-2">
-                            <button type="button" onClick={handleSavePassword} disabled={savingPw} className="tb-btn tb-btn-primary flex-1">
-                              {savingPw ? <Loader2 className="w-4 h-4 animate-spin text-[var(--tb-on-primary)] relative z-10" /> : <span className="relative z-10">Save password</span>}
-                            </button>
-                            <button type="button" onClick={() => { setPwOpen(false); setOtpSent(false); setOtp(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} className="tb-btn tb-btn-secondary flex-1">
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {error && (
-                  <p className="text-xs text-[var(--tb-error)] mt-3">{error}</p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  disabled={!consent || saving}
-                  className="tb-btn tb-btn-primary mt-5"
-                >
-                  {saving ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-[var(--tb-on-primary)] relative z-10" />
-                  ) : (
-                    <>
-                      <span className="relative z-10">{isNewOAuthUser ? 'Create account & continue' : 'Continue'}</span>
-                      <ArrowRight className="w-4 h-4 stroke-[2.5] relative z-10" />
-                    </>
-                  )}
+                {error && <p style={{ fontSize: '12px', color: '#F43F5E', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
+                <button type="button" onClick={handleContinue} disabled={!consent || saving} style={{ width: '100%', height: '44px', borderRadius: '8px', background: !consent || saving ? 'rgba(255,255,255,0.08)' : '#0095F6', color: !consent || saving ? '#71717A' : '#FFFFFF', fontSize: '14px', fontWeight: 700, border: 'none', cursor: !consent || saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', boxShadow: !consent || saving ? 'none' : '0 4px 16px rgba(0,149,246,0.28)', opacity: !consent ? 0.9 : 1 }}>
+                  {saving ? <span>Please wait…</span> : <><span>{isNewOAuthUser ? 'Create account & continue' : 'Continue to workspace'}</span><ArrowRight size={16} /></>}
                 </button>
-
-                <p className="text-xs text-[var(--tb-on-surface-variant)] text-center leading-relaxed mt-4">
-                  You can set a password and manage connected services anytime from your
-                  dashboard settings.
-                </p>
+                <p style={{ fontSize: '11px', color: '#52525B', textAlign: 'center', lineHeight: 1.5, marginTop: '10px' }}>Set a password and manage connected services from dashboard settings.</p>
               </>
             )}
           </>
         )}
       </motion.div>
-
-      {/* Image Crop Editor */}
       {showImageEditor && tempImageUrl && (
-        <React.Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--tb-text)]" /></div>}>
-          <ImageCropEditor
-            imageUrl={tempImageUrl}
-            onCrop={handleCropImage}
-            onCancel={handleCancelCrop}
-            outputSize={512}
-          />
+        <React.Suspense fallback={null}>
+          <ImageCropEditor imageUrl={tempImageUrl} onCrop={handleCropImage} onCancel={handleCancelCrop} outputSize={512} />
         </React.Suspense>
       )}
     </div>

@@ -40,6 +40,10 @@ export const DEFAULT_DASHBOARD_URL = getDashboardUrl();
 export function isAllowedRedirectTarget(url: string): boolean {
   try {
     const u = new URL(url);
+    // Block URLs with embedded credentials (e.g. https://evil@dashboard.tirbeo.app)
+    if (u.username || u.password) return false;
+    // Block non-http(s) schemes (javascript:, data:, etc.)
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
     const isLocal = import.meta.env.DEV && (u.hostname === 'localhost' || u.hostname === '127.0.0.1');
     if (!isLocal && u.protocol !== 'https:') return false;
     if (u.hostname === APP_DOMAIN || u.hostname.endsWith(`.${APP_DOMAIN}`)) return true;
@@ -71,6 +75,8 @@ const REDIRECT_PARAM_KEYS = ['redirect', 'redirect_to', 'next', 'return_to'] as 
 /**
  * Resolve the post-auth destination from the current page URL.
  * Falls back to the default dashboard URL when nothing valid is present.
+ * Only validated Tirbeo targets are ever returned — third-party URLs are
+ * silently dropped to prevent open-redirect / session-hijack.
  */
 export function getRedirectTarget(): string {
   if (typeof window === 'undefined') return DEFAULT_DASHBOARD_URL;
@@ -79,13 +85,16 @@ export function getRedirectTarget(): string {
   for (const key of REDIRECT_PARAM_KEYS) {
     const raw = params.get(key);
     if (!raw) continue;
+    // Strip whitespace and control chars that could smuggle a target
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
 
-    if (raw.includes('://')) {
-      if (isAllowedRedirectTarget(raw)) return raw;
+    if (trimmed.includes('://')) {
+      if (isAllowedRedirectTarget(trimmed)) return trimmed;
       continue;
     }
 
-    const built = buildFromAppName(raw);
+    const built = buildFromAppName(trimmed);
     if (built && isAllowedRedirectTarget(built)) return built;
   }
 
@@ -93,6 +102,13 @@ export function getRedirectTarget(): string {
   if (referrer && isAllowedRedirectTarget(referrer)) return referrer;
 
   return DEFAULT_DASHBOARD_URL;
+}
+
+/** Accounts /login URL preserving no redirect — used after signup */
+export function getAccountsLoginUrl(): string {
+  const base = typeof window !== 'undefined' ? window.location.origin : '';
+  if (base && isAllowedRedirectTarget(base)) return `${base.replace(/\/$/, '')}/login`;
+  return '/login';
 }
 
 /**

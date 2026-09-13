@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { ArrowRight, CheckCircle2, Camera, Loader2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Camera } from 'lucide-react';
 import { BottomSheet } from './BottomSheet';
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -219,7 +219,7 @@ export const MobileConsentSheet: React.FC<MobileConsentSheetProps> = ({
             className="flex-[1.4] flex items-center justify-center gap-2 rounded-full bg-[var(--tb-primary)] py-3 text-sm font-bold text-[var(--tb-on-primary)] transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
-              <Loader2 className="w-5 h-5 animate-spin text-[var(--tb-on-primary)]" />
+              <span>Please wait…</span>
             ) : (
               <>
                 <span className="relative z-10">

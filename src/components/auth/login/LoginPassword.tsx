@@ -23,25 +23,26 @@ interface LoginPasswordProps {
 
 const primaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '56px',
-  background: '#0095f6',
-  color: '#ffffff',
+  height: '44px',
+  background: '#0095F6',
+  color: '#FFFFFF',
   border: 'none',
-  borderRadius: '14px',
+  borderRadius: '8px',
   fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
-  transition: 'opacity 150ms ease',
+  transition: 'all 150ms ease',
+  boxShadow: 'none',
 };
 
 const inputBase: React.CSSProperties = {
   width: '100%',
   height: '56px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 24px',
@@ -53,10 +54,10 @@ const inputBase: React.CSSProperties = {
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
   height: '48px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#a0a0a0',
+  color: '#A1A1AA',
   fontSize: '15px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
@@ -75,6 +76,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
 
   return (
     <form
+      className="auth-form"
       onSubmit={onSubmit}
       style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
     >
@@ -83,8 +85,8 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           width: '80px',
           height: '80px',
           borderRadius: '50%',
-          background: '#111111',
-          border: '2px solid #2a2a2a',
+          background: 'rgba(255,255,255,0.04)',
+          border: '2px solid rgba(255,255,255,0.07)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -100,10 +102,10 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           )}
         </div>
 
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily }}>
           Hi, {displayName}
         </h2>
-        <p style={{ fontSize: '15px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
           Enter your password to continue.
         </p>
       </div>
@@ -118,13 +120,13 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           autoComplete="current-password"
           style={{
             ...inputBase,
-            borderColor: showPasswordError ? '#ed4956' : '#2a2a2a',
+            borderColor: showPasswordError ? '#f43f5e' : 'rgba(255,255,255,0.07)',
           }}
           onFocus={(e) => {
-            if (!showPasswordError) e.currentTarget.style.borderColor = '#3a3a3a';
+            if (!showPasswordError) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = showPasswordError ? '#ed4956' : '#2a2a2a';
+            e.currentTarget.style.borderColor = showPasswordError ? '#f43f5e' : 'rgba(255,255,255,0.07)';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -139,7 +141,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
               transform: 'translateY(-50%)',
               background: 'none',
               border: 'none',
-              color: '#707070',
+              color: '#71717A',
               cursor: 'pointer',
               padding: '4px',
               display: 'flex',
@@ -161,7 +163,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
         )}
       </div>
       {showPasswordError && (
-        <p style={{ fontSize: '14px', color: '#ed4956', margin: '-8px 0 0', paddingLeft: '2px' }}>
+        <p style={{ fontSize: '14px', color: '#f43f5e', margin: '-8px 0 0', paddingLeft: '2px' }}>
           {errors.password}
         </p>
       )}
@@ -171,7 +173,9 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
         disabled={!password || isSubmitting}
         style={{
           ...primaryBtn,
-          opacity: password && !isSubmitting ? 1 : 0.5,
+          background: password && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.08)',
+          color: password && !isSubmitting ? '#FFFFFF' : '#71717A',
+          opacity: 1,
           cursor: password && !isSubmitting ? 'pointer' : 'not-allowed',
         }}
       >
@@ -192,8 +196,8 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
             cursor: isSubmitting ? 'not-allowed' : 'pointer',
             opacity: isSubmitting ? 0.5 : 1,
           }}
-          onMouseOver={e => { if (!isSubmitting) { e.currentTarget.style.background = '#161616'; e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#f5f5f5'; } }}
-          onMouseOut={e => { if (!isSubmitting) { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#a0a0a0'; } }}
+          onMouseOver={e => { if (!isSubmitting) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; } }}
+          onMouseOut={e => { if (!isSubmitting) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; } }}
         >
           More ways to verify
         </button>
@@ -202,7 +206,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           style={{
             background: 'none',
             border: 'none',
-            color: '#707070',
+            color: '#71717A',
             fontSize: '14px',
             fontWeight: 500,
             fontFamily: TYPOGRAPHY.fontFamily,
@@ -211,8 +215,8 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
             borderRadius: '8px',
             transition: 'color 150ms ease, background 150ms ease',
           }}
-          onMouseOver={e => { e.currentTarget.style.color = '#a0a0a0'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          onMouseOut={e => { e.currentTarget.style.color = '#707070'; e.currentTarget.style.background = 'transparent'; }}
+          onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseOut={e => { e.currentTarget.style.color = '#71717A'; e.currentTarget.style.background = 'transparent'; }}
         >
           Switch account
         </button>

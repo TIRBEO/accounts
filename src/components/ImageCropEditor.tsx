@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Check,
   Image as ImageIcon,
-  Loader2,
   RotateCw,
   X,
   ZoomIn,
@@ -167,12 +166,12 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4"
+      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.55)" }}
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-[520px] overflow-hidden rounded-[28px] border border-[color-mix(in_srgb,var(--tb-outline-variant)_40%,transparent)] bg-[var(--tb-surface-container)] text-[var(--tb-on-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
+        className="image-crop-editor-panel w-full max-w-[520px] overflow-hidden rounded-[28px] border border-[color-mix(in_srgb,var(--tb-outline-variant)_40%,transparent)] bg-[var(--tb-surface-container)] text-[var(--tb-on-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -199,11 +198,10 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         </div>
 
         {/* Cropper */}
-        <div className="relative h-[360px] w-full overflow-hidden bg-black/70">
+        <div className="image-crop-editor-stage relative h-[360px] w-full overflow-hidden bg-black/70">
           {mediaLoading && !mediaError && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
-              <Loader2 size={22} className="animate-spin" />
-              <span className="text-xs">Loading image…</span>
+              <span className="text-xs">Loading…</span>
             </div>
           )}
           {mediaError ? (
@@ -235,7 +233,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         </div>
 
         {/* Controls */}
-        <div className="space-y-4 px-6 py-5">
+        <div className="image-crop-editor-controls space-y-4 px-6 py-5">
           <div className="flex items-center gap-3">
             <ZoomOut size={16} className="shrink-0 text-[var(--tb-on-surface-variant)]" />
             <input
@@ -285,11 +283,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
               className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--tb-primary)] px-6 py-2.5 text-[13.5px] font-semibold text-[var(--tb-on-primary)] shadow-[0_6px_20px_color-mix(in_srgb,var(--tb-primary)_40%,transparent)] transition-all duration-150 hover:brightness-105 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isProcessing ? (
-                <Loader2 size={15} className="animate-spin" />
-              ) : (
-                <Check size={15} />
-              )}
+              {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}
             </button>
           </div>

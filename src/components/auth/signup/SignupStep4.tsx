@@ -28,10 +28,10 @@ interface SignupStep4Props {
 const inputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
   height: '56px',
-  background: '#111111',
-  border: `1px solid ${hasError ? '#ed4956' : '#2a2a2a'}`,
+  background: 'rgba(255,255,255,0.04)',
+  border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 48px 0 24px',
@@ -43,10 +43,10 @@ const inputStyle = (hasError: boolean): React.CSSProperties => ({
 const confirmInputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
   height: '56px',
-  background: '#111111',
-  border: `1px solid ${hasError ? '#ed4956' : '#2a2a2a'}`,
+  background: 'rgba(255,255,255,0.04)',
+  border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 24px',
@@ -58,29 +58,30 @@ const confirmInputStyle = (hasError: boolean): React.CSSProperties => ({
 const labelStyle: React.CSSProperties = {
   fontSize: '15px',
   fontWeight: 500,
-  color: '#a0a0a0',
+  color: '#A1A1AA',
   marginBottom: '4px',
 };
 
 const errorStyle: React.CSSProperties = {
   fontSize: '14px',
-  color: '#ed4956',
+  color: '#f43f5e',
   marginTop: '-8px',
 };
 
 const gradientBtnStyle = (enabled: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '56px',
-  background: '#0095f6',
-  color: '#ffffff',
+  height: '44px',
+  background: enabled ? '#0095F6' : 'rgba(255,255,255,0.08)',
+  color: enabled ? '#FFFFFF' : '#71717A',
   border: 'none',
-  borderRadius: '14px',
+  borderRadius: '8px',
   fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: enabled ? 'pointer' : 'not-allowed',
-  transition: 'opacity 150ms ease',
-  opacity: enabled ? 1 : 0.5,
+  transition: 'all 150ms ease',
+  opacity: 1,
+  boxShadow: 'none',
 });
 
 function getPasswordStrength(password: string): number {
@@ -95,11 +96,11 @@ function getPasswordStrength(password: string): number {
 
 function getStrengthColor(level: number): string {
   switch (level) {
-    case 1: return '#ed4956';
-    case 2: return '#f5a623';
-    case 3: return '#58c322';
-    case 4: return '#0095f6';
-    default: return '#2a2a2a';
+    case 1: return '#f43f5e';
+    case 2: return '#fbbf24';
+    case 3: return '#34d399';
+    case 4: return '#FFFFFF';
+    default: return 'rgba(255,255,255,0.07)';
   }
 }
 
@@ -123,25 +124,24 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
   const showPasswordError = touched.password && errors.password;
   const showConfirmError = touched.confirmPassword && errors.confirmPassword;
 
-  const progressDots = [1, 2, 3, 4];
-
   return (
     <form
+      className="auth-form"
       onSubmit={onSubmit}
       style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
     >
       <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
           Create a password
         </h2>
-        <p style={{ fontSize: '16px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '24px' }}>
+        <p style={{ fontSize: '16px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '24px' }}>
           Choose a strong password with at least 8 characters. Use a mix of letters, numbers, and symbols for best security.
         </p>
       </div>
 
       {/* Password */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <label style={labelStyle}>Password <span style={{ color: '#ed4956' }}>*</span></label>
+        <label style={labelStyle}>Password <span style={{ color: '#f43f5e' }}>*</span></label>
         <div style={{ position: 'relative' }}>
           <input
             type={showPassword ? 'text' : 'password'}
@@ -153,11 +153,11 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
             style={inputStyle(!!showPasswordError)}
             onFocus={(e) => {
               if (!showPasswordError) {
-                e.currentTarget.style.borderColor = '#3a3a3a';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
               }
             }}
             onBlurCapture={(e) => {
-              e.currentTarget.style.borderColor = showPasswordError ? '#ed4956' : '#2a2a2a';
+              e.currentTarget.style.borderColor = showPasswordError ? '#f43f5e' : 'rgba(255,255,255,0.07)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           />
@@ -171,7 +171,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               transform: 'translateY(-50%)',
               background: 'none',
               border: 'none',
-              color: '#707070',
+              color: '#71717A',
               cursor: 'pointer',
               padding: '4px',
               display: 'flex',
@@ -205,7 +205,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
                   flex: 1,
                   height: '4px',
                   borderRadius: '2px',
-                  background: level <= getPasswordStrength(password) ? getStrengthColor(level) : '#2a2a2a',
+                  background: level <= getPasswordStrength(password) ? getStrengthColor(level) : 'rgba(255,255,255,0.07)',
                   transition: 'background 300ms ease',
                 }}
               />
@@ -213,7 +213,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
             <span style={{
               fontSize: '12px',
               fontWeight: 600,
-              color: '#707070',
+              color: '#71717A',
               marginLeft: '8px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -226,7 +226,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
 
       {/* Confirm Password */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <label style={labelStyle}>Confirm Password <span style={{ color: '#ed4956' }}>*</span></label>
+        <label style={labelStyle}>Confirm Password <span style={{ color: '#f43f5e' }}>*</span></label>
         <input
           type={showPassword ? 'text' : 'password'}
           value={confirmPassword}
@@ -237,11 +237,11 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           style={confirmInputStyle(!!showConfirmError)}
           onFocus={(e) => {
             if (!showConfirmError) {
-              e.currentTarget.style.borderColor = '#3a3a3a';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
             }
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = showConfirmError ? '#ed4956' : '#2a2a2a';
+            e.currentTarget.style.borderColor = showConfirmError ? '#f43f5e' : 'rgba(255,255,255,0.07)';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -261,8 +261,8 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               width: '18px',
               height: '18px',
               borderRadius: '5px',
-              border: `1.5px solid ${consentTerms ? '#0095f6' : '#2a2a2a'}`,
-              background: consentTerms ? '#0095f6' : 'transparent',
+              border: `1.5px solid ${consentTerms ? '#FFFFFF' : 'rgba(255,255,255,0.07)'}`,
+              background: consentTerms ? '#FFFFFF' : 'transparent',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -272,19 +272,19 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               marginTop: '1px',
             }}
           />
-          <span style={{ fontSize: '15px', color: '#a0a0a0', lineHeight: '22px' }}>
+          <span style={{ fontSize: '15px', color: '#A1A1AA', lineHeight: '22px' }}>
             I agree to the{' '}
-            <button type="button" onClick={() => onOpenLegalModal('terms')} style={{ color: '#0095f6', background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
+            <button type="button" onClick={() => onOpenLegalModal('terms')} style={{ color: '#FFFFFF', background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
               Terms of Service
             </button>{' '}
             and{' '}
-            <button type="button" onClick={() => onOpenLegalModal('privacy')} style={{ color: '#0095f6', background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
+            <button type="button" onClick={() => onOpenLegalModal('privacy')} style={{ color: '#FFFFFF', background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
               Privacy Policy
             </button>
           </span>
         </label>
         {touched.consentTerms && !consentTerms && (
-          <p style={{ fontSize: '14px', color: '#ed4956', marginLeft: '30px' }}>You must accept the Terms of Service and Privacy Policy</p>
+          <p style={{ fontSize: '14px', color: '#f43f5e', marginLeft: '30px' }}>You must accept the Terms of Service and Privacy Policy</p>
         )}
       </div>
 

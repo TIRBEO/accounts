@@ -1,351 +1,249 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TYPOGRAPHY } from '../../../lib/design';
+import { Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Trash2, UserRound } from 'lucide-react';
 
 interface SignupStep2Props {
   gender: string;
-  setGender: (v: string) => void;
+  setGender: (value: string) => void;
   dob: string;
-  setDob: (v: string) => void;
+  setDob: (value: string) => void;
   occupation: string;
-  setOccupation: (v: string) => void;
+  setOccupation: (value: string) => void;
   company: string;
-  setCompany: (v: string) => void;
+  setCompany: (value: string) => void;
   role: string;
-  setRole: (v: string) => void;
+  setRole: (value: string) => void;
   profilePic: string | null;
-  setProfilePic: (v: string | null) => void;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveProfilePic: () => void;
   errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
   handleBlur: (field: string) => void;
-  validateField: (field: string, value: string) => string | undefined;
   isSubmitting: boolean;
   step2Complete: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (event: React.FormEvent) => void;
 }
 
-const inputStyle = (hasError: boolean): React.CSSProperties => ({
-  width: '100%',
-  height: '52px',
-  background: '#111111',
-  border: `1px solid ${hasError ? '#ed4956' : '#2a2a2a'}`,
-  borderRadius: '14px',
-  color: '#f5f5f5',
-  fontSize: '16px',
-  fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 24px',
-  outline: 'none',
-  transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  boxSizing: 'border-box',
-});
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '14px',
-  color: '#a0a0a0',
-  marginBottom: '6px',
-  fontWeight: 500,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.08em',
-};
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function getMaxDay(year: number, month: number): number {
-  if (year <= 0 || month < 0 || month > 11) return 31;
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function parseDob(dob: string): { year: number; month: number; day: number } {
-  if (!dob) return { year: 0, month: 0, day: 0 };
-  const parts = dob.split('-').map(Number);
-  return { year: parts[0] || 0, month: (parts[1] || 1) - 1, day: parts[2] || 1 };
-}
-
-function formatDate(y: number, m: number, d: number): string {
-  if (y <= 0 || m < 0 || m > 11 || d <= 0) return '';
-  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const CURRENT_YEAR = new Date().getFullYear();
 const MAX_AGE_YEAR = CURRENT_YEAR - 13;
 const MIN_AGE_YEAR = CURRENT_YEAR - 100;
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+];
+
+function parseDob(v:string){ if(!v) return {year:0,month:-1,day:0}; const p=v.split('-').map(Number); return {year:p[0]||0, month:p.length>1&&p[1]?p[1]-1:-1, day:p.length>2?p[2]||0:0}; }
+function formatDate(y:number,m:number,d:number){ if(y<=0||m<0||m>11||d<=0) return ''; return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function daysInMonth(y:number,m:number){ return new Date(y,m+1,0).getDate(); }
 
 export const SignupStep2: React.FC<SignupStep2Props> = ({
-  gender, setGender, dob, setDob, occupation, setOccupation,
-  company, setCompany, role, setRole, profilePic, setProfilePic,
-  errors, touched, handleBlur, validateField,
-  isSubmitting, step2Complete, onSubmit,
-}) => {
-  const showDobError = touched.dob && errors.dob;
-  const showGenderError = touched.gender && errors.gender;
+  gender,setGender,dob,setDob,occupation,setOccupation,company,setCompany,role,setRole,
+  profilePic,fileInputRef,onFileSelect,onRemoveProfilePic,errors,touched,handleBlur,isSubmitting,step2Complete,onSubmit,
+})=>{
+  const genderError = touched.gender?errors.gender:undefined;
+  const dobError = touched.dob?errors.dob:undefined;
+  const parsed = parseDob(dob);
+  const today=new Date();
+  const maxDate=new Date(today.getFullYear()-13,today.getMonth(),today.getDate());
+  const minDate=new Date(today.getFullYear()-100,today.getMonth(),today.getDate());
+  const [viewYear,setViewYear]=useState(parsed.year||CURRENT_YEAR-22);
+  const [viewMonth,setViewMonth]=useState(parsed.month>=0?parsed.month:5);
+  const [pickerMode,setPickerMode]=useState<'days'|'months'|'years'>('days');
+  const [genderOpen,setGenderOpen]=useState(false);
+  const [dobOpen,setDobOpen]=useState(false);
 
-  const { year, month, day } = parseDob(dob);
-  const initialMaxDay = year > 0 && month >= 0 ? getMaxDay(year, month) : 31;
-  const initialDay = day > 0 && day <= initialMaxDay ? day : 1;
+  useEffect(()=>{ const p=parseDob(dob); if(p.year&&p.month>=0){setViewYear(p.year); setViewMonth(p.month);} },[]);
+  useEffect(()=>{ if(!dobOpen) return; const onKey=(e:KeyboardEvent)=>{ if(e.key==='Escape'){setDobOpen(false); handleBlur('dob');}}; window.addEventListener('keydown',onKey); return()=>window.removeEventListener('keydown',onKey); },[dobOpen]);
+  useEffect(()=>{ if(dobOpen) setPickerMode('days'); },[dobOpen]);
 
-  const [dobMonth, setDobMonth] = useState(month >= 0 ? month : 0);
-  const [dobDay, setDobDay] = useState(day > 0 && day <= initialMaxDay ? day : 1);
-  const [dobYear, setDobYear] = useState(year > 0 ? year : 0);
+  const selectDay=(d:number)=>{ setDob(formatDate(viewYear,viewMonth,d)); handleBlur('dob'); };
+  const isSelected=(d:number)=>parsed.year===viewYear&&parsed.month===viewMonth&&parsed.day===d;
+  const isToday=(d:number)=>{ const n=new Date(); return n.getFullYear()===viewYear&&n.getMonth()===viewMonth&&n.getDate()===d; };
+  const isDisabled=(d:number)=>{ const dt=new Date(viewYear,viewMonth,d); return dt>maxDate||dt<minDate; };
+  const canPrev=()=> new Date(viewYear,viewMonth-1,1) >= new Date(minDate.getFullYear(),minDate.getMonth(),1);
+  const canNext=()=> new Date(viewYear,viewMonth+1,1) <= new Date(maxDate.getFullYear(),maxDate.getMonth(),1);
+  const goPrev=()=>{ if(!canPrev())return; if(viewMonth===0){setViewMonth(11); setViewYear(v=>v-1);} else setViewMonth(m=>m-1); };
+  const goNext=()=>{ if(!canNext())return; if(viewMonth===11){setViewMonth(0); setViewYear(v=>v+1);} else setViewMonth(m=>m+1); };
 
-  useEffect(() => {
-    setDob(formatDate(dobYear, dobMonth, dobDay));
-  }, [dobYear, dobMonth, dobDay]);
-
-  useEffect(() => {
-    const max = getMaxDay(dobYear, dobMonth);
-    setDobDay(dobDay > max ? max : dobDay);
-  }, [dobYear, dobMonth, dobDay]);
-
-  const handleMonthChange = (m: number) => {
-    setDobMonth(m);
-    const max = getMaxDay(dobYear, m);
-    setDobDay(dobDay > max ? max : dobDay);
-  };
-  const handleDayChange = (d: number) => setDobDay(d);
-  const handleYearChange = (y: number) => {
-    setDobYear(y);
-    const max = getMaxDay(y, dobMonth);
-    setDobDay(dobDay > max ? max : dobDay);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const url = event.target?.result as string;
-      if (url) setProfilePic(url);
-    };
-    reader.readAsDataURL(file);
-  };
+  const years = Array.from({length: MAX_AGE_YEAR-MIN_AGE_YEAR+1},(_,i)=>MAX_AGE_YEAR-i);
+  const dobDisplay = dob ? new Date(dob).toLocaleDateString('en-US',{year:'numeric', month:'long', day:'numeric'}) : '';
 
   return (
-    <form
-      onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}
-    >
-      {/* Header section */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ width: '48px', height: '48px', margin: '0 auto 16px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0095f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </div>
-        <h2 style={{
-          fontSize: '28px', fontWeight: 700, color: '#f5f5f5',
-          marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily,
-        }}>
-          Tell us about yourself
-        </h2>
-        <p style={{
-          fontSize: '14px', color: '#707070', lineHeight: '22px',
-          fontFamily: TYPOGRAPHY.fontFamily,
-        }}>
-          Help us personalize your Tirbeo experience.
-        </p>
+    <form onSubmit={onSubmit} style={{display:'flex', flexDirection:'column', gap:'16px'}} noValidate>
+      <style>{`
+        .s2-head{ text-align:center; }
+        .s2-profile-hero{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; }
+        .s2-square{ width:128px; height:128px; border-radius:14px; background:#141416; border:1.5px dashed rgba(255,255,255,0.07); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+        .s2-square.has-photo{ border-style:solid; border-color:rgba(255,255,255,0.07); }
+        .s2-pair{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .s2-card{ background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:14px; }
+        .s2-card.has-error{ border-color:#ed4956; }
+        .s2-label{ font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#A1A1AA; display:block; margin-bottom:8px; font-family:${TYPOGRAPHY.fontFamily}; }
+        .s2-label b{ color:#ed4956; }
+        .s2-trigger{ width:100%; height:56px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; cursor:pointer; font-size:16px; color:#71717A; transition:border-color 150ms; }
+        .s2-trigger.has-value{ color:#FAFAFA; }
+        .s2-trigger.has-error{ border-color:#ed4956; }
+        .s2-trigger.open{ border-color:rgba(255,255,255,0.10); box-shadow:0 0 0 3px rgba(255,255,255,0.06); }
+        .s2-dropdown{ position:absolute; top:calc(100% + 8px); left:0; right:0; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; z-index:30; box-shadow:0 16px 40px rgba(0,0,0,0.6); }
+        .s2-dropdown button{ width:100%; text-align:left; padding:12px 16px; background:transparent; border:none; color:#A1A1AA; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+        .s2-dropdown button:hover{ background:rgba(255,255,255,0.06); color:#FAFAFA; }
+        .s2-dropdown button.is-selected{ background:rgba(255,255,255,0.06); color:#FFFFFF; }
+        .s2-popup-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.64); backdrop-filter:blur(8px); z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; }
+        .s2-popup{ width:100%; max-width:368px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.65); }
+        .s2-cal-head{ display:flex; align-items:center; justify-content:space-between; padding:14px; border-bottom:1px solid rgba(255,255,255,0.07); background:#141416; }
+        .s2-cal-title{ font-size:14px; font-weight:700; color:#FAFAFA; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:8px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; }
+        .s2-cal-title:hover{ border-color:rgba(255,255,255,0.10); }
+        .s2-cal-nav{ width:36px; height:36px; border-radius:12px; border:1px solid rgba(255,255,255,0.07); background:#141416; color:#71717A; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+        .s2-cal-nav:disabled{ opacity:0.35; cursor:not-allowed; }
+        .s2-cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:12px; }
+        .s2-cal-weekday{ font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#484848; text-align:center; padding:6px 0; }
+        .s2-day{ height:38px; border-radius:12px; border:none; background:transparent; color:#A1A1AA; font-size:14px; font-weight:500; cursor:pointer; position:relative; }
+        .s2-day:hover:not(:disabled){ background:#141416; color:#FAFAFA; }
+        .s2-day.is-today{ box-shadow:inset 0 0 0 1.5px #FFFFFF; }
+        .s2-day.is-selected{ background:#FFFFFF; color:#09090B; font-weight:700; }
+        .s2-day.is-disabled{ color:rgba(255,255,255,0.07); cursor:not-allowed; opacity:0.45; }
+        .s2-month-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:14px; }
+        .s2-month{ height:42px; border-radius:12px; border:1px solid rgba(255,255,255,0.07); background:#141416; color:#A1A1AA; font-size:13px; font-weight:600; cursor:pointer; }
+        .s2-month:hover{ border-color:rgba(255,255,255,0.10); color:#FAFAFA; }
+        .s2-month.is-current{ border-color:#FFFFFF; color:#FFFFFF; }
+        .s2-month.is-selected{ background:#FFFFFF; border-color:#FFFFFF; color:#09090B; }
+        .s2-year-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px; max-height:220px; overflow-y:auto; }
+        .s2-year{ height:38px; border-radius:12px; border:1px solid rgba(255,255,255,0.07); background:#141416; color:#A1A1AA; font-size:13px; font-weight:600; cursor:pointer; }
+        .s2-year:hover{ border-color:rgba(255,255,255,0.10); color:#FAFAFA; }
+        .s2-year.is-selected{ background:#FFFFFF; border-color:#FFFFFF; color:#09090B; }
+        .s2-cal-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px; border-top:1px solid rgba(255,255,255,0.07); background:#141416; }
+        .s2-foot-btn{ height:36px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.07); background:transparent; color:#71717A; }
+        .s2-foot-btn.primary{ background:#FFFFFF; border-color:#FFFFFF; color:#09090B; }
+        .s2-work{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; padding:14px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; }
+        .s2-work-head{ grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#71717A; display:flex; align-items:center; gap:8px; margin:0; }
+        .s2-work-head span{ color:#484848; font-weight:400; text-transform:none; letter-spacing:0; }
+        .s2-input{ width:100%; height:56px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; color:#FAFAFA; font-size:16px; padding:0 16px; outline:none; box-sizing:border-box; }
+        .s2-input::placeholder{ color:#484848; }
+        .s2-input:focus{ border-color:rgba(255,255,255,0.10); }
+        @media(max-width:640px){
+          .s2-pair{ grid-template-columns:1fr; }
+          .s2-work{ grid-template-columns:1fr; }
+          .s2-popup{ max-width:94vw; }
+          .s2-month-grid{ grid-template-columns:repeat(3,1fr); }
+          .s2-year-grid{ grid-template-columns:repeat(3,1fr); }
+        }
+      `}</style>
+
+      <div className="s2-head">
+        <h2 style={{fontSize:'28px', fontWeight:700, color:'#FAFAFA', margin:'0 0 8px', fontFamily:TYPOGRAPHY.fontFamily, letterSpacing:'-0.02em'}}><span style={{color:'#FFFFFF', fontStyle:'italic'}}>Personalize</span> your account</h2>
+        <p style={{fontSize:'14px', color:'#A1A1AA', margin:0, lineHeight:'20px'}}>Complete your profile in seconds — square photo, gender and birthday are required. Work details are optional and can be updated later.</p>
       </div>
 
-      {/* Two-column layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-        {/* LEFT COLUMN: Profile + Gender */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
-          {/* Profile Picture Section */}
-          <div style={{ width: '160px', textAlign: 'center' }}>
-            <div style={{
-              width: '140px', height: '140px', borderRadius: '50%',
-              overflow: 'hidden', background: '#161616',
-              border: '2px solid #2a2a2a', margin: '0 auto 16px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'border-color 200ms ease, box-shadow 200ms ease',
-            }}>
-              {(profilePic) ? (
-                <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#505050" strokeWidth="1.2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => document.getElementById('profile-pic-input')?.click()
-            }
-              style={{
-                width: '36px', height: '36px', marginTop: '8px',
-                borderRadius: '50%', background: '#0095f6',
-                border: '2px solid #0d0d0d', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,149,246,0.3)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease',
-              }}
-              onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,149,246,0.5)'; }}
-              onMouseOut={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,149,246,0.3)'; }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-                <path d="M12 11v6" />
-                <path d="M9 14h6" />
-              </svg>
-            </button>
-            <input
-              id="profile-pic-input"
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              style={{ display: 'none' }}
-              onChange={(e) => handleFileChange(e)}
-            />
-            <p style={{ fontSize: '12px', color: '#707070', marginTop: '6px' }}>
-              Add photo
-            </p>
-          </div>
-
-          {/* Gender dropdown */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-            <label style={{ ...labelStyle, textAlign: 'center' }}>Gender <span style={{ color: '#ed4956' }}>*</span></label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              onBlur={() => handleBlur('gender')}
-              style={{
-                ...inputStyle(!!showGenderError),
-                appearance: 'none' as const,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
-                paddingRight: '36px', cursor: 'pointer',
-                color: gender ? '#f5f5f5' : '#707070',
-              }}
-            >
-              <option value="" disabled>Select</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
-            {touched.gender && errors.gender && (
-              <p style={{ fontSize: '14px', color: '#ed4956', margin: 0, textAlign: 'center' }}>{errors.gender}</p>
-            )}
-          </div>
+      {/* Profile — centered hero */}
+      <div className="s2-profile-hero">
+        <div className={`s2-square ${profilePic?'has-photo':''}`} style={{borderStyle: profilePic?'solid':'dashed'}}>
+          {profilePic ? <img src={profilePic} alt="Profile" style={{width:'100%', height:'100%', objectFit:'cover'}}/> : <UserRound size={36} strokeWidth={1.4} color="rgba(255,255,255,0.07)"/>}
+          <button type="button" onClick={()=>fileInputRef.current?.click()} style={{position:'absolute', inset:0, background: profilePic?'linear-gradient(180deg,transparent 45%, rgba(0,0,0,0.6) 100%)':'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-end', justifyContent:'center', paddingBottom:'12px'}}>
+            <span style={{display:'inline-flex', alignItems:'center', gap:'6px', padding:'8px 14px', borderRadius:'999px', background:'#FFFFFF', color:'#09090B', fontSize:'12px', fontWeight:700}}><Camera size={14}/>{profilePic?'Change':'Upload'}</span>
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={onFileSelect} disabled={isSubmitting} style={{display:'none'}}/>
+          {profilePic && <button type="button" onClick={onRemoveProfilePic} style={{position:'absolute', top:'8px', right:'8px', width:'26px', height:'26px', borderRadius:'999px', background:'rgba(0,0,0,0.6)', border:'1px solid rgba(255,255,255,0.07)', color:'#FAFAFA', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer'}}><Trash2 size={13}/></button>}
         </div>
-
-        {/* RIGHT COLUMN: DOB + fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-          {/* DOB */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <label style={{ ...labelStyle }}>Date of Birth <span style={{ color: '#ed4956' }}>*</span></label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <select
-                value={dobMonth >= 0 ? dobMonth : ''}
-                onChange={(e) => handleMonthChange(Number(e.target.value))}
-                onBlur={() => handleBlur('dob')}
-                style={{
-                  ...inputStyle(!!showDobError),
-                  flex: 2,
-                  appearance: 'none' as const,
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-                  paddingRight: '28px', paddingLeft: '12px',
-                  cursor: 'pointer', color: dobMonth >= 0 ? '#f5f5f5' : '#707070',
-                }}
-              >
-                <option value="" disabled>Month</option>
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i}>{m}</option>
-                ))}
-              </select>
-              <select
-                value={dobDay > 0 ? dobDay : ''}
-                onChange={(e) => handleDayChange(Number(e.target.value))}
-                onBlur={() => handleBlur('dob')}
-                style={{
-                  ...inputStyle(!!showDobError),
-                  flex: 1,
-                  appearance: 'none' as const,
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-                  paddingRight: '28px', paddingLeft: '12px',
-                  cursor: 'pointer', color: dobDay > 0 ? '#f5f5f5' : '#707070',
-                }}
-              >
-                <option value="" disabled>Day</option>
-                {Array.from({ length: getMaxDay(dobYear >= 0 ? dobYear : 2024, dobMonth >= 0 ? dobMonth : 0) }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-              <select
-                value={dobYear > 0 ? dobYear : ''}
-                onChange={(e) => handleYearChange(Number(e.target.value))}
-                onBlur={() => handleBlur('dob')}
-                style={{
-                  ...inputStyle(!!showDobError),
-                  flex: 1.5,
-                  appearance: 'none' as const,
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-                  paddingRight: '28px', paddingLeft: '12px',
-                  cursor: 'pointer', color: dobYear > 0 ? '#f5f5f5' : '#707070',
-                }}
-              >
-                <option value="" disabled>Year</option>
-                {Array.from({ length: MAX_AGE_YEAR - MIN_AGE_YEAR + 1 }, (_, i) => {
-                  const y = MAX_AGE_YEAR - i;
-                  return <option key={y} value={y}>{y}</option>;
-                })}
-              </select>
-            </div>
-            {touched.dob && errors.dob && (
-              <p style={{ fontSize: '14px', color: '#ed4956', margin: 0 }}>{errors.dob}</p>
-            )}
-          </div>
-
-          {/* Occupation */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ ...labelStyle }}>Occupation</label>
-            <input
-              type="text"
-              value={occupation}
-              onChange={(e) => setOccupation(e.target.value)}
-              onBlur={() => handleBlur('occupation')}
-              placeholder="e.g., Software Engineer"
-              maxLength={100}
-              style={inputStyle(false)}
-            />
-          </div>
-
-          {/* Company */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ ...labelStyle }}>Company</label>
-            <input
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              onBlur={() => handleBlur('company')}
-              placeholder="e.g., Acme Inc"
-              maxLength={100}
-              style={inputStyle(false)}
-            />
-          </div>
-
-          {/* Role */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ ...labelStyle }}>Role / Title</label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              onBlur={() => handleBlur('role')}
-              placeholder="e.g., Senior Engineer"
-              maxLength={100}
-              style={inputStyle(false)}
-            />
-          </div>
+        <div style={{textAlign:'center'}}>
+          <p style={{fontSize:'13px', fontWeight:700, color:'#FAFAFA', margin:'0 0 2px'}}>Profile photo</p>
+          <p style={{fontSize:'11px', color:'#71717A', margin:0}}>Square • JPG PNG WebP • 5 MB — optional</p>
         </div>
       </div>
+
+      {/* Gender + DOB side-by-side — different placement */}
+      <div className="s2-pair">
+        <div className={`s2-card ${genderError?'has-error':''} ${genderOpen?'open':''}`} style={{position:'relative'}}>
+          <span className="s2-label">Gender <b>*</b></span>
+          <button type="button" onClick={()=>setGenderOpen(v=>!v)} className={`s2-trigger ${gender?'has-value':''} ${genderError?'has-error':''} ${genderOpen?'open':''}`} disabled={isSubmitting}>
+            <span>{gender ? GENDER_OPTIONS.find(g=>g.value===gender)?.label : 'Select gender'}</span>
+            <ChevronDown size={16} color="#484848" style={{transform: genderOpen?'rotate(180deg)':''}}/>
+          </button>
+          {genderOpen && (
+            <div className="s2-dropdown">
+              {GENDER_OPTIONS.map(o=>{
+                const sel=gender===o.value;
+                return <button key={o.value} type="button" className={sel?'is-selected':''} onClick={()=>{setGender(o.value); handleBlur('gender'); setGenderOpen(false);}}>{o.label}{sel&&<Check size={14}/>}</button>
+              })}
+            </div>
+          )}
+          {genderError && <p style={{fontSize:'12px', color:'#ed4956', margin:'8px 0 0'}}>{genderError}</p>}
+        </div>
+
+        <div className={`s2-card ${dobError?'has-error':''} ${dobOpen?'open':''}`} style={{position:'relative'}}>
+          <span className="s2-label">Date of birth <b>*</b></span>
+          <button type="button" onClick={()=> setDobOpen(true)} className={`s2-trigger ${dob?'has-value':''} ${dobError?'has-error':''} ${dobOpen?'open':''}`} aria-haspopup="dialog" aria-expanded={dobOpen}>
+            <span style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{dobDisplay || 'Pick a date'}</span>
+            <ChevronDown size={16} color="#484848" style={{transform: dobOpen?'rotate(180deg)':''}}/>
+          </button>
+          {dobError && <p style={{fontSize:'12px', color:'#ed4956', margin:'8px 0 0'}}>{dobError}</p>}
+          {dobOpen && (
+            <div className="s2-popup-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget){ setDobOpen(false); handleBlur('dob'); }}}>
+              <div className="s2-popup" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}>
+                <div className="s2-cal-head">
+                  <button type="button" className="s2-cal-nav" onClick={goPrev} disabled={!canPrev()}><ChevronLeft size={16}/></button>
+                  <button type="button" onClick={()=>setPickerMode(pickerMode==='days'?'months': pickerMode==='months'?'years':'days')} className="s2-cal-title">
+                    {pickerMode==='days' && <>{MONTHS[viewMonth]} {viewYear}</>}
+                    {pickerMode==='months' && <>{viewYear}</>}
+                    {pickerMode==='years' && <>{years[0]} – {years[years.length-1]}</>}
+                    <ChevronDown size={13} style={{opacity:0.5, transform: pickerMode!=='days'?'rotate(180deg)':''}}/>
+                  </button>
+                  <button type="button" className="s2-cal-nav" onClick={goNext} disabled={!canNext()}><ChevronRight size={16}/></button>
+                </div>
+
+                {pickerMode==='years' ? (
+                  <div className="s2-year-grid">
+                    {years.map(y=> <button key={y} type="button" onClick={()=>{setViewYear(y); setPickerMode('days');}} className={`s2-year ${viewYear===y?'is-selected':''}`}>{y}</button>)}
+                  </div>
+                ) : pickerMode==='months' ? (
+                  <div className="s2-month-grid">
+                    {MONTHS.map((m,i)=>{
+                      const isM = viewMonth===i;
+                      const disabled = new Date(viewYear,i,1) < new Date(minDate.getFullYear(),minDate.getMonth(),1) || new Date(viewYear,i,1) > new Date(maxDate.getFullYear(),maxDate.getMonth(),1);
+                      return <button key={m} type="button" disabled={disabled} onClick={()=>{setViewMonth(i); setPickerMode('days');}} className={`s2-month ${isM?'is-selected':''}`}>{m.slice(0,3)}</button>
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    <div className="s2-cal-grid">
+                      {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=> <div key={d} className="s2-cal-weekday">{d}</div>)}
+                      {Array.from({length: new Date(viewYear,viewMonth,1).getDay()}).map((_,i)=><div key={'e'+i}/>)}
+                      {Array.from({length: daysInMonth(viewYear,viewMonth)},(_,i)=>{
+                        const d=i+1; const sel=isSelected(d), tod=isToday(d), dis=isDisabled(d);
+                        return <button key={d} type="button" disabled={dis} onClick={()=>{ selectDay(d); setDobOpen(false); }} className={`s2-day ${tod?'is-today':''} ${sel?'is-selected':''} ${dis?'is-disabled':''}`}>{d}</button>
+                      })}
+                    </div>
+                    <div className="s2-cal-foot">
+                      <button type="button" onClick={()=>{ const t=new Date(); if(t>=minDate && t<=maxDate){ setViewYear(t.getFullYear()); setViewMonth(t.getMonth()); selectDay(t.getDate()); setDobOpen(false);} }} className="s2-foot-btn">Today</button>
+                      <div style={{display:'flex', gap:'8px'}}>
+                        <button type="button" onClick={()=>{setDob(''); setDobOpen(false);}} className="s2-foot-btn">Clear</button>
+                        <button type="button" onClick={()=>{handleBlur('dob'); setDobOpen(false);}} className="s2-foot-btn primary">Done</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="s2-work">
+        <p className="s2-work-head">Work <span>— optional</span> <span style={{flex:1, height:'1px', background:'rgba(255,255,255,0.07)', marginLeft:'10px'}}/></p>
+        <input value={occupation} onChange={e=>setOccupation(e.target.value)} onBlur={()=>handleBlur('occupation')} placeholder="Occupation" maxLength={100} disabled={isSubmitting} className="s2-input" />
+        <input value={company} onChange={e=>setCompany(e.target.value)} onBlur={()=>handleBlur('company')} placeholder="Company" maxLength={100} disabled={isSubmitting} className="s2-input" />
+        <input value={role} onChange={e=>setRole(e.target.value)} onBlur={()=>handleBlur('role')} placeholder="Role" maxLength={100} disabled={isSubmitting} className="s2-input" />
+      </div>
+
+      <button type="submit" disabled={!step2Complete||isSubmitting} style={{width:'100%', height:'44px', background: step2Complete&&!isSubmitting?'#0095F6':'rgba(255,255,255,0.08)', color: step2Complete&&!isSubmitting?'#FFFFFF':'#71717A', border:'none', borderRadius:'8px', fontSize:'17px', fontWeight:700, boxShadow:'none', opacity:1, cursor: step2Complete&&!isSubmitting?'pointer':'not-allowed'}}>
+        {isSubmitting?'Please wait…':'Continue'}
+      </button>
     </form>
   );
 };
-
-SignupStep2.displayName = 'SignupStep2';
+SignupStep2.displayName='SignupStep2';

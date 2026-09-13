@@ -184,6 +184,19 @@ export interface UsernameExistsData {
   reserved: boolean;
 }
 
+export interface SignupAvailabilityData {
+  email: EmailExistsData;
+  username: UsernameExistsData;
+}
+
+/** Check email and username availability in one request. */
+export async function checkSignupAvailability(
+  email: string,
+  username: string,
+): Promise<ApiResult<SignupAvailabilityData>> {
+  return apiPost<SignupAvailabilityData>('/api/auth/signup-availability', { email, username });
+}
+
 /** Check whether a username is already taken (API-backed). */
 export async function checkUsernameExists(username: string): Promise<ApiResult<UsernameExistsData>> {
   return apiPost<UsernameExistsData>('/api/auth/username-exists', { username });
@@ -516,6 +529,22 @@ export async function oauthConsent(payload: {
   signatureName?: string;
 }): Promise<ApiResult<OAuthConsentData>> {
   return apiPost<OAuthConsentData>('/api/auth/oauth/consent', payload);
+}
+
+// ═══ LOGOUT ═══
+export async function logout(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getCsrfToken() ? { 'X-CSRF-Token': getCsrfToken() } : {}),
+      },
+    });
+  } catch {
+    // best-effort — even if the request fails the cookie may already be expired
+  }
 }
 
 // ═══ OAUTH / SOCIAL LOGIN ═══

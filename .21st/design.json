@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "project": {
+    "name": "tirbeo-auth",
+    "productType": null,
+    "stack": [
+      "react",
+      "tailwind-v4",
+      "vite"
+    ]
+  },
+  "sources": {
+    "tokens": [
+      "src/index.css"
+    ],
+    "components": [
+      "src/components/ui"
+    ],
+    "assets": [],
+    "instructions": []
+  },
+  "design": {
+    "colorMode": "light",
+    "colors": {
+      "--tb-primary": {
+        "value": "#000000",
+        "source": "src/index.css"
+      },
+      "--tb-on-primary": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-primary-container": {
+        "value": "rgba(255, 255, 255, 0.08)",
+        "source": "src/index.css"
+      },
+      "--tb-on-primary-container": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-accent": {
+        "value": "#000000",
+        "source": "src/index.css"
+      },
+      "--tb-accent-bright": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-secondary": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-on-secondary": {
+        "value": "#000000",
+        "source": "src/index.css"
+      },
+      "--tb-secondary-container": {
+        "value": "rgba(255, 255, 255, 0.08)",
+        "source": "src/index.css"
+      },
+      "--tb-on-secondary-container": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-muted": {
+        "value": "rgba(255, 255, 255, 0.40)",
+        "source": "src/index.css"
+      }
+    },
+    "typography": {
+      "--tb-text": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-text-dim": {
+        "value": "rgba(0, 0, 0, 0.55)",
+        "source": "src/index.css"
+      }
+    },
+    "spacing": {
+      "--tb-surface-container-lowest": {
+        "value": "#000000",
+        "source": "src/index.css"
+      },
+      "--tb-surface-container-low": {
+        "value": "#FFFFFF",
+        "source": "src/index.css"
+      },
+      "--tb-surface-container": {
+        "value": "#F5F5F5",
+        "source": "src/index.css"
+      },
+      "--tb-surface-container-high": {
+        "value": "#E8E8E8",
+        "source": "src/index.css"
+      },
+      "--tb-surface-container-highest": {
+        "value": "#E0E0E0",
+        "source": "src/index.css"
+      },
+      "--tb-error-container": {
+        "value": "rgba(255, 255, 255, 0.12)",
+        "source": "src/index.css"
+      },
+      "--tb-success-container": {
+        "value": "rgba(255, 255, 255, 0.12)",
+        "source": "src/index.css"
+      }
+    },
+    "radius": {},
+    "shadows": {},
+    "motion": {},
+    "density": "unknown"
+  },
+  "components": {
+    "installed": [
+      "atoms"
+    ],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": [],
+  "evidence": [
+    {
+      "fact": "components.installed",
+      "source": "src/components/ui"
+    },
+    {
+      "fact": "design.colorMode:light",
+      "source": "src/index.css"
+    },
+    {
+      "fact": "design.tokens",
+      "source": "src/index.css"
+    },
+    {
+      "fact": "project.stack:react",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:tailwind-v4",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:vite",
+      "source": "package.json"
+    }
+  ],
+  "generatedAt": "2026-09-13T09:10:56.227Z"
+}

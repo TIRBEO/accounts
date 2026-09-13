@@ -37,10 +37,10 @@ function ensureStyles() {
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
   height: '48px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#a0a0a0',
+  color: '#A1A1AA',
   fontSize: '15px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
@@ -69,16 +69,13 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
       type="button"
       onClick={option.onClick}
       disabled={option.disabled}
+      className="login-more-option"
       style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         width: '100%',
         padding: '18px 20px',
-        background: hovered && !option.disabled ? '#111111' : 'transparent',
+        background: hovered && !option.disabled ? 'rgba(255,255,255,0.04)' : 'transparent',
         border: 'none',
-        borderBottom: isLast ? 'none' : '1px solid #1a1a1a',
+        borderBottom: isLast ? 'none' : '1px solid #141416',
         borderRadius: '0',
         color: 'inherit',
         font: 'inherit',
@@ -97,7 +94,7 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
           <span style={{
             fontSize: '16px',
             fontWeight: 600,
-            color: '#e0e0e0',
+            color: '#FAFAFA',
             fontFamily: TYPOGRAPHY.fontFamily,
             transition: 'color 120ms ease',
           }}>
@@ -109,9 +106,9 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
               fontSize: '11px',
               fontWeight: 600,
               borderRadius: '4px',
-              background: sends === 0 ? 'rgba(237,73,86,0.1)' : '#1a1a1a',
-              color: sends === 0 ? '#ed4956' : '#a0a0a0',
-              border: `1px solid ${sends === 0 ? 'rgba(237,73,86,0.2)' : '#2a2a2a'}`,
+              background: sends === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
+              color: sends === 0 ? '#f43f5e' : '#A1A1AA',
+              border: `1px solid ${sends === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
               letterSpacing: '0.02em',
             }}>
               {sends === 0 ? 'limit reached' : cooldown > 0 ? `${cooldown}s` : `${sends} left`}
@@ -120,11 +117,11 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
         </div>
         <p style={{
           fontSize: '13px',
-          color: '#707070',
+          color: '#71717A',
           margin: '4px 0 0',
           fontFamily: TYPOGRAPHY.fontFamily,
           transition: 'color 120ms ease',
-          ...(hovered && !option.disabled ? { color: '#a0a0a0' } : {}),
+          ...(hovered && !option.disabled ? { color: '#A1A1AA' } : {}),
         }}>
           {option.disabled && sends === 0
             ? 'Maximum attempts reached for this session'
@@ -136,7 +133,7 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
 
       <svg
         width="14" height="14" viewBox="0 0 24 24" fill="none"
-        stroke={hovered && !option.disabled ? '#a0a0a0' : '#484848'}
+        stroke={hovered && !option.disabled ? '#A1A1AA' : '#484848'}
         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         style={{ flexShrink: 0, marginLeft: '16px', transition: 'all 120ms ease', transform: hovered && !option.disabled ? 'translateX(2px)' : 'none' }}
       >
@@ -194,7 +191,7 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0', width: '100%' }}>
+    <div className="login-more-options auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '0', width: '100%' }}>
       {/* Header with profile pic */}
       <div style={{ textAlign: 'center', marginBottom: '32px', animation: 'moFadeUp 0.35s ease both' }}>
         {photoUrl ? (
@@ -202,8 +199,8 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: '#111111',
-            border: '2px solid #2a2a2a',
+            background: 'rgba(255,255,255,0.04)',
+            border: '2px solid rgba(255,255,255,0.07)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -217,8 +214,8 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: '#111111',
-            border: '2px solid #2a2a2a',
+            background: 'rgba(255,255,255,0.04)',
+            border: '2px solid rgba(255,255,255,0.07)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -229,10 +226,10 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
             </span>
           </div>
         )}
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '1.2' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '1.2' }}>
           More ways to sign in
         </h2>
-        <p style={{ fontSize: '14px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <p style={{ fontSize: '14px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily }}>
           {email}
         </p>
       </div>
@@ -248,8 +245,8 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
         margin: '28px 0 24px',
         animation: `moFadeUp 0.35s ease ${0.15 + options.length * 0.06}s both`,
       }}>
-        <div style={{ flex: 1, height: '1px', background: '#1a1a1a' }} />
-        <div style={{ flex: 1, height: '1px', background: '#1a1a1a' }} />
+        <div style={{ flex: 1, height: '1px', background: '#141416' }} />
+        <div style={{ flex: 1, height: '1px', background: '#141416' }} />
       </div>
 
       <button
@@ -259,8 +256,8 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
           ...secondaryBtn,
           animation: `moFadeUp 0.35s ease ${0.15 + options.length * 0.06 + 0.06}s both`,
         }}
-        onMouseOver={e => { e.currentTarget.style.background = '#161616'; e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#f5f5f5'; }}
-        onMouseOut={e => { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#a0a0a0'; }}
+        onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; }}
+        onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; }}
       >
         Back to sign in
       </button>

@@ -12,27 +12,7 @@ export function SessionGate({ children }: SessionGateProps) {
   const { user, loading, isAuthenticated, signOut } = useSession();
 
   if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}
-        >
-          <img src="/logo.png" alt="Tirbeo" width={128} height={85} style={{ height: '48px', width: 'auto' }} />
-          <div style={{ position: 'relative', width: '112px', height: '6px', overflow: 'hidden', borderRadius: '999px', background: 'rgba(255,255,255,0.09)' }}>
-            <motion.div
-              style={{ position: 'absolute', top: 0, bottom: 0, width: '33%', borderRadius: '999px', background: '#0095f6' }}
-              animate={{ x: ['-100%', '300%'] }}
-              transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          </div>
-          <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.18em', color: '#606060', fontFamily: TYPOGRAPHY.fontFamily }}>
-            Loading
-          </p>
-        </motion.div>
-      </div>
-    );
+    return null;
   }
 
   if (isAuthenticated && user) {

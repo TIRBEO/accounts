@@ -1,5 +1,4 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 import { GitHubIcon, GoogleIcon, DiscordIcon } from "./SocialIcons";
 import { startOAuth, type OAuthProvider } from "../lib/oauth";
 import { GoogleOneTap } from "./auth/GoogleOneTap";
@@ -129,11 +128,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {isPending ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-white/65" />
-                  ) : (
-                    meta.icon
-                  )}
+                  {meta.icon}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
                   {verb} {meta.label}
@@ -186,11 +181,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-white/65" />
-                ) : (
-                  meta.icon
-                )}
+                {meta.icon}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
                 {verb} {meta.label}

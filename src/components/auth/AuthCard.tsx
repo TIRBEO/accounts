@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
 import { redirectBlockedToDashboard } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
@@ -20,6 +20,7 @@ import {
   confirmPasswordReset,
   verifyPasswordReset,
   checkEmailExists,
+  logout,
 } from '../../lib/api';
 import type { BlockInfo } from '../../lib/api';
 import { validatePassword, validateEmail, validateUsername, validateDob } from '../../lib/validations';
@@ -52,53 +53,54 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 }) => {
   const form = useAuthForm(onShowToast);
 
-  const {
-    mode, switchMode,
-    signupStep, setSignupStep,
-    loginStep, setLoginStep,
-    firstName, setFirstName,
-    lastName, setLastName,
-    email, setEmail,
-    password, setPassword,
-    confirmPassword, setConfirmPassword,
-    showPassword, setShowPassword,
-    gender, setGender,
-    dob, setDob,
-    username, setUsername,
-    occupation, setOccupation,
-    company, setCompany,
-    role, setRole,
-    verificationCode, setVerificationCode,
-    profilePic, setProfilePic,
-    showImageEditor, setShowImageEditor,
-    tempImageUrl, setTempImageUrl,
-    fileInputRef,
-    twoFactorCode, setTwoFactorCode,
-    loginTempToken, setLoginTempToken,
-    loginPending2fa, setLoginPending2fa,
-    loginOtpCode, setLoginOtpCode,
-    backupCode, setBackupCode,
-    loginWithBackup, setLoginWithBackup,
-    recoveryMethod, setRecoveryMethod,
-    recoveryCode, setRecoveryCode,
-    resetToken, setResetToken,
-    recoveryStage, setRecoveryStage,
-    loginProfile, setLoginProfile,
-    consentTerms, setConsentTerms,
-    consentPrivacy, setConsentPrivacy,
-    isSubmitting, setIsSubmitting,
-    cooldowns, setCooldowns, isInCooldown, getCooldownRemaining, startCooldown,
-    canSend, incrementSend, remainingSends,
-    errors, setErrors,
-    touched, setTouched,
-    validateField, handleBlur, validateStep,
-    usernameStatus, usernameMessage, usernameSuggestions,
-    emailCheckStatus,
-    checkUsername,
-    resetToHome, clearValidation, resetLoginPassword, resetRecovery,
-  } = form;
+    const {
+      mode, switchMode,
+      signupStep, setSignupStep,
+      loginStep, setLoginStep,
+      firstName, setFirstName,
+      lastName, setLastName,
+      email, setEmail,
+      password, setPassword,
+      confirmPassword, setConfirmPassword,
+      showPassword, setShowPassword,
+      gender, setGender,
+      dob, setDob,
+      username, setUsername,
+      occupation, setOccupation,
+      company, setCompany,
+      role, setRole,
+      verificationCode, setVerificationCode,
+      profilePic, setProfilePic,
+      showImageEditor, setShowImageEditor,
+      tempImageUrl, setTempImageUrl,
+      fileInputRef,
+      twoFactorCode, setTwoFactorCode,
+      loginTempToken, setLoginTempToken,
+      loginPending2fa, setLoginPending2fa,
+      loginOtpCode, setLoginOtpCode,
+      backupCode, setBackupCode,
+      loginWithBackup, setLoginWithBackup,
+      recoveryMethod, setRecoveryMethod,
+      recoveryCode, setRecoveryCode,
+      resetToken, setResetToken,
+      recoveryStage, setRecoveryStage,
+      loginProfile, setLoginProfile,
+      consentTerms, setConsentTerms,
+      consentPrivacy, setConsentPrivacy,
+      isSubmitting, setIsSubmitting,
+      cooldowns, setCooldowns, isInCooldown, getCooldownRemaining, startCooldown,
+      canSend, incrementSend, remainingSends, sendWithRateLimit,
+      errors, setErrors,
+      touched, setTouched,
+      validateField, handleBlur, validateStep,
+      usernameStatus, usernameMessage, usernameSuggestions,
+      emailCheckStatus,
+      checkUsername,
+      resetToHome, clearValidation, resetLoginPassword, resetRecovery,
+    } = form;
 
-  const COOLDOWN_SECONDS = 30;
+  const [magicSent, setMagicSent] = React.useState(false);
+  React.useEffect(() => { setMagicSent(false); }, [email]);
 
   const lockAccount = (result: { block?: BlockInfo | null }): boolean => {
     if (!result.block) return false;
@@ -164,7 +166,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         const userId = result.data?.id;
         if (userId && profilePic) {
           try {
-            // Convert data URL to Blob for API upload
+            // Convert data URL to Blob for API upload — must happen while the
+            // freshly-created session cookie is still valid.
             const headerMatch = profilePic.match(/^data:([^;]+);base64,(.+)$/);
             let uploadFile: Blob;
             if (headerMatch) {
@@ -187,8 +190,24 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           }
         }
 
-        onSuccessAuth(email, 'Email Registration');
+        // Always force the user through /login after creation — never auto-redirect
+        // to the dashboard and never honour an incoming redirect_to. The fresh
+        // session issued by the signup endpoint is cleared so the login screen
+        // does not immediately auto-bounce via getCurrentUser().
         haptic('success');
+        onShowToast('Account created — please log in');
+        setIsSubmitting(false);
+        try {
+          await logout();
+        } catch {}
+        try { localStorage.removeItem('tirbeo_session'); } catch {}
+        // Preserve the email so the login form can pre-fill it.
+        // Switch to /login route so refresh stays on login and the
+        // getCurrentUser auto-redirect in App.tsx is bypassed (no cookie now).
+        switchMode('login');
+        setLoginStep('email');
+        // Do NOT call onSuccessAuth — that would redirect to dashboard.
+        return;
       }
     } catch (err) {
       onShowToast('An unexpected error occurred');
@@ -372,21 +391,18 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   };
 
   const handleLoginOtpResend = async () => {
-    if (!email || isInCooldown('login-otp')) return;
-    setIsSubmitting(true);
-    const result = await requestLoginOtp(email);
-    setIsSubmitting(false);
+    const result = await sendWithRateLimit('login-otp', () => requestLoginOtp(email), { cooldownKey: 'login-otp' });
     if (result.ok) {
-      incrementSend('login-otp');
-      startCooldown('login-otp');
+      setLoginOtpCode('');
+      setLoginPending2fa(false);
+      setLoginStep('otp');
       onShowToast('Verification code resent to ' + email);
     } else if (result.status === 429) {
-      incrementSend('login-otp');
-      const seconds = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : COOLDOWN_SECONDS;
-      setCooldowns((prev) => ({ ...prev, 'login-otp': seconds }));
+      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      setCooldowns((prev) => ({ ...prev, 'login-otp': retryAfter }));
       onShowToast(result.error || 'Please wait before resending');
     } else {
-      if (lockAccount(result)) return;
+      if (lockAccount(result as any)) return;
       onShowToast(result.error || 'Failed to resend code');
     }
   };
@@ -474,71 +490,31 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setShowImageEditor(false);
   };
 
-  const handleCooldown = (method: string, retryAfterMs?: number) => {
-    const seconds = retryAfterMs ? Math.ceil(retryAfterMs / 1000) : COOLDOWN_SECONDS;
-    setCooldowns((prev) => ({ ...prev, [method]: seconds }));
-  };
-
   const handleDirectLoginRequest = async (method: 'code' | 'magic-link') => {
-    if (!email) {
-      onShowToast('Please enter your email first');
-      return;
-    }
-    const otpKey = method === 'code' ? 'login-otp' : method;
-    if (!canSend(otpKey)) {
-      onShowToast('Maximum sends reached. Please try again later.');
-      return;
-    }
-    if (isInCooldown(otpKey)) {
-      onShowToast(`Please wait ${getCooldownRemaining(otpKey)}s before sending again`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
+    const key = method === 'code' ? 'login-otp' : 'magic-link';
+    const sendFn = method === 'code'
+      ? () => requestLoginOtp(email)
+      : () => requestMagicLink(email);
+    const result = await sendWithRateLimit(key, sendFn, { cooldownKey: key });
+    if (result.ok) {
       if (method === 'code') {
-        const result = await requestLoginOtp(email);
-        if (!result.ok) {
-          if (lockAccount(result)) return;
-          if (result.status === 429) {
-            incrementSend(otpKey);
-            handleCooldown(otpKey, result.data?.retryAfterMs);
-            onShowToast(result.error || 'Please wait before requesting another code');
-          } else {
-            onShowToast(result.error || 'Failed to send the code');
-          }
-          return;
-        }
-        incrementSend(otpKey);
-        startCooldown(otpKey);
         setLoginOtpCode('');
         setLoginPending2fa(false);
         setLoginStep('otp');
         onShowToast('One-time code sent to ' + email);
       } else {
-        const result = await requestMagicLink(email);
-        if (!result.ok) {
-          if (result.status === 429) {
-            incrementSend(method);
-            handleCooldown(method, result.retryAfterMs);
-            onShowToast(result.error || 'Please wait before requesting another magic link');
-          } else {
-            onShowToast(result.error || 'Failed to send magic link');
-          }
-          return;
-        }
-        incrementSend(method);
-        startCooldown(method);
-        setRecoveryMethod('magic-link');
-        setRecoveryStage('code');
-        setRecoveryCode('');
         setErrors({});
         setTouched({});
-        setLoginStep('recovery');
-        onShowToast('Magic link sent to ' + email);
+        onShowToast('Magic link sent to ' + email + ' — one-time link, direct login.');
+        setMagicSent(true);
       }
-    } finally {
-      setIsSubmitting(false);
+    } else if (result.status === 429) {
+      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
+      onShowToast(result.error || 'Please wait before requesting again');
+    } else {
+      if (lockAccount(result as any)) return;
+      onShowToast(result.error || 'Failed to send');
     }
   };
 
@@ -547,31 +523,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       onShowToast('Please enter your email first');
       return;
     }
-    const uiKey = method === 'recovery' ? 'recovery' : 'otp';
-    if (!canSend(uiKey)) {
-      onShowToast('Maximum sends reached. Please try again later.');
-      return;
-    }
-    if (isInCooldown(uiKey)) {
-      onShowToast(`Please wait ${getCooldownRemaining(uiKey)}s before sending again`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await requestPasswordReset(email, method);
-      if (!result.ok) {
-        if (result.status === 429) {
-          incrementSend(uiKey);
-          handleCooldown(uiKey, result.data?.retryAfterMs);
-          onShowToast(result.error || 'Please wait before requesting another code');
-        } else {
-          onShowToast(result.error || 'Failed to send the reset code');
-        }
-        return;
-      }
-      incrementSend(uiKey);
-      startCooldown(uiKey);
+    const key = method === 'recovery' ? 'recovery' : 'otp';
+    const result = await sendWithRateLimit(key, () => requestPasswordReset(email, method), { cooldownKey: key });
+    if (result.ok) {
       setRecoveryMethod(method === 'recovery' ? 'recovery' : 'code');
       setRecoveryStage('code');
       setRecoveryCode('');
@@ -584,8 +538,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           ? 'Reset code sent to ' + (loginProfile?.recoveryEmail || 'your recovery email')
           : 'Reset code sent to ' + email,
       );
-    } finally {
-      setIsSubmitting(false);
+    } else if (result.status === 429) {
+      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
+      onShowToast(result.error || 'Please wait before requesting another code');
+    } else {
+      onShowToast(result.error || 'Failed to send the reset code');
     }
   };
 
@@ -598,28 +556,37 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       await handleDirectLoginRequest('magic-link');
       return;
     }
-    await handlePasswordResetRequest(recoveryMethod === 'recovery' ? 'recovery' : 'otp');
+    const key = recoveryMethod === 'recovery' ? 'recovery' : 'otp';
+    const pwMethod = key === 'recovery' ? 'recovery' : 'otp';
+    const result = await sendWithRateLimit(key, () => requestPasswordReset(email, pwMethod as any), { cooldownKey: key });
+    if (result.ok) {
+      setRecoveryMethod(recoveryMethod === 'recovery' ? 'recovery' : 'code');
+      setRecoveryStage('code');
+      setRecoveryCode('');
+      setResetToken('');
+      setErrors({});
+      setTouched({});
+      setLoginStep('recovery');
+    } else if (result.status === 429) {
+      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
+      onShowToast(result.error || 'Please wait before requesting another code');
+    } else {
+      onShowToast(result.error || 'Failed to send the reset code');
+    }
   };
 
   const handleResendCode = async () => {
-    if (isInCooldown('signup-otp')) return;
-
-    try {
-      const result = await requestSignupOtp(email);
-      if (!result.ok) {
-        if (result.status === 429) {
-          incrementSend('signup-otp');
-          onShowToast(result.error || 'Please wait before resending');
-        } else {
-          onShowToast(result.error || 'Error sending verification code');
-        }
-        return;
-      }
-      incrementSend('signup-otp');
-      startCooldown('signup-otp');
+    if (!email || isInCooldown('signup-otp')) return;
+    const result = await sendWithRateLimit('signup-otp', () => requestSignupOtp(email), { cooldownKey: 'signup-otp' });
+    if (result.ok) {
       onShowToast('Verification code resent to ' + email);
-    } catch (err) {
-      onShowToast('Error sending verification code');
+    } else if (result.status === 429) {
+      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      setCooldowns((prev) => ({ ...prev, 'signup-otp': retryAfter }));
+      onShowToast(result.error || 'Please wait before resending');
+    } else {
+      onShowToast(result.error || 'Error sending verification code');
     }
   };
 
@@ -716,8 +683,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     return 'Email';
   };
 
-  const stepLabels = ['Basics', 'Details', 'Verify', 'Create'];
-
   const emailValid = !validateEmail(email);
   const usernameValid = validateUsername(username) === undefined;
   const step1Complete = Boolean(
@@ -729,6 +694,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     emailCheckStatus === 'available',
   );
   const step2Complete = Boolean(gender && dob && !validateDob(dob));
+  const isStep2 = mode === 'signup' && signupStep === 2;
   const step4Complete = Boolean(
     password &&
     !validatePassword(password).error &&
@@ -737,40 +703,83 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     consentPrivacy,
   );
 
+  if (magicSent && mode === 'login') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 40, background: '#09090B', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}>
+        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /></div>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '440px', background: 'rgba(20,20,22,0.92)', backdropFilter: 'blur(20px) saturate(1.15)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '32px 28px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)' }}>
+          <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 16px', boxShadow: '0 4px 16px rgba(255,255,255,0.10)' }}>
+            <Mail size={22} color="#09090B" />
+          </div>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.02em', color: '#FAFAFA', margin: '0 0 8px' }}>Check your <em style={{ fontStyle: 'italic', color: '#E4E4E7' }}>email</em></h2>
+          <p style={{ fontSize: '13.5px', color: '#A1A1AA', lineHeight: '20px', margin: '0 0 4px' }}>
+            One-time magic link sent to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>
+          </p>
+          <p style={{ fontSize: '12.5px', color: '#71717A', lineHeight: '18px', margin: 0 }}>
+            Tap the link to sign in — no password needed. Expires in 15 min.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px', color: '#A1A1AA', fontWeight: 600 }}>
+            {remainingSends('magic-link')} sends left • expires in 15 min • one-time
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer' }}>
+              Back
+            </button>
+            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '999px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#FFFFFF', color: isInCooldown('magic-link') ? '#71717A' : '#09090B', border: 'none', fontSize: '13.5px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer' }}>
+              {isInCooldown('magic-link') ? `Resend in ${getCooldownRemaining('magic-link')}s` : 'Resend link'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{
+    <div className="accounts-auth-shell" style={{
       position: 'relative',
       zIndex: 10,
-      minHeight: 'calc(100vh - 72px)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       userSelect: 'none',
-      padding: '32px 20px 64px',
+      padding: '20px',
+      width: '100%',
     }}>
-      <main className="auth-main" style={{
+      <style>{`
+        @media (min-width: 1025px) {
+          .auth-main--step2 { overflow: visible; }
+          .auth-card--step2 { overflow: visible; max-height: none; }
+        }
+        @media (max-width: 1024px) {
+          .auth-main--step2 { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+          .auth-card--step2 { overflow: visible; }
+        }
+      `}</style>
+      <main className={`auth-main accounts-auth-main${isStep2 ? ' auth-main--step2' : ''}`} style={{
         width: '100%',
-        maxWidth: mode === 'signup' && signupStep === 2 ? '860px' : '600px',
+        maxWidth: isStep2 ? '860px' : '600px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '16px',
-        padding: '32px 20px 64px',
-        transition: 'max-width 200ms ease',
+        padding: isStep2 ? '12px 20px 40px' : '32px 20px 64px',
+        transition: 'max-width 200ms ease, padding 200ms ease',
       }}>
         {/* Main card */}
         <div
-          className="auth-card"
+          className={`auth-card${isStep2 ? ' auth-card--step2' : ''}`}
           style={{
             width: '100%',
-            background: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '20px',
-            padding: mode === 'signup' && signupStep === 2 ? '40px 44px' : '52px 56px',
+            background: 'rgba(20,20,22,0.92)',
+            backdropFilter: 'blur(20px) saturate(1.15)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            padding: isStep2 ? '48px 44px' : '44px 40px 36px',
+            overflow: 'visible',
             boxSizing: 'border-box',
             opacity: 1,
+            boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)',
           }}
         >
           <div>
@@ -823,7 +832,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   errors={errors}
                   touched={touched}
                   handleBlur={handleBlur}
-                  validateField={validateField}
                   isSubmitting={isSubmitting}
                   step2Complete={step2Complete}
                   onSubmit={handleSignupSubmit}
@@ -1008,14 +1016,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             backdropFilter: 'blur(24px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '20px',
-            padding: '24px',
+            padding: '22px 24px',
             textAlign: 'center',
             boxSizing: 'border-box',
           }}
         >
           <p style={{
-            fontSize: '16px',
-            color: '#707070',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,0.55)',
             fontFamily: TYPOGRAPHY.fontFamily,
             margin: 0,
           }}>
@@ -1027,12 +1035,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#0095f6',
-                    fontSize: '16px',
-                    fontWeight: 600,
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    fontWeight: 700,
                     fontFamily: TYPOGRAPHY.fontFamily,
                     cursor: 'pointer',
                     padding: 0,
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    textDecorationColor: 'rgba(255,255,255,0.25)',
                   }}
                 >
                   Log in
@@ -1046,12 +1057,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#0095f6',
-                    fontSize: '16px',
-                    fontWeight: 600,
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    fontWeight: 700,
                     fontFamily: TYPOGRAPHY.fontFamily,
                     cursor: 'pointer',
                     padding: 0,
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    textDecorationColor: 'rgba(255,255,255,0.25)',
                   }}
                 >
                   Sign up
@@ -1064,7 +1078,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
       {/* Image Crop Editor */}
       {showImageEditor && tempImageUrl && (
-        <React.Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}><Loader2 size={24} style={{ animation: 'spin 0.8s linear infinite', color: '#707070' }} /></div>}>
+        <React.Suspense fallback={null}>
           <ImageCropEditor
             imageUrl={tempImageUrl}
             onCrop={handleCropImage}

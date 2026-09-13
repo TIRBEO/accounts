@@ -22,10 +22,10 @@ interface LoginOtpProps {
 const codeInput: React.CSSProperties = {
   width: '52px',
   height: '60px',
-  background: '#111111',
-  border: '1px solid #2a2a2a',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '14px',
-  color: '#f5f5f5',
+  color: '#FAFAFA',
   fontSize: '28px',
   fontWeight: 700,
   fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
@@ -37,16 +37,17 @@ const codeInput: React.CSSProperties = {
 
 const primaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '56px',
-  background: '#0095f6',
-  color: '#ffffff',
+  height: '44px',
+  background: '#0095F6',
+  color: '#FFFFFF',
   border: 'none',
-  borderRadius: '14px',
+  borderRadius: '8px',
   fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
-  transition: 'opacity 150ms ease',
+  transition: 'all 150ms ease',
+  boxShadow: 'none',
 };
 
 export const LoginOtp: React.FC<LoginOtpProps> = ({
@@ -59,13 +60,13 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
   const sendsRemaining = remainingSends('login-otp');
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <form className="auth-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#f5f5f5', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
           Check your email
         </h2>
-        <p style={{ fontSize: '15px', color: '#707070', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
-          We sent a 6-digit code to <span style={{ color: '#a0a0a0' }}>{email}</span>.
+        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+          We sent a 6-digit code to <span style={{ color: '#A1A1AA' }}>{email}</span>.
         </p>
         {loginPending2fa && (
           <p style={{ marginTop: '8px', fontSize: '13px', color: '#484848' }}>
@@ -74,7 +75,7 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+      <div className="otp-grid" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
         {[...Array(6)].map((_, i) => (
           <input
             key={i}
@@ -104,12 +105,12 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
             }}
             style={{
               ...codeInput,
-              borderColor: showCodeError ? '#ed4956' : loginOtpCode[i] ? '#3a3a3a' : '#2a2a2a',
+              borderColor: showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)',
             }}
             data-code-index={i}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#0095f6'; }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#FFFFFF'; }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = showCodeError ? '#ed4956' : loginOtpCode[i] ? '#3a3a3a' : '#2a2a2a';
+              e.currentTarget.style.borderColor = showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)';
               e.currentTarget.style.boxShadow = 'none';
             }}
           />
@@ -119,18 +120,18 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
       <input type="hidden" value={loginOtpCode} onChange={(e) => setLoginOtpCode(e.target.value)} onBlur={() => handleBlur('loginOtpCode')} />
 
       {showCodeError && (
-        <p style={{ textAlign: 'center', fontSize: '14px', color: '#ed4956', marginTop: '-12px' }}>{errors.loginOtpCode}</p>
+        <p style={{ textAlign: 'center', fontSize: '14px', color: '#f43f5e', marginTop: '-12px' }}>{errors.loginOtpCode}</p>
       )}
 
       <div style={{ textAlign: 'center' }}>
         {isInCooldown('login-otp') ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#707070', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
             <span>Resend in {getCooldownRemaining('login-otp')}s</span>
             <span style={{
               padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-              background: sendsRemaining === 0 ? 'rgba(237,73,86,0.1)' : '#1a1a1a',
-              color: sendsRemaining === 0 ? '#ed4956' : '#a0a0a0',
-              border: `1px solid ${sendsRemaining === 0 ? 'rgba(237,73,86,0.2)' : '#2a2a2a'}`,
+              background: sendsRemaining === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
+              color: sendsRemaining === 0 ? '#f43f5e' : '#A1A1AA',
+              border: `1px solid ${sendsRemaining === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
             }}>
               {sendsRemaining === 0 ? 'limit reached' : `${sendsRemaining} left`}
             </span>
@@ -141,23 +142,23 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#707070',
+                color: '#71717A',
                 fontSize: '14px',
                 fontFamily: TYPOGRAPHY.fontFamily,
                 cursor: 'pointer',
                 padding: 0,
                 transition: 'color 150ms ease',
               }}
-              onMouseOver={e => { e.currentTarget.style.color = '#a0a0a0'; }}
-              onMouseOut={e => { e.currentTarget.style.color = '#707070'; }}
+              onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; }}
+              onMouseOut={e => { e.currentTarget.style.color = '#71717A'; }}
             >
               Resend code
             </button>
             <span style={{
               padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-              background: sendsRemaining === 0 ? 'rgba(237,73,86,0.1)' : '#1a1a1a',
-              color: sendsRemaining === 0 ? '#ed4956' : '#a0a0a0',
-              border: `1px solid ${sendsRemaining === 0 ? 'rgba(237,73,86,0.2)' : '#2a2a2a'}`,
+              background: sendsRemaining === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
+              color: sendsRemaining === 0 ? '#f43f5e' : '#A1A1AA',
+              border: `1px solid ${sendsRemaining === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
             }}>
               {sendsRemaining === 0 ? 'limit reached' : `${sendsRemaining} left`}
             </span>
@@ -168,7 +169,9 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
       <button type="submit" disabled={!codeComplete || isSubmitting}
         style={{
           ...primaryBtn,
-          opacity: codeComplete && !isSubmitting ? 1 : 0.5,
+          background: codeComplete && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.08)',
+          color: codeComplete && !isSubmitting ? '#FFFFFF' : '#71717A',
+          opacity: 1,
           cursor: codeComplete && !isSubmitting ? 'pointer' : 'not-allowed',
         }}
       >
@@ -186,18 +189,18 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
         style={{
           width: '100%',
           height: '48px',
-          background: '#111111',
-          border: '1px solid #2a2a2a',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '14px',
-          color: '#a0a0a0',
+          color: '#A1A1AA',
           fontSize: '15px',
           fontWeight: 600,
           fontFamily: TYPOGRAPHY.fontFamily,
           cursor: 'pointer',
           transition: 'all 150ms ease',
         }}
-        onMouseOver={e => { e.currentTarget.style.background = '#161616'; e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#f5f5f5'; }}
-        onMouseOut={e => { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#a0a0a0'; }}
+        onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; }}
+        onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; }}
       >
         Back to sign in
       </button>

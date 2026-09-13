@@ -1,5 +1,4 @@
 import React, { useEffect, useCallback, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { GoogleIcon } from "../SocialIcons";
 import { apiPost } from "../../lib/api";
 
@@ -125,11 +124,7 @@ export const GoogleOneTap: React.FC<GoogleOneTapProps> = ({ onSuccessAuth }) => 
       "
       aria-label="Google One Tap sign in"
     >
-      {processing ? (
-        <Loader2 className="h-5 w-5 animate-spin text-white/65" />
-      ) : (
-        <GoogleIcon className="h-5 w-5" />
-      )}
+      <GoogleIcon className="h-5 w-5" />
       <span>{processing ? "Signing in with Google..." : "Google One Tap"}</span>
     </div>
   );

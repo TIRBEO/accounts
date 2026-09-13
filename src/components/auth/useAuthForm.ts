@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { checkEmailExists, checkUsernameExists, requestSignupOtp } from '../../lib/api';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
 
-// ═══ SHARED AUTH FORM STATE HOOK ═══
-// Manages all state shared across signup + login forms. Individual form
-// components read/write via this hook instead of prop-drilling.
+const COOLDOWN_SECONDS = 30;
+const WINDOW_MS = 15 * 60 * 1000;
+const SYNC_DEBOUNCE_MS = 2000;
+const LIMITS_SYNC_MS = 30_000;
 
 export interface LoginProfile {
   email: string;
@@ -16,8 +17,17 @@ export interface LoginProfile {
   recoveryEmail?: string | null;
 }
 
+const DEFAULT_SEND_LIMITS: Record<string, number> = {
+  'login-otp': 5,
+  'magic-link': 3,
+  'otp': 5,
+  'recovery': 5,
+  'signup-otp': 5,
+  'global-email': 5,
+  'global-ip': 20,
+};
+
 export function useAuthForm(onShowToast: (msg: string) => void) {
-  // ─── Mode ───
   const [mode, setMode] = useState<'login' | 'signup'>(() =>
     typeof window !== 'undefined' && window.location.pathname.startsWith('/login') ? 'login' : 'signup',
   );
@@ -82,49 +92,90 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ─── Per-method send limits (1 attempt each, persisted to localStorage, 15-min window) ───
-  const SEND_LIMITS: Record<string, number> = {
-    'login-otp': 1,
-    'magic-link': 1,
-    'otp': 1,
-    'recovery': 1,
-    'signup-otp': 3,
-  };
-  const WINDOW_MS = 15 * 60 * 1000;
-  const STORAGE_KEY = 'tirbeo_auth_send_counts';
+  // ─── Server-synced limits ───
+  const [sendLimits, setSendLimits] = useState<Record<string, number>>(DEFAULT_SEND_LIMITS);
+  const limitsSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLimitsSyncRef = useRef<number>(0);
 
-  const loadSendAttempts = (): Record<string, { count: number; windowStart: number }> => {
+  const fetchLimits = useCallback(async (forceInit = false) => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return {};
-      const data = JSON.parse(raw);
-      const now = Date.now();
-      const cleaned: Record<string, { count: number; windowStart: number }> = {};
-      for (const [k, v] of Object.entries(data)) {
-        const entry = v as any;
-        if (
-          entry &&
-          typeof entry.count === 'number' &&
-          Number.isFinite(entry.count) &&
-          typeof entry.windowStart === 'number' &&
-          Number.isFinite(entry.windowStart) &&
-          now - entry.windowStart < WINDOW_MS
-        ) {
-          cleaned[k] = { count: entry.count, windowStart: entry.windowStart };
+      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+      // Initialize limits from DB if not present
+      if (forceInit) {
+        await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'init' }),
+        }).catch(()=>{});
+      }
+      const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.limits && typeof data.limits === 'object') {
+          setSendLimits(prev => ({ ...prev, ...data.limits }));
         }
       }
-      return cleaned;
-    } catch { return {}; }
-  };
+    } catch {}
+  }, []);
 
-  const [sendAttempts, setSendAttempts] = useState<Record<string, { count: number; windowStart: number }>>(loadSendAttempts);
+  // Only sync limits periodically (not on every render)
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastLimitsSyncRef.current < LIMITS_SYNC_MS) return;
+    lastLimitsSyncRef.current = now;
+    fetchLimits(true);
+    limitsSyncTimerRef.current = setTimeout(() => { lastLimitsSyncRef.current = 0; }, LIMITS_SYNC_MS);
+  }, [fetchLimits]);
+
+  // Init limits from DB on mount
+  useEffect(() => {
+    void fetchLimits(true);
+  }, []);
+
+  // ─── Send attempts tracking ───
+  const [sendAttempts, setSendAttempts] = useState<Record<string, { count: number; windowStart: number }>>({});
+
+  // Sync from DB — so frontend shows real remaining, not just in-memory numbers
+  const syncFromDb = useCallback(async () => {
+    if (!email || !email.includes('@')) return;
+    try {
+      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+      const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/remaining?email=${encodeURIComponent(email)}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data: any = await res.json();
+      const rem = data.remaining || {};
+      const now = Date.now();
+      const next: Record<string, { count: number; windowStart: number }> = {};
+      for (const [m, info] of Object.entries(rem as Record<string, any>)) {
+        const max = info.max ?? sendLimits[m] ?? DEFAULT_SEND_LIMITS[m] ?? 3;
+        const remaining = info.remaining ?? max;
+        const used = Math.max(0, max - remaining);
+        next[m] = { count: used, windowStart: now };
+      }
+      if (Object.keys(next).length) setSendAttempts(prev => ({ ...prev, ...next }));
+    } catch {}
+  }, [email, sendLimits]);
+
+  const debouncedSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const periodicSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (debouncedSyncRef.current) clearTimeout(debouncedSyncRef.current);
+    debouncedSyncRef.current = setTimeout(() => { syncFromDb(); }, SYNC_DEBOUNCE_MS);
+    return () => { if (debouncedSyncRef.current) clearTimeout(debouncedSyncRef.current); };
+  }, [syncFromDb, mode, email, loginStep]);
+  // Periodic sync every 30s for cross-tab consistency
+  useEffect(() => {
+    periodicSyncRef.current = setInterval(syncFromDb, 30000);
+    return () => { if (periodicSyncRef.current) clearInterval(periodicSyncRef.current); };
+  }, [syncFromDb]);
 
   const getSendCount = (method: string) => {
     const entry = sendAttempts[method];
     if (!entry || Date.now() - entry.windowStart >= WINDOW_MS) return 0;
     return entry.count;
   };
-  const getMaxSends = (method: string) => SEND_LIMITS[method] || 5;
+  const getMaxSends = (method: string) => sendLimits[method] ?? DEFAULT_SEND_LIMITS[method] ?? 3;
   const canSend = (method: string) => getSendCount(method) < getMaxSends(method);
   const incrementSend = (method: string) => {
     setSendAttempts(prev => {
@@ -132,26 +183,25 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       const entry = prev[method];
       const windowStart = !entry || now - entry.windowStart >= WINDOW_MS ? now : entry.windowStart;
       const next = { ...prev, [method]: { count: ((entry && now - entry.windowStart < WINDOW_MS) ? entry.count : 0) + 1, windowStart } };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
   };
   const remainingSends = (method: string) => {
     const max = getMaxSends(method);
     const used = getSendCount(method);
-    if (!Number.isFinite(max) || !Number.isFinite(used)) return 0;
     return Math.max(0, max - used);
   };
 
-  // ─── Per-method cooldown timers (30s between sends) ───
+  // ─── Per-method cooldown timers ───
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
-  const COOLDOWN_SECONDS = 30;
+
   const isInCooldown = (key: string) => (cooldowns[key] || 0) > 0;
   const getCooldownRemaining = (key: string) => cooldowns[key] || 0;
-  const startCooldown = (key: string) => {
+  const startCooldown = useCallback((key: string) => {
     setCooldowns(prev => ({ ...prev, [key]: COOLDOWN_SECONDS }));
-  };
+  }, []);
 
+  // Cooldown ticker — single interval
   useEffect(() => {
     const active = Object.entries(cooldowns).filter(([, v]) => v > 0);
     if (active.length === 0) return;
@@ -160,13 +210,13 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         const next = { ...prev };
         let changed = false;
         for (const [k, v] of Object.entries(next)) {
-          if (v > 0) { next[k] = v - 1; changed = true; }
+          if (v > 0) { next[k] = Math.max(0, v - 1); changed = true; }
         }
         return changed ? next : prev;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [Object.keys(cooldowns).length]);
+  }, [Object.keys(cooldowns).filter(k => cooldowns[k] > 0).join(',')]);
 
   // ─── Validation state ───
   const [errors, setErrors] = useState<FormErrors>({});
@@ -182,31 +232,42 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
   const signupAvailabilityRequestRef = useRef(0);
 
-  // Cleanup username check timeout on unmount
   useEffect(() => {
     return () => {
       if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current);
     };
   }, []);
 
-  // ─── SEND OTP WHEN ENTERING STEP 3 ───
+  // ─── SEND OTP WHEN ENTERING STEP 3 (with rate limit guard) ───
+  const otpAutoSentRef = useRef<string>('');
   useEffect(() => {
+    if (mode !== 'signup' || signupStep !== 3 || !email || email === otpAutoSentRef.current) return;
+    if (!canSend('signup-otp') || isInCooldown('signup-otp')) return;
+    otpAutoSentRef.current = email;
+
+    let cancelled = false;
     const sendOtpForVerification = async () => {
-      if (mode === 'signup' && signupStep === 3 && email) {
+      if (!canSend('signup-otp')) return;
+      incrementSend('signup-otp');
+      startCooldown('signup-otp');
+      try {
         const result = await requestSignupOtp(email);
+        if (cancelled) return;
         if (!result.ok) {
           if (result.status === 429) {
-            incrementSend('signup-otp');
+            const retryAfter = (result as any)?.data?.retryAfterMs ? Math.ceil((result as any).data.retryAfterMs / 1000) : COOLDOWN_SECONDS;
+            setCooldowns(prev => ({ ...prev, 'signup-otp': retryAfter }));
+            onShowToast(result.error || 'Please wait before requesting another code');
+          } else {
+            onShowToast(result.status === 409 ? 'An account with this email already exists' : 'Error sending verification code');
           }
-          onShowToast(result.status === 409 ? 'An account with this email already exists' : 'Error sending verification code');
         } else {
-          incrementSend('signup-otp');
           onShowToast('Verification code sent to ' + email);
-          startCooldown('signup-otp');
         }
-      }
+      } catch {}
     };
-    sendOtpForVerification();
+    void sendOtpForVerification();
+    return () => { cancelled = true; };
   }, [signupStep, mode, email]);
 
   // ─── PRE-FETCH LOGIN PROFILE ───
@@ -218,14 +279,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       checkEmailExists(email)
         .then((res) => {
           if (res.ok && res.data?.exists) {
-            setLoginProfile({
-              email,
-              exists: true,
-              photoUrl: res.data.photoUrl,
-              name: res.data.name,
-              hasRecoveryEmail: !!res.data.hasRecoveryEmail,
-              recoveryEmail: res.data.recoveryEmail,
-            });
+            setLoginProfile({ email, exists: true, photoUrl: res.data.photoUrl, name: res.data.name, hasRecoveryEmail: !!res.data.hasRecoveryEmail, recoveryEmail: res.data.recoveryEmail });
           } else {
             setLoginProfile({ email, exists: false });
           }
@@ -234,6 +288,19 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     }, 350);
     return () => clearTimeout(timer);
   }, [mode, loginStep, email]);
+
+  // ─── Generate username suggestions ───
+  const generateSuggestions = useCallback(async (base: string): Promise<string[]> => {
+    const suggestions: string[] = [];
+    for (let i = 1; i <= 5 && suggestions.length < 3; i++) {
+      const candidate = `${base}${i}`;
+      const res = await checkUsernameExists(candidate);
+      if (res.ok && res.data?.valid && !res.data?.exists && !res.data?.reserved) {
+        suggestions.push(candidate);
+      }
+    }
+    return suggestions;
+  }, []);
 
   // ─── SIGNUP: check email and username together ───
   const checkSignupAvailability = useCallback(async (
@@ -250,7 +317,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     const usernameError = validateUsername(nextUsername);
 
     if (emailError || usernameError) {
-      setEmailCheckStatus(emailError ? 'idle' : 'idle');
+      setEmailCheckStatus('idle');
       setUsernameStatus(usernameError ? 'error' : 'idle');
       setUsernameMessage(usernameError || '');
       return { emailAvailable: false, usernameAvailable: false, emailError, usernameError };
@@ -309,8 +376,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       setUsernameMessage('Unable to check availability');
       setUsernameSuggestions([]);
       return {
-        emailAvailable: false,
-        usernameAvailable: false,
+        emailAvailable: false, usernameAvailable: false,
         emailError: 'Unable to check email availability',
         usernameError: 'Unable to check username availability',
       };
@@ -326,44 +392,26 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       }
       return;
     }
-
-    const timer = setTimeout(() => {
-      void checkSignupAvailability(email, username);
-    }, 300);
+    const timer = setTimeout(() => { void checkSignupAvailability(email, username); }, 300);
     return () => clearTimeout(timer);
   }, [mode, signupStep, email, username, checkSignupAvailability]);
-  const generateSuggestions = useCallback(async (base: string): Promise<string[]> => {
-    const suggestions: string[] = [];
-    for (let i = 1; i <= 5 && suggestions.length < 3; i++) {
-      const candidate = `${base}${i}`;
-      const res = await checkUsernameExists(candidate);
-      if (res.ok && res.data?.valid && !res.data?.exists && !res.data?.reserved) {
-        suggestions.push(candidate);
-      }
-    }
-    return suggestions;
-  }, []);
 
-  // ─── Generate username suggestions ───
+  // ─── Check username ───
   const checkUsername = useCallback(async (value: string) => {
     if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current);
-
     if (!value || value.length < 3) {
       setUsernameStatus('idle');
       setUsernameMessage('');
       return;
     }
-
     const localError = validateUsername(value);
     if (localError) {
       setUsernameStatus('error');
       setUsernameMessage(localError);
       return;
     }
-
     setUsernameStatus('checking');
     setUsernameMessage('Checking availability...');
-
     usernameCheckTimeoutRef.current = setTimeout(async () => {
       try {
         const result = await checkUsernameExists(value);
@@ -454,20 +502,11 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       const value = getFieldValue(field);
       if (!value) return;
       validateField(field, value);
-      // Trigger immediate server checks on blur (skip debounce)
-      if (mode === 'signup' && signupStep === 1) {
-        if (field === 'email' && value && !validateEmail(value)) {
-          lastCheckedEmailRef.current = '';
-          setEmailCheckStatus('checking');
-          checkEmailExists(value)
-            .then((res) => {
-              setEmailCheckStatus(res.ok && res.data?.exists ? 'taken' : 'available');
-            })
-            .catch(() => setEmailCheckStatus('idle'));
-        }
-        if (field === 'username' && value && value.length >= 3 && !validateUsername(value)) {
-          if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current);
-          checkUsername(value);
+      if (mode === 'signup' && signupStep === 1 && (field === 'email' || field === 'username')) {
+        const nextEmail = field === 'email' ? value : email;
+        const nextUsername = field === 'username' ? value : username;
+        if (!validateEmail(nextEmail) && !validateUsername(nextUsername)) {
+          void checkSignupAvailability(nextEmail, nextUsername);
         }
       }
     } catch {}
@@ -507,27 +546,15 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       if (lastNameError) { newErrors.lastName = lastNameError; isValid = false; }
       if (emailError) { newErrors.email = emailError; isValid = false; }
       if (usernameError) { newErrors.username = usernameError; isValid = false; }
-
       if (isValid) {
-        const [emailRes, usernameRes] = await Promise.all([
-          checkEmailExists(email),
-          checkUsernameExists(username),
-        ]);
-
-        if (emailRes.ok && emailRes.data?.exists) {
-          newErrors.email = 'An account with this email already exists';
+        const availability = await checkSignupAvailability(email, username);
+        if (!availability.emailAvailable) {
+          newErrors.email = availability.emailError || 'An account with this email already exists';
           isValid = false;
         }
-
-        if (usernameRes.ok && (usernameRes.data?.exists || usernameRes.data?.reserved)) {
-          newErrors.username = usernameRes.data?.reserved ? 'This username is reserved' : 'This username is already taken';
+        if (!availability.usernameAvailable) {
+          newErrors.username = availability.usernameError || 'This username is already taken';
           isValid = false;
-          setUsernameStatus('taken');
-          setUsernameMessage(newErrors.username);
-          setUsernameSuggestions(await generateSuggestions(username));
-        } else if (usernameRes.ok && usernameRes.data?.valid && !usernameRes.data?.exists) {
-          setUsernameStatus('available');
-          setUsernameMessage(`${username} is available`);
         }
       }
     } else if (step === 2) {
@@ -559,6 +586,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     setLoginProfile(null);
     setErrors({});
     setTouched({});
+    otpAutoSentRef.current = '';
   }, []);
 
   const clearValidation = useCallback(() => {
@@ -581,6 +609,39 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     setErrors({});
     setTouched({});
   }, []);
+
+  // ─── Shared send helper with rate limit enforcement ───
+  const sendWithRateLimit = useCallback(async (
+    method: string,
+    sendFn: () => Promise<any>,
+    opts?: { cooldownKey?: string; requireGlobal?: boolean }
+  ): Promise<{ ok: boolean; status?: number; data?: any; error?: string; retryAfterMs?: number; block?: any }> => {
+    const key = opts?.cooldownKey || method;
+    if (opts?.requireGlobal && (!canSend('global-email') || !canSend('global-ip'))) {
+      return { ok: false, status: 429, error: 'Too many verification attempts. Please try again later.' };
+    }
+    if (!canSend(method)) {
+      return { ok: false, status: 429, error: 'Maximum sends reached. Please try again later.' };
+    }
+    if (isInCooldown(key)) {
+      return { ok: false, status: 429, error: `Please wait ${getCooldownRemaining(key)}s before sending again.` };
+    }
+
+    incrementSend(method);
+    startCooldown(key);
+
+    try {
+      const result = await sendFn();
+      if (!result.ok && result.status === 429) {
+        const retryAfterMs = (result as any)?.data?.retryAfterMs;
+        const retrySec = retryAfterMs ? Math.ceil(retryAfterMs / 1000) : COOLDOWN_SECONDS;
+        setCooldowns(prev => ({ ...prev, [key]: retrySec }));
+      }
+      return result;
+    } catch {
+      return { ok: false, status: 500, error: 'Network error' };
+    }
+  }, [canSend, isInCooldown, getCooldownRemaining, incrementSend, startCooldown]);
 
   return {
     // Mode
@@ -623,13 +684,22 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     consentPrivacy, setConsentPrivacy,
     // Submit
     isSubmitting, setIsSubmitting,
-    // Cooldown / send limits
-    cooldowns, setCooldowns, isInCooldown, getCooldownRemaining, startCooldown,
-    canSend, incrementSend, remainingSends,
+    // Rate limiting / cooldowns
+    cooldowns, setCooldowns,
+    isInCooldown,
+    getCooldownRemaining,
+    startCooldown,
+    canSend,
+    incrementSend,
+    remainingSends,
+    sendLimits,
     // Validation
     errors, setErrors,
     touched, setTouched,
-    validateField, handleBlur, getFieldValue, validateStep,
+    validateField,
+    handleBlur,
+    getFieldValue,
+    validateStep,
     // Username
     usernameStatus, setUsernameStatus,
     usernameMessage, setUsernameMessage,
@@ -637,7 +707,12 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     checkUsername,
     // Email
     emailCheckStatus, setEmailCheckStatus,
+    // Shared send helper
+    sendWithRateLimit,
     // Reset
-    resetToHome, clearValidation, resetLoginPassword, resetRecovery,
+    resetToHome,
+    clearValidation,
+    resetLoginPassword,
+    resetRecovery,
   };
 }
