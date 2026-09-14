@@ -25,7 +25,9 @@ const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={
 function Bg() {
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(min-width: 1024px)" />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background-tab.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(max-width: 1023px) and (min-width: 641px)" />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background-mobile.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(max-width: 640px)" />
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.52) 100%)' }} />
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'radial-gradient(900px 600px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} />
     </>
@@ -33,12 +35,12 @@ function Bg() {
 }
 function TopBar() {
   return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'transparent', border: 'none' }}>
+    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'transparent', border: 'none', minHeight: '56px' }}>
       <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-        <img src="/logo.png" alt="Tirbeo" style={{ height: '36px', width: 'auto', filter: 'drop-shadow(0 1px 6px rgba(0,0,0,0.45))' }} />
-        <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>Tirbeo</span>
+        <img src="/logo.png" alt="Tirbeo" style={{ height: '36px', width: 'auto', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }} />
+        <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>Tirbeo</span>
       </a>
-      <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '-0.01em', color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>Accounts</span>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>Accounts</span>
     </nav>
   );
 }
@@ -54,6 +56,35 @@ export default function App() {
     try { localStorage.setItem('tirbeo_session', JSON.stringify({ type, ts: Date.now() })); } catch {}
     try { new BroadcastChannel('tirbeo:session')?.postMessage({ type, ts: Date.now() }); } catch {}
   };
+  // Split-loader state — declared before any early returns (rules of hooks:
+  // hook order must be identical on every render, including callback paths).
+  const [pageChanging, setPageChanging] = useState(false);
+  const [initialSplit, setInitialSplit] = useState(() => (typeof window !== 'undefined' ? (window.location.pathname.startsWith('/callback') || window.location.pathname.startsWith('/magic-sent')) : false));
+  const pathRef = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
+  useEffect(() => {
+    if (initialSplit) {
+      const t = setTimeout(() => setInitialSplit(false), 700);
+      return () => clearTimeout(t);
+    }
+  }, [initialSplit]);
+  useEffect(() => {
+    const trigger = () => {
+      if (typeof window === 'undefined') return;
+      if (window.location.pathname !== pathRef.current) {
+        pathRef.current = window.location.pathname;
+        setPageChanging(true);
+        setTimeout(() => setPageChanging(false), 700);
+      }
+    };
+    window.addEventListener('popstate', trigger);
+    const origPush = history.pushState.bind(history);
+    const origReplace = history.replaceState.bind(history);
+    (history as any).pushState = (...a: any[]) => { (origPush as any)(...a); trigger(); };
+    (history as any).replaceState = (...a: any[]) => { (origReplace as any)(...a); trigger(); };
+    const iv = setInterval(trigger, 300);
+    return () => { window.removeEventListener('popstate', trigger); (history as any).pushState = origPush; (history as any).replaceState = origReplace; clearInterval(iv); };
+  }, []);
+  const showLoader = isLoading || isAuthenticated || pageChanging || initialSplit;
   useEffect(() => {
     if (isCallbackPath() || isMagicSentPath()) return;
     let cancelled = false;
@@ -160,48 +191,20 @@ export default function App() {
       <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Bg /><TopBar />
         <SplitLoader active={showLoader} />
-        <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 16px 24px', minHeight: 0 }}>
+        <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 18px 24px', minHeight: 0 }}>
           <div style={{ width: '100%', maxWidth: '760px', height: 'auto' }}><MagicLinkSentPage /></div>
         </div>
         <AnimatePresence>{toast && <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast"><span>{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span></motion.div>}</AnimatePresence>
       </div>
     );
   }
-  const [pageChanging, setPageChanging] = useState(false);
-  const [initialSplit, setInitialSplit] = useState(() => (typeof window !== 'undefined' ? (window.location.pathname.startsWith('/callback') || window.location.pathname.startsWith('/magic-sent')) : false));
-  const pathRef = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
-  useEffect(() => {
-    if (initialSplit) {
-      const t = setTimeout(() => setInitialSplit(false), 700);
-      return () => clearTimeout(t);
-    }
-  }, [initialSplit]);
-  useEffect(() => {
-    const trigger = () => {
-      if (typeof window === 'undefined') return;
-      if (window.location.pathname !== pathRef.current) {
-        pathRef.current = window.location.pathname;
-        setPageChanging(true);
-        setTimeout(() => setPageChanging(false), 700);
-      }
-    };
-    window.addEventListener('popstate', trigger);
-    const origPush = history.pushState.bind(history);
-    const origReplace = history.replaceState.bind(history);
-    (history as any).pushState = (...a: any[]) => { (origPush as any)(...a); trigger(); };
-    (history as any).replaceState = (...a: any[]) => { (origReplace as any)(...a); trigger(); };
-    const iv = setInterval(trigger, 300);
-    return () => { window.removeEventListener('popstate', trigger); (history as any).pushState = origPush; (history as any).replaceState = origReplace; clearInterval(iv); };
-  }, []);
-
-  const showLoader = isLoading || isAuthenticated || pageChanging || initialSplit;
 
   return (
     <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <Bg /><TopBar />
       <SplitLoader active={showLoader} />
-      <main style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 16px 20px', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: '980px', height: 'auto' }}>
+      <main style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 18px 24px', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: '600px', height: 'auto' }}>
           <SessionGate>
             <Suspense fallback={null}>
               <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />

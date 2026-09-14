@@ -24,29 +24,31 @@ export const ResendCounter: React.FC<ResendCounterProps> = ({
   const progress = (remaining / maxSends) * 100;
 
   return (
-    <div className="space-y-2">
-      {/* Progress bar */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-1.5 rounded-full bg-[var(--tb-outline-variant)] overflow-hidden">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', backdropFilter: 'blur(12px)' }}>
+      {/* Progress bar — sky blue */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ flex: 1, height: '4px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
-            className="h-full rounded-full"
             style={{
-              background: remaining > 1 ? 'var(--tb-primary)' : remaining === 1 ? 'var(--tb-warning)' : 'var(--tb-error)',
+              height: '100%',
+              borderRadius: '999px',
+              background: remaining > 1 ? '#0095F6' : remaining === 1 ? '#38BDF8' : '#F43F5E',
+              boxShadow: remaining > 0 ? `0 0 10px ${remaining > 1 ? 'rgba(0,149,246,0.30)' : 'rgba(56,189,248,0.25)'}` : 'none',
             }}
           />
         </div>
-        <span className="text-xs text-[var(--tb-on-surface-variant)] whitespace-nowrap">
-          {remaining}/{maxSends} remaining
+        <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: remaining > 1 ? '#7DD3FC' : remaining === 1 ? '#F59E0B' : '#F43F5E', whiteSpace: 'nowrap' }}>
+          {remaining}/{maxSends} left
         </span>
       </div>
 
       {/* Resend button/label */}
       {remaining > 0 ? (
         isInCooldown ? (
-          <p className="text-xs text-[var(--tb-on-surface-variant)] text-center">
+          <p style={{ fontSize: '12px', color: '#71717A', textAlign: 'center', margin: 0, fontWeight: 500 }}>
             Next send in {cooldownSeconds}s
           </p>
         ) : (
@@ -54,14 +56,14 @@ export const ResendCounter: React.FC<ResendCounterProps> = ({
             type="button"
             onClick={onResend}
             disabled={!canResend}
-            className="flex items-center gap-1.5 mx-auto text-xs font-medium text-[var(--tb-primary)] hover:text-[var(--tb-primary)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', margin: '0 auto', fontSize: '12px', fontWeight: 700, letterSpacing: '0.02em', color: canResend ? '#38BDF8' : '#52525B', background: canResend ? 'rgba(56,189,248,0.08)' : 'transparent', border: `1px solid ${canResend ? 'rgba(56,189,248,0.14)' : 'transparent'}`, borderRadius: '999px', padding: '6px 12px', cursor: canResend ? 'pointer' : 'not-allowed', opacity: canResend ? 1 : 0.5, transition: 'all 150ms ease' }}
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw size={12} />
             {label}
           </button>
         )
       ) : (
-        <p className="text-xs text-[var(--tb-error)] text-center">
+        <p style={{ fontSize: '12px', color: '#F43F5E', textAlign: 'center', margin: 0, fontWeight: 600 }}>
           No more sends available. Please try again later.
         </p>
       )}

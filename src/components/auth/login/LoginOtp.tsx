@@ -20,19 +20,20 @@ interface LoginOtpProps {
 }
 
 const codeInput: React.CSSProperties = {
-  width: '52px',
-  height: '60px',
+  width: '48px',
+  height: '52px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '28px',
+  fontSize: '20px',
   fontWeight: 700,
   fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
   textAlign: 'center',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  caretColor: 'transparent',
+  caretColor: '#38BDF8',
 };
 
 const primaryBtn: React.CSSProperties = {
@@ -40,14 +41,14 @@ const primaryBtn: React.CSSProperties = {
   height: '44px',
   background: '#0095F6',
   color: '#FFFFFF',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '17px',
+  border: '1px solid #0095F6',
+  borderRadius: '12px',
+  fontSize: '14px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
   transition: 'all 150ms ease',
-  boxShadow: 'none',
+  boxShadow: '0 4px 16px rgba(0,149,246,0.28)',
 };
 
 export const LoginOtp: React.FC<LoginOtpProps> = ({
@@ -60,13 +61,13 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
   const sendsRemaining = remainingSends('login-otp');
 
   return (
-    <form className="auth-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          Check your email
+    <form className="auth-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          Check your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>email</em>
         </h2>
-        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
-          We sent a 6-digit code to <span style={{ color: '#A1A1AA' }}>{email}</span>.
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+          We sent a 6-digit code to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.
         </p>
         {loginPending2fa && (
           <p style={{ marginTop: '8px', fontSize: '13px', color: '#484848' }}>
@@ -105,13 +106,14 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
             }}
             style={{
               ...codeInput,
-              borderColor: showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)',
+              borderColor: showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)',
+              boxShadow: loginOtpCode[i] && !showCodeError ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none',
             }}
             data-code-index={i}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#FFFFFF'; }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(56,189,248,0.14)'; }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)';
-              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.borderColor = showCodeError ? '#f43f5e' : loginOtpCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)';
+              e.currentTarget.style.boxShadow = loginOtpCode[i] && !showCodeError ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none';
             }}
           />
         ))}
@@ -173,6 +175,8 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
           color: codeComplete && !isSubmitting ? '#FFFFFF' : '#71717A',
           opacity: 1,
           cursor: codeComplete && !isSubmitting ? 'pointer' : 'not-allowed',
+          boxShadow: codeComplete && !isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
+          border: `1px solid ${codeComplete && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
         }}
       >
         {isSubmitting ? (
@@ -188,12 +192,13 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
       <button type="button" onClick={() => window.history.back()}
         style={{
           width: '100%',
-          height: '48px',
+          height: '44px',
           background: 'rgba(255,255,255,0.04)',
+          backdropFilter: 'blur(12px)',
           border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '14px',
+          borderRadius: '12px',
           color: '#A1A1AA',
-          fontSize: '15px',
+          fontSize: '14px',
           fontWeight: 600,
           fontFamily: TYPOGRAPHY.fontFamily,
           cursor: 'pointer',

@@ -36,12 +36,13 @@ function ensureStyles() {
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '48px',
+  height: '44px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#A1A1AA',
-  fontSize: '15px',
+  fontSize: '14px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -72,43 +73,50 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
       className="login-more-option"
       style={{
         width: '100%',
-        padding: '18px 20px',
-        background: hovered && !option.disabled ? 'rgba(255,255,255,0.04)' : 'transparent',
-        border: 'none',
-        borderBottom: isLast ? 'none' : '1px solid #141416',
-        borderRadius: '0',
+        padding: '16px 18px',
+        background: hovered && !option.disabled ? 'rgba(56,189,248,0.06)' : 'rgba(255,255,255,0.03)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: isLast ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '16px',
         color: 'inherit',
         font: 'inherit',
         cursor: option.disabled ? 'not-allowed' : 'pointer',
-        opacity: option.disabled ? 0.3 : 1,
-        transition: 'all 120ms ease',
+        opacity: option.disabled ? 0.35 : 1,
+        transition: 'all 150ms ease',
         boxSizing: 'border-box',
         textAlign: 'left',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        marginBottom: isLast ? 0 : '12px',
         animation: `moFadeUp 0.35s ease ${delay}s both`,
+        boxShadow: hovered && !option.disabled ? '0 0 0 1px rgba(56,189,248,0.14), 0 4px 16px rgba(56,189,248,0.06)' : 'none',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <span style={{
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: 600,
-            color: '#FAFAFA',
+            color: hovered && !option.disabled ? '#E0F2FE' : '#FAFAFA',
             fontFamily: TYPOGRAPHY.fontFamily,
-            transition: 'color 120ms ease',
+            transition: 'color 150ms ease',
           }}>
             {option.label}
           </span>
           {sends >= 0 && (
             <span style={{
-              padding: '2px 7px',
+              padding: '3px 8px',
               fontSize: '11px',
               fontWeight: 600,
-              borderRadius: '4px',
-              background: sends === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
-              color: sends === 0 ? '#f43f5e' : '#A1A1AA',
-              border: `1px solid ${sends === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
+              borderRadius: '999px',
+              background: sends === 0 ? 'rgba(244,63,94,0.10)' : cooldown > 0 ? 'rgba(56,189,248,0.10)' : 'rgba(255,255,255,0.06)',
+              color: sends === 0 ? '#f43f5e' : cooldown > 0 ? '#38BDF8' : '#A1A1AA',
+              border: `1px solid ${sends === 0 ? 'rgba(244,63,94,0.18)' : cooldown > 0 ? 'rgba(56,189,248,0.18)' : 'rgba(255,255,255,0.07)'}`,
               letterSpacing: '0.02em',
             }}>
               {sends === 0 ? 'limit reached' : cooldown > 0 ? `${cooldown}s` : `${sends} left`}
@@ -117,11 +125,11 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
         </div>
         <p style={{
           fontSize: '13px',
-          color: '#71717A',
-          margin: '4px 0 0',
+          color: hovered && !option.disabled ? '#7DD3FC' : '#71717A',
+          margin: '6px 0 0',
           fontFamily: TYPOGRAPHY.fontFamily,
-          transition: 'color 120ms ease',
-          ...(hovered && !option.disabled ? { color: '#A1A1AA' } : {}),
+          transition: 'color 150ms ease',
+          lineHeight: 1.5,
         }}>
           {option.disabled && sends === 0
             ? 'Maximum attempts reached for this session'
@@ -131,15 +139,17 @@ const OptionRow = ({ option, index, isLast }: { option: OptionConfig; index: num
         </p>
       </div>
 
-      <svg
-        width="14" height="14" viewBox="0 0 24 24" fill="none"
-        stroke={hovered && !option.disabled ? '#A1A1AA' : '#484848'}
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        style={{ flexShrink: 0, marginLeft: '16px', transition: 'all 120ms ease', transform: hovered && !option.disabled ? 'translateX(2px)' : 'none' }}
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5l7 7-7 7" />
-      </svg>
+      <span style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '999px', background: hovered && !option.disabled ? '#0095F6' : 'rgba(255,255,255,0.06)', border: `1px solid ${hovered && !option.disabled ? '#0095F6' : 'rgba(255,255,255,0.07)'}`, display: 'grid', placeItems: 'center', transition: 'all 150ms ease', transform: hovered && !option.disabled ? 'translateX(2px)' : 'none' }}>
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke={hovered && !option.disabled ? '#FFFFFF' : '#71717A'}
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transition: 'stroke 150ms ease' }}
+        >
+          <path d="M5 12h14" />
+          <path d="M12 5l7 7-7 7" />
+        </svg>
+      </span>
     </button>
   );
 };
@@ -192,44 +202,46 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
 
   return (
     <div className="login-more-options auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '0', width: '100%' }}>
-      {/* Header with profile pic */}
-      <div style={{ textAlign: 'center', marginBottom: '32px', animation: 'moFadeUp 0.35s ease both' }}>
+      {/* Header with profile pic — Instrument Serif 30px */}
+      <div style={{ textAlign: 'center', marginBottom: '16px', animation: 'moFadeUp 0.35s ease both' }}>
         {photoUrl ? (
           <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
+            width: '72px',
+            height: '72px',
+            borderRadius: '16px',
             background: 'rgba(255,255,255,0.04)',
-            border: '2px solid rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
             overflow: 'hidden',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset',
           }}>
             <img src={photoUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         ) : (
           <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.04)',
-            border: '2px solid rgba(255,255,255,0.07)',
+            width: '72px',
+            height: '72px',
+            borderRadius: '16px',
+            background: 'rgba(56,189,248,0.08)',
+            border: '1px solid rgba(56,189,248,0.14)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
           }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#484848', fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: '#7DD3FC', fontFamily: TYPOGRAPHY.fontFamily }}>
               {displayName.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '1.2' }}>
-          More ways to sign in
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 8px', lineHeight: 1.1 }}>
+          More ways to <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>sign in</em>
         </h2>
-        <p style={{ fontSize: '14px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily }}>
+        <p style={{ fontSize: '13px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '999px', padding: '6px 12px', display: 'inline-block', margin: 0 }}>
           {email}
         </p>
       </div>
@@ -241,8 +253,8 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
       </div>
 
       <div style={{
-        display: 'flex', alignItems: 'center', gap: '16px',
-        margin: '28px 0 24px',
+        display: 'flex', alignItems: 'center', gap: '12px',
+        margin: '16px 0 12px',
         animation: `moFadeUp 0.35s ease ${0.15 + options.length * 0.06}s both`,
       }}>
         <div style={{ flex: 1, height: '1px', background: '#141416' }} />

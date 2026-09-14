@@ -41,59 +41,61 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
     startOAuth(provider);
   };
 
-  const baseStyles = {
+  const baseStyles: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '10px',
     width: '100%',
-    minHeight: '49px',
+    minHeight: '44px',
+    height: '44px',
     borderRadius: '12px',
-    fontSize: '15px',
-    fontWeight: 500,
+    fontSize: '14px',
+    fontWeight: 600,
     fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    padding: '14px 24px',
+    padding: '0 16px',
     cursor: 'pointer',
-    transition: 'background-color 150ms ease, border-color 150ms ease, color 150ms ease, background 150ms ease',
+    transition: 'background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
+    backdropFilter: 'blur(12px)',
+    boxSizing: 'border-box' as const,
   };
 
-  const googleStyles = {
+  const googleStyles: React.CSSProperties = {
     ...baseStyles,
     background: '#FFFFFF',
     color: '#1F1F1F',
-    border: '1px solid rgba(0,0,0,0.1)',
-    '&:hover': { background: '#F5F5F5' },
+    border: '1px solid rgba(0,0,0,0.08)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
   };
 
-  const githubStyles = {
+  const githubStyles: React.CSSProperties = {
     ...baseStyles,
-    background: '#1F1F1F',
-    color: '#FFFFFF',
-    border: '1px solid rgba(255,255,255,0.1)',
-    '&:hover': { background: '#2A2A2A' },
+    background: 'rgba(255,255,255,0.06)',
+    color: '#FAFAFA',
+    border: '1px solid rgba(255,255,255,0.08)',
   };
 
-  const discordStyles = {
+  const discordStyles: React.CSSProperties = {
     ...baseStyles,
     background: '#5865F2',
     color: '#FFFFFF',
-    border: 'none',
-    '&:hover': { background: '#4752C4' },
+    border: '1px solid rgba(88,101,242,0.40)',
+    boxShadow: '0 4px 16px rgba(88,101,242,0.20)',
   };
 
-  const baseStackStyles = {
+  const baseStackStyles: React.CSSProperties = {
     ...baseStyles,
-    background: '#0D0D0D',
-    color: '#F5F5F5',
-    border: '1px solid rgba(245,245,245,0.13)',
-    '&:hover': { background: '#1F1F1F', borderColor: 'rgba(245,245,245,0.20)' },
+    background: 'rgba(255,255,255,0.05)',
+    color: '#FAFAFA',
+    border: '1px solid rgba(255,255,255,0.08)',
+    boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset',
   };
 
   if (variant === "row") {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {onSuccessAuth && <GoogleOneTap onSuccessAuth={onSuccessAuth} />}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }} role="group" aria-label="Social sign in">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }} role="group" aria-label="Social sign in">
           {PROVIDERS.map((provider) => {
             const meta = PROVIDER_META[provider];
             const isPending = pending === provider;
@@ -142,9 +144,9 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {onSuccessAuth && <GoogleOneTap onSuccessAuth={onSuccessAuth} />}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} role="group" aria-label="Social sign in">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }} role="group" aria-label="Social sign in">
         {PROVIDERS.map((provider) => {
           const meta = PROVIDER_META[provider];
           const isPending = pending === provider;

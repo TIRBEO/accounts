@@ -38,14 +38,14 @@ export const SignupStep1: React.FC<{
 
   const inputField = (hasError: boolean): React.CSSProperties => ({
     width: '100%',
-    height: '56px',
+    height: '48px',
     background: 'rgba(255,255,255,0.04)',
     border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
-    borderRadius: '14px',
+    borderRadius: '12px',
     color: '#FAFAFA',
-    fontSize: '16px',
+    fontSize: '14.5px',
     fontFamily: TYPOGRAPHY.fontFamily,
-    padding: '0 24px',
+    padding: '0 16px',
     outline: 'none',
     transition: 'border-color 150ms ease, box-shadow 150ms ease',
     boxSizing: 'border-box',
@@ -56,10 +56,11 @@ export const SignupStep1: React.FC<{
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '56px',
-    borderRadius: '14px',
+    height: '48px',
+    borderRadius: '12px',
     border: '1px solid rgba(255,255,255,0.07)',
     background: 'rgba(255,255,255,0.04)',
+    backdropFilter: 'blur(12px)',
     cursor: 'pointer',
     transition: 'all 150ms ease',
   };
@@ -71,8 +72,8 @@ export const SignupStep1: React.FC<{
     background: '#0095F6',
     color: '#FFFFFF',
     border: 'none',
-    borderRadius: '8px',
-    fontSize: '17px',
+    borderRadius: '12px',
+    fontSize: '14px',
     fontWeight: 700,
     fontFamily: TYPOGRAPHY.fontFamily,
     cursor: 'pointer',
@@ -84,14 +85,14 @@ export const SignupStep1: React.FC<{
     <form
       className="auth-form"
       onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          Create your account
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          Create your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>account</em>
         </h2>
-        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
-          Create your account to get started.
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+          Create your account to get started — sky-blue glass, built for speed.
         </p>
       </div>
 
@@ -126,15 +127,15 @@ export const SignupStep1: React.FC<{
         </button>
       </div>
 
-      {/* Divider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
+      {/* Divider — sky-blue subtle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '2px' }}>
         <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-        <span style={{ fontSize: '14px', color: '#484848', fontWeight: 500, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>OR</span>
+        <span style={{ fontSize: '11px', color: '#71717A', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em', padding: '3px 10px', borderRadius: '999px', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.08)' }}>OR</span>
         <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
       </div>
 
       {/* Name fields */}
-      <div className="signup-step1-names" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="signup-step1-names" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
         <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} onBlur={() => handleBlur('firstName')} placeholder="First name" style={inputField(!!showFirstNameError)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); } }}
         />
@@ -195,7 +196,7 @@ export const SignupStep1: React.FC<{
           transform: 'translateY(-50%)',
           color: '#484848',
           pointerEvents: 'none',
-          fontSize: '16px',
+          fontSize: '14px',
           fontWeight: 500,
         }}>@ </span>
       </div>
@@ -243,7 +244,7 @@ export const SignupStep1: React.FC<{
         </div>
       )}
 
-      {/* Submit */}
+      {/* Submit — 44px 8px sky blue */}
       <button type="submit" disabled={!step1Complete || isSubmitting}
         style={{
           ...gradientBtn,
@@ -251,6 +252,7 @@ export const SignupStep1: React.FC<{
           color: step1Complete && !isSubmitting ? '#FFFFFF' : '#71717A',
           opacity: 1,
           cursor: step1Complete && !isSubmitting ? 'pointer' : 'not-allowed',
+          boxShadow: step1Complete && !isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
         }}
       >
         Continue

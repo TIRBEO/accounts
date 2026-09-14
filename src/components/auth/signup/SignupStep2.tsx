@@ -78,24 +78,24 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
     <form onSubmit={onSubmit} style={{display:'flex', flexDirection:'column', gap:'16px'}} noValidate>
       <style>{`
         .s2-head{ text-align:center; }
-        .s2-profile-hero{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; }
-        .s2-square{ width:128px; height:128px; border-radius:14px; background:#141416; border:1.5px dashed rgba(255,255,255,0.07); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-        .s2-square.has-photo{ border-style:solid; border-color:rgba(255,255,255,0.07); }
+        .s2-profile-hero{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:22px; background:rgba(255,255,255,0.03); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.07); border-radius:28px; box-shadow:0 1px 0 rgba(255,255,255,0.04) inset; }
+        .s2-square{ width:96px; height:96px; border-radius:16px; background:rgba(255,255,255,0.03); border:1.5px dashed rgba(56,189,248,0.18); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+        .s2-square.has-photo{ border-style:solid; border-color:rgba(56,189,248,0.18); }
         .s2-pair{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-        .s2-card{ background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:14px; }
+        .s2-card{ background:rgba(255,255,255,0.03); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.07); border-radius:28px; padding:14px; }
         .s2-card.has-error{ border-color:#ed4956; }
         .s2-label{ font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#A1A1AA; display:block; margin-bottom:8px; font-family:${TYPOGRAPHY.fontFamily}; }
         .s2-label b{ color:#ed4956; }
-        .s2-trigger{ width:100%; height:56px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; cursor:pointer; font-size:16px; color:#71717A; transition:border-color 150ms; }
+        .s2-trigger{ width:100%; height:48px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:12px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; cursor:pointer; font-size:14.5px; color:#71717A; transition:border-color 150ms, box-shadow 150ms; }
         .s2-trigger.has-value{ color:#FAFAFA; }
         .s2-trigger.has-error{ border-color:#ed4956; }
-        .s2-trigger.open{ border-color:rgba(255,255,255,0.10); box-shadow:0 0 0 3px rgba(255,255,255,0.06); }
-        .s2-dropdown{ position:absolute; top:calc(100% + 8px); left:0; right:0; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; z-index:30; box-shadow:0 16px 40px rgba(0,0,0,0.6); }
+        .s2-trigger.open{ border-color:rgba(56,189,248,0.35); box-shadow:0 0 0 4px rgba(56,189,248,0.14); }
+        .s2-dropdown{ position:absolute; top:calc(100% + 8px); left:0; right:0; background:rgba(18,18,20,0.94); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; z-index:30; box-shadow:0 16px 40px rgba(0,0,0,0.6); }
         .s2-dropdown button{ width:100%; text-align:left; padding:12px 16px; background:transparent; border:none; color:#A1A1AA; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
-        .s2-dropdown button:hover{ background:rgba(255,255,255,0.06); color:#FAFAFA; }
-        .s2-dropdown button.is-selected{ background:rgba(255,255,255,0.06); color:#FFFFFF; }
-        .s2-popup-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.64); backdrop-filter:blur(8px); z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; }
-        .s2-popup{ width:100%; max-width:368px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.65); }
+        .s2-dropdown button:hover{ background:rgba(56,189,248,0.06); color:#FAFAFA; }
+        .s2-dropdown button.is-selected{ background:rgba(56,189,248,0.10); color:#FFFFFF; }
+        .s2-popup-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.64); backdrop-filter:blur(8px); z-index:60; display:flex; align-items:center; justify-content:center; padding:12px; }
+        .s2-popup{ width:100%; max-width:368px; background:rgba(18,18,20,0.94); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.08); border-radius:28px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.65); }
         .s2-cal-head{ display:flex; align-items:center; justify-content:space-between; padding:14px; border-bottom:1px solid rgba(255,255,255,0.07); background:#141416; }
         .s2-cal-title{ font-size:14px; font-weight:700; color:#FAFAFA; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:8px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; }
         .s2-cal-title:hover{ border-color:rgba(255,255,255,0.10); }
@@ -120,12 +120,12 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
         .s2-cal-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px; border-top:1px solid rgba(255,255,255,0.07); background:#141416; }
         .s2-foot-btn{ height:36px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,0.07); background:transparent; color:#71717A; }
         .s2-foot-btn.primary{ background:#FFFFFF; border-color:#FFFFFF; color:#09090B; }
-        .s2-work{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; padding:14px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; }
-        .s2-work-head{ grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#71717A; display:flex; align-items:center; gap:8px; margin:0; }
-        .s2-work-head span{ color:#484848; font-weight:400; text-transform:none; letter-spacing:0; }
-        .s2-input{ width:100%; height:56px; background:#141416; border:1px solid rgba(255,255,255,0.07); border-radius:14px; color:#FAFAFA; font-size:16px; padding:0 16px; outline:none; box-sizing:border-box; }
-        .s2-input::placeholder{ color:#484848; }
-        .s2-input:focus{ border-color:rgba(255,255,255,0.10); }
+        .s2-work{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; padding:20px; background:rgba(255,255,255,0.03); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.07); border-radius:28px; }
+        .s2-work-head{ grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#7DD3FC; display:flex; align-items:center; gap:8px; margin:0; }
+        .s2-work-head span{ color:#71717A; font-weight:400; text-transform:none; letter-spacing:0; }
+        .s2-input{ width:100%; height:48px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:12px; color:#FAFAFA; font-size:14.5px; padding:0 16px; outline:none; box-sizing:border-box; transition:border-color 150ms, box-shadow 150ms; }
+        .s2-input::placeholder{ color:#71717A; }
+        .s2-input:focus{ border-color:rgba(56,189,248,0.35); box-shadow:0 0 0 4px rgba(56,189,248,0.10); }
         @media(max-width:640px){
           .s2-pair{ grid-template-columns:1fr; }
           .s2-work{ grid-template-columns:1fr; }
@@ -136,8 +136,8 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
       `}</style>
 
       <div className="s2-head">
-        <h2 style={{fontSize:'28px', fontWeight:700, color:'#FAFAFA', margin:'0 0 8px', fontFamily:TYPOGRAPHY.fontFamily, letterSpacing:'-0.02em'}}><span style={{color:'#FFFFFF', fontStyle:'italic'}}>Personalize</span> your account</h2>
-        <p style={{fontSize:'14px', color:'#A1A1AA', margin:0, lineHeight:'20px'}}>Complete your profile in seconds — square photo, gender and birthday are required. Work details are optional and can be updated later.</p>
+        <h2 style={{fontFamily:"'Instrument Serif', Georgia, serif", fontSize:'22px', fontWeight:400, letterSpacing:'-0.03em', color:'#FAFAFA', margin:'0 0 10px', lineHeight:1.1}}><span style={{color:'#38BDF8', fontStyle:'italic', fontWeight:400}}>Personalize</span> your account</h2>
+        <p style={{fontSize:'14.5px', color:'#A1A1AA', margin:0, lineHeight:'22px'}}>Complete your profile in seconds — square photo, gender and birthday are required. Work details are optional and can be updated later.</p>
       </div>
 
       {/* Profile — centered hero */}
@@ -240,7 +240,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
         <input value={role} onChange={e=>setRole(e.target.value)} onBlur={()=>handleBlur('role')} placeholder="Role" maxLength={100} disabled={isSubmitting} className="s2-input" />
       </div>
 
-      <button type="submit" disabled={!step2Complete||isSubmitting} style={{width:'100%', height:'44px', background: step2Complete&&!isSubmitting?'#0095F6':'rgba(255,255,255,0.08)', color: step2Complete&&!isSubmitting?'#FFFFFF':'#71717A', border:'none', borderRadius:'8px', fontSize:'17px', fontWeight:700, boxShadow:'none', opacity:1, cursor: step2Complete&&!isSubmitting?'pointer':'not-allowed'}}>
+      <button type="submit" disabled={!step2Complete||isSubmitting} style={{width:'100%', height:'44px', background: step2Complete&&!isSubmitting?'#0095F6':'rgba(255,255,255,0.08)', color: step2Complete&&!isSubmitting?'#FFFFFF':'#71717A', border: `1px solid ${step2Complete&&!isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.06)'}`, borderRadius:'12px', fontSize:'14px', fontWeight:700, boxShadow: step2Complete&&!isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none', opacity:1, cursor: step2Complete&&!isSubmitting?'pointer':'not-allowed', transition: 'all 150ms ease'}}>
         {isSubmitting?'Please wait…':'Continue'}
       </button>
     </form>

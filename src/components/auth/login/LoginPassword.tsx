@@ -27,8 +27,8 @@ const primaryBtn: React.CSSProperties = {
   background: '#0095F6',
   color: '#FFFFFF',
   border: 'none',
-  borderRadius: '8px',
-  fontSize: '17px',
+  borderRadius: '12px',
+  fontSize: '14px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -38,14 +38,15 @@ const primaryBtn: React.CSSProperties = {
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  height: '56px',
+  height: '48px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '16px',
+  fontSize: '14.5px',
   fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 24px',
+  padding: '0 16px',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
   boxSizing: 'border-box',
@@ -53,12 +54,13 @@ const inputBase: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '48px',
+  height: '44px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#A1A1AA',
-  fontSize: '15px',
+  fontSize: '14px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -78,34 +80,36 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
     <form
       className="auth-form"
       onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
         <div style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '50%',
+          width: '88px',
+          height: '88px',
+          borderRadius: '28px',
           background: 'rgba(255,255,255,0.04)',
-          border: '2px solid rgba(255,255,255,0.07)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           margin: '0 auto 20px',
           overflow: 'hidden',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 24px rgba(0,0,0,0.35)',
         }}>
           {photoUrl ? (
             <img src={photoUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <span style={{ fontSize: '28px', fontWeight: 700, color: '#484848', fontFamily: TYPOGRAPHY.fontFamily }}>
+            <span style={{ fontSize: '28px', fontWeight: 700, color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily }}>
               {displayName.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
 
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          Hi, {displayName}
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 8px', lineHeight: 1.1 }}>
+          Hi, <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>{displayName}</em>
         </h2>
-        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           Enter your password to continue.
         </p>
       </div>
@@ -177,6 +181,8 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           color: password && !isSubmitting ? '#FFFFFF' : '#71717A',
           opacity: 1,
           cursor: password && !isSubmitting ? 'pointer' : 'not-allowed',
+          boxShadow: password && !isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
+          border: `1px solid ${password && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
         }}
       >
         {isSubmitting ? (
@@ -189,7 +195,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
         ) : 'Log in'}
       </button>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
         <button type="button" onClick={onMoreOptions} disabled={isSubmitting}
           style={{
             ...secondaryBtn,

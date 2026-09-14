@@ -25,8 +25,8 @@ const primaryBtn: React.CSSProperties = {
   background: '#0095F6',
   color: '#FFFFFF',
   border: 'none',
-  borderRadius: '8px',
-  fontSize: '17px',
+  borderRadius: '12px',
+  fontSize: '14px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -36,14 +36,15 @@ const primaryBtn: React.CSSProperties = {
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  height: '56px',
+  height: '48px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '16px',
+  fontSize: '14.5px',
   fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 24px',
+  padding: '0 16px',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
   boxSizing: 'border-box',
@@ -54,10 +55,11 @@ const oauthBtn: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  height: '56px',
-  borderRadius: '14px',
+  height: '48px',
+  borderRadius: '12px',
   border: '1px solid rgba(255,255,255,0.07)',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   cursor: 'pointer',
   transition: 'all 150ms ease',
 };
@@ -72,13 +74,13 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
     <form
       className="auth-form"
       onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          Log in
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          Log <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>in</em>
         </h2>
-        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           Enter your email to sign in to your account.
         </p>
       </div>
@@ -117,6 +119,8 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           color: email.includes('@') && !isSubmitting ? '#FFFFFF' : '#71717A',
           opacity: 1,
           cursor: email.includes('@') && !isSubmitting ? 'pointer' : 'not-allowed',
+          boxShadow: email.includes('@') && !isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
+          border: `1px solid ${email.includes('@') && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
         }}
       >
         {isSubmitting ? (

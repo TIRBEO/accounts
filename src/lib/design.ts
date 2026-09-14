@@ -1,6 +1,6 @@
 /**
- * Tirbeo Accounts — INFINITE · Instagram Blue
- * Big, spacious, full-bleed. No constraints.
+ * Tirbeo Accounts — COMPACT · Fast · Small
+ * Tight, dense, no bloat. Every px counts.
  */
 
 export const COLORS = {
@@ -8,8 +8,8 @@ export const COLORS = {
   bgSoft: '#0A0A0C',
   bgElevated: '#111113',
   surface: 'rgba(255,255,255,0.04)',
-  surfaceHover: 'rgba(255,255,255,0.07)',
-  surfaceActive: 'rgba(255,255,255,0.09)',
+  surfaceHover: 'rgba(255,255,255,0.06)',
+  surfaceActive: 'rgba(255,255,255,0.08)',
   surface2: '#18181B',
   surface3: '#232326',
 
@@ -19,26 +19,26 @@ export const COLORS = {
   textFaint: '#52525B',
 
   border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.14)',
-  borderHover: 'rgba(255,255,255,0.18)',
-  borderFocus: 'rgba(0,149,246,0.55)',
+  borderStrong: 'rgba(255,255,255,0.12)',
+  borderHover: 'rgba(255,255,255,0.14)',
+  borderFocus: 'rgba(0,149,246,0.50)',
 
   primary: '#0095F6',
   primaryHover: '#0084DB',
   primaryActive: '#0077C5',
-  primaryMuted: 'rgba(0,149,246,0.14)',
+  primaryMuted: 'rgba(0,149,246,0.12)',
   primaryText: '#FFFFFF',
-  primaryRing: 'rgba(0,149,246,0.30)',
+  primaryRing: 'rgba(0,149,246,0.22)',
 
   accent: '#0095F6',
   accentHover: '#0081D6',
-  accentMuted: 'rgba(0,149,246,0.12)',
+  accentMuted: 'rgba(0,149,246,0.10)',
 
   error: '#FF3040',
-  errorMuted: 'rgba(255,48,64,0.10)',
-  errorBorder: 'rgba(255,48,64,0.22)',
+  errorMuted: 'rgba(255,48,64,0.08)',
+  errorBorder: 'rgba(255,48,64,0.18)',
   success: '#00C950',
-  successMuted: 'rgba(0,201,80,0.10)',
+  successMuted: 'rgba(0,201,80,0.08)',
   warning: '#FFB800',
 
   googleBg: '#FFFFFF',
@@ -49,45 +49,45 @@ export const COLORS = {
   discordText: '#FFFFFF',
 };
 
-export const SPACING = { xs: '6px', sm: '10px', md: '16px', lg: '24px', xl: '32px', xxl: '56px', '3xl': '80px' };
-export const RADIUS = { xs: '10px', sm: '12px', md: '16px', lg: '20px', xl: '28px', '2xl': '32px', pill: '9999px', full: '50%' };
+export const SPACING = { xs: '6px', sm: '10px', md: '16px', lg: '22px', xl: '29px', xxl: '38px', '3xl': '53px' };
+export const RADIUS = { xs: '11px', sm: '13px', md: '17px', lg: '22px', xl: '29px', '2xl': '34px', pill: '9999px', full: '50%' };
 
 export const TYPOGRAPHY = {
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  fontDisplay: "'Instrument Serif', Georgia, serif",
+  fontDisplay: "'Inter', sans-serif",
   fontMono: "'JetBrains Mono', monospace",
-  h1: { size: '42px', weight: '800', lineHeight: '42px', letterSpacing: '-0.04em' },
-  h2: { size: '30px', weight: '750', lineHeight: '32px', letterSpacing: '-0.03em' },
-  h3: { size: '20px', weight: '650', lineHeight: '26px' },
-  body: { size: '16px', weight: '400', lineHeight: '24px' },
-  bodySmall: { size: '14.5px', weight: '400', lineHeight: '21px' },
-  caption: { size: '11px', weight: '700', lineHeight: '14px', letterSpacing: '0.08em', textTransform: 'uppercase' as const },
-  link: { size: '14.5px', weight: '600', lineHeight: '20px' },
+  h1: { size: '38px', weight: '750', lineHeight: '38px', letterSpacing: '-0.03em' },
+  h2: { size: '26px', weight: '700', lineHeight: '29px', letterSpacing: '-0.02em' },
+  h3: { size: '19px', weight: '650', lineHeight: '26px' },
+  body: { size: '17px', weight: '400', lineHeight: '25px' },
+  bodySmall: { size: '16px', weight: '400', lineHeight: '23px' },
+  caption: { size: '12.5px', weight: '700', lineHeight: '15px', letterSpacing: '0.07em', textTransform: 'uppercase' as const },
+  link: { size: '16px', weight: '600', lineHeight: '23px' },
 };
 
 export const SHADOWS = {
-  sm: '0 1px 3px rgba(0,0,0,0.4)',
-  md: '0 8px 32px rgba(0,0,0,0.55)',
-  lg: '0 16px 48px rgba(0,0,0,0.60)',
-  xl: '0 24px 64px rgba(0,0,0,0.65)',
-  focus: '0 0 0 4px rgba(0,149,246,0.18)',
-  glow: '0 12px 40px rgba(0,149,246,0.32)',
-  card: '0 0 0 1px rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.65)',
+  sm: '0 1px 2px rgba(0,0,0,0.35)',
+  md: '0 4px 12px rgba(0,0,0,0.35)',
+  lg: '0 8px 24px rgba(0,0,0,0.45)',
+  xl: '0 12px 32px rgba(0,0,0,0.50)',
+  focus: '0 0 0 3px rgba(0,149,246,0.16)',
+  glow: '0 4px 16px rgba(0,149,246,0.22)',
+  card: '0 0 0 1px rgba(255,255,255,0.06) inset, 0 12px 32px rgba(0,0,0,0.50)',
 };
 
-export const TRANSITIONS = { fast: '140ms ease', normal: '220ms ease', slow: '360ms ease', spring: '400ms cubic-bezier(0.16,1,0.3,1)' };
+export const TRANSITIONS = { fast: '120ms ease', normal: '160ms ease', slow: '220ms ease', spring: '320ms cubic-bezier(0.16,1,0.3,1)' };
 export const Z_INDEX = { dropdown: 100, modal: 200, toast: 300, tooltip: 400 };
 export const BREAKPOINTS = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
 
 export const INPUT_STYLES = {
   base: {
     width: '100%',
-    height: '56px',
-    background: 'rgba(255,255,255,0.06)',
+    height: '60px',
+    background: 'rgba(255,255,255,0.05)',
     border: `1px solid ${COLORS.border}`,
     borderRadius: '14px',
     color: COLORS.text,
-    fontSize: '16px',
+    fontSize: '17px',
     fontFamily: TYPOGRAPHY.fontFamily,
     padding: '0 16px',
     outline: 'none',
@@ -100,44 +100,41 @@ export const BUTTON_STYLES = {
     background: '#0095F6',
     color: '#FFF',
     border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    fontSize: '17px',
     fontWeight: 650,
     fontFamily: TYPOGRAPHY.fontFamily,
-    height: '44px',
-    padding: '0 20px',
+    height: '58px',
+    padding: '0 24px',
     cursor: 'pointer',
     boxShadow: 'none',
   },
   ghost: {
-    background: 'rgba(255,255,255,0.06)',
+    background: 'rgba(255,255,255,0.05)',
     color: COLORS.text,
     border: `1px solid ${COLORS.border}`,
-    borderRadius: '8px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    fontSize: '16px',
     fontWeight: 600,
     fontFamily: TYPOGRAPHY.fontFamily,
-    padding: '0 18px',
-    height: '44px',
+    padding: '0 22px',
+    height: '58px',
     cursor: 'pointer',
   },
-  danger: { background: COLORS.error, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, fontFamily: TYPOGRAPHY.fontFamily, height: '44px', padding: '0 20px', cursor: 'pointer' },
-  link: { background: 'transparent', color: '#0095F6', border: 'none', fontSize: '14.5px', fontWeight: 600, fontFamily: TYPOGRAPHY.fontFamily, padding: 0, cursor: 'pointer' },
+  danger: { background: COLORS.error, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 700, fontFamily: TYPOGRAPHY.fontFamily, height: '58px', padding: '0 24px', cursor: 'pointer' },
+  link: { background: 'transparent', color: '#0095F6', border: 'none', fontSize: '15px', fontWeight: 600, fontFamily: TYPOGRAPHY.fontFamily, padding: 0, cursor: 'pointer' },
 };
 
 export const FOCUS_VISIBLE = { outline: 'none', boxShadow: SHADOWS.focus };
-export const FOCUS_RING = { outline: 'none', boxShadow: `0 0 0 4px rgba(0,149,246,0.22)` };
+export const FOCUS_RING = { outline: 'none', boxShadow: `0 0 0 3px rgba(0,149,246,0.18)` };
 export const ANIMATION = {
-  spring: { type: 'spring', stiffness: 380, damping: 30 },
-  easeOut: { duration: 0.30, ease: [0.16, 1, 0.3, 1] },
-  easeInOut: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
-  fadeIn: { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } },
-  slideUp: { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } },
+  spring: { type: 'spring', stiffness: 420, damping: 30 },
+  easeOut: { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
+  easeInOut: { duration: 0.28, ease: [0.16, 1, 0.3, 1] },
+  fadeIn: { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } },
+  slideUp: { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
 };
-export const KEYFRAMES = `
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-`;
+export const KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg); } } @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
 export function injectGlobalStyles() {
   if (typeof document === 'undefined') return;
   if (document.getElementById('accounts-design-keyframes')) return;

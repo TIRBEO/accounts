@@ -70,61 +70,62 @@ export const MagicLinkSentPage: React.FC = () => {
   const isLocked = cooldown > 0 || retryAfter > 0;
 
   return (
-    <div style={{ position: 'relative', zIndex: 10, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px 40px' }}>
-      <div style={{ width: '100%', maxWidth: '520px' }}>
-        {/* card */}
+    <div style={{ position: 'relative', zIndex: 10, minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px' }}>
+      <div style={{ width: '100%', maxWidth: '580px' }}>
+        {/* card — infinite big glass 760 28 sky-blue */}
           <div style={{
-          background: 'rgba(20,20,22,0.92)',
-          backdropFilter: 'blur(20px) saturate(1.15)',
+          background: 'rgba(18,18,20,0.88)',
+          backdropFilter: 'blur(28px) saturate(1.25)',
+          WebkitBackdropFilter: 'blur(28px) saturate(1.25)',
           border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '24px',
-          padding: '40px 36px 28px',
-          boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)',
+          borderRadius: '20px',
+          padding: '22px',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.60), 0 0 40px rgba(56,189,248,0.05)',
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* top glow line */}
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '62%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+          {/* top glow line — sky blue */}
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '68%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.20), transparent)' }} />
 
           {/* icon */}
-          <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 16px', boxShadow: '0 4px 16px rgba(255,255,255,0.10)', position: 'relative' }}>
-            <Mail size={22} color="#09090B" />
-            <span style={{ position: 'absolute', right: '-4px', bottom: '-4px', width: '18px', height: '18px', borderRadius: '50%', background: '#10B981', border: '2px solid #141416', display: 'grid', placeItems: 'center' }}>
-              <Sparkles size={9} color="#fff" />
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 20px', boxShadow: '0 4px 18px rgba(255,255,255,0.10), 0 0 20px rgba(56,189,248,0.10)', position: 'relative' }}>
+            <Mail size={24} color="#09090B" />
+            <span style={{ position: 'absolute', right: '-6px', bottom: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#0095F6', border: '2px solid rgba(18,18,20,0.88)', display: 'grid', placeItems: 'center', boxShadow: '0 2px 8px rgba(0,149,246,0.30)' }}>
+              <Sparkles size={10} color="#fff" />
             </span>
           </div>
 
           <div style={{ textAlign: 'center' }}>
-            <p style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 9px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#A1A1AA' }}>
+            <p style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 11px', borderRadius: '999px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.14)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7DD3FC' }}>
               <ShieldCheck size={11} /> One-time link
             </p>
-            <h1 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '26px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '12px 0 0', lineHeight: 1.15 }}>
-              Check your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#E4E4E7' }}>email</em>
+            <h1 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '14px 0 0', lineHeight: 1.1 }}>
+              Check your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>email</em>
             </h1>
-            <p style={{ fontSize: '13.5px', lineHeight: 1.6, color: '#A1A1AA', margin: '10px 0 0' }}>
+            <p style={{ fontSize: '14.5px', lineHeight: 1.6, color: '#A1A1AA', margin: '12px 0 0' }}>
               We sent a magic link to <span style={{ color: '#FAFAFA', fontWeight: 600, wordBreak: 'break-all' }}>{email}</span>
             </p>
-            <p style={{ fontSize: '12.5px', lineHeight: 1.6, color: '#71717A', margin: '6px 0 0' }}>
+            <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#71717A', margin: '8px 0 0' }}>
               Tap the link to sign in — no password needed. Expires in 15 minutes.
             </p>
           </div>
 
-          {/* progress meta */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginTop: '20px', padding: '11px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', fontWeight: 600, color: '#A1A1AA' }}>
-              <Clock size={13} color="#71717A" />
+          {/* progress meta — glass 28 sky-blue */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginTop: '14px', padding: '14px 16px', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.10)', borderRadius: '20px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', fontWeight: 600, color: '#7DD3FC' }}>
+              <Clock size={13} color="#38BDF8" />
               {loading ? 'Syncing…' : `${remaining}/${maxSends} sends left`}
             </span>
-            <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#52525B' }}>15 min · one-time</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#38BDF8' }}>15 min · one-time</span>
           </div>
 
-          {/* progress bar */}
-          <div style={{ marginTop: '10px', height: '3px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(remaining / maxSends) * 100}%`, background: remaining > 1 ? '#FFFFFF' : remaining === 1 ? '#F59E0B' : '#71717A', borderRadius: '999px', transition: 'width 300ms ease, background 300ms ease' }} />
+          {/* progress bar — sky blue */}
+          <div style={{ marginTop: '12px', height: '4px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(remaining / maxSends) * 100}%`, background: remaining > 1 ? '#0095F6' : remaining === 1 ? '#38BDF8' : '#71717A', borderRadius: '999px', transition: 'width 300ms ease, background 300ms ease', boxShadow: remaining > 0 ? '0 0 8px rgba(0,149,246,0.25)' : 'none' }} />
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
-            <button type="button" onClick={handleBack} style={{ flex: '0 0 auto', height: '44px', padding: '0 16px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '7px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '14px' }}>
+            <button type="button" onClick={handleBack} style={{ flex: '0 0 auto', height: '44px', padding: '0 18px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: 'all 150ms ease' }}>
               <ArrowLeft size={15} /> Back
             </button>
             <button
@@ -132,11 +133,11 @@ export const MagicLinkSentPage: React.FC = () => {
               onClick={handleResend}
               disabled={isLocked || sending}
               style={{
-                flex: 1, height: '48px', borderRadius: '12px',
+                flex: 1, height: '44px', borderRadius: '12px',
                 background: isLocked ? 'rgba(255,255,255,0.06)' : '#0095F6',
                 color: isLocked ? '#71717A' : '#FFFFFF',
                 border: `1px solid ${isLocked ? 'rgba(255,255,255,0.06)' : '#0095F6'}`,
-                fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em',
+                fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em',
                 cursor: isLocked ? 'not-allowed' : 'pointer',
                 opacity: isLocked ? 1 : 1,
                 boxShadow: isLocked ? 'none' : '0 4px 16px rgba(0,149,246,0.28)',

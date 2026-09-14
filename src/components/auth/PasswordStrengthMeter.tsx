@@ -4,11 +4,11 @@ import zxcvbn from 'zxcvbn';
 
 const STRENGTH_LABELS = ['Too short', 'Weak', 'Fair', 'Strong', 'Very strong'];
 const STRENGTH_COLORS = [
-  'var(--tb-error)',
-  'var(--tb-error)',
-  'var(--tb-warning)',
-  'var(--tb-success)',
-  'var(--tb-success)',
+  '#F43F5E',
+  '#F43F5E',
+  '#F59E0B',
+  '#38BDF8',
+  '#0095F6',
 ];
 
 function formatCrackTime(seconds: number): string {
@@ -32,32 +32,32 @@ export const PasswordStrengthMeter: React.FC<{
   const color = STRENGTH_COLORS[score] || 'var(--tb-outline)';
 
   return (
-    <div className="mt-2">
-      <div className="flex gap-1.5 mb-1">
+    <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', backdropFilter: 'blur(12px)' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-1 flex-1 rounded-full overflow-hidden"
-            style={{ background: 'var(--tb-outline-variant)' }}
+            style={{ flex: 1, height: '4px', borderRadius: '999px', background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}
           >
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: score >= i ? '100%' : '0%' }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full rounded-full"
-              style={{ background: color }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as any }}
+              style={{ height: '100%', borderRadius: '999px', background: color, boxShadow: score >= i ? `0 0 8px ${color}40` : 'none' }}
             />
           </div>
         ))}
       </div>
-      <p className="text-xs" style={{ color }}>
-        {label}
-      </p>
-      {score > 0 && (
-        <p className="text-xs mt-0.5" style={{ color: 'var(--tb-on-surface-variant)' }}>
-          Crack time: {formatCrackTime(crackTime)}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color }}>
+          {label}
         </p>
-      )}
+        {score > 0 && (
+          <p style={{ fontSize: '11px', color: '#71717A' }}>
+            Crack: {formatCrackTime(crackTime)}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

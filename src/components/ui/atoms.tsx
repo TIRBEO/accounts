@@ -14,13 +14,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, h
         {leftIcon && <span style={{ position: 'absolute', left: '16px', display: 'flex', color: focused ? '#A1A1AA' : '#71717A', pointerEvents: 'none' }}>{leftIcon}</span>}
         <input ref={ref} {...props}
           style={{
-            width: '100%', height: '56px',
-            background: focused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)',
-            border: `1.5px solid ${focused ? COLORS.borderFocus : error ? COLORS.errorBorder : 'rgba(255,255,255,0.08)'}`,
-            borderRadius: '14px', color: '#FFF', fontSize: '16px', fontFamily: FONT,
-            padding: leftIcon ? '0 16px 0 46px' : rightIcon ? '0 46px 0 16px' : '0 16px',
+            width: '100%', height: '72px',
+            background: focused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${focused ? COLORS.borderFocus : error ? COLORS.errorBorder : 'rgba(255,255,255,0.08)'}`,
+            borderRadius: '14px', color: '#FFF', fontSize: '17px', fontFamily: FONT,
+            padding: leftIcon ? '0 18px 0 50px' : rightIcon ? '0 50px 0 18px' : '0 18px',
             outline: 'none', transition: `all ${TRANSITIONS.fast}`,
-            boxShadow: focused ? `0 0 0 4px ${error ? 'rgba(255,48,64,0.10)' : COLORS.primaryRing}` : 'none',
+            boxShadow: focused ? `0 0 0 4px ${error ? 'rgba(255,48,64,0.12)' : COLORS.primaryRing}` : 'none',
           } as any}
           onFocus={(e) => { setFocused(true); onFocus?.(e); }} onBlur={(e) => { setFocused(false); onBlur?.(e); }} className={className} />
         {rightIcon && <span style={{ position: 'absolute', right: '16px', display: 'flex', color: '#71717A' }}>{rightIcon}</span>}
@@ -37,17 +37,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ variant = 'primary', fullWidth = false, loading = false, leftIcon, rightIcon, disabled, children, className = '', style, ...props }, ref) => {
   const base: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-    borderRadius: '8px', fontSize: '14px', fontWeight: variant === 'primary' ? 650 : 600, fontFamily: FONT,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+    borderRadius: '10px', fontSize: '17px', fontWeight: variant === 'primary' ? 650 : 600, fontFamily: FONT,
     cursor: loading || disabled ? 'not-allowed' : 'pointer',
-    transition: `all ${TRANSITIONS.fast}`, opacity: loading || disabled ? 0.6 : 1,
-    width: fullWidth ? '100%' : 'auto', minHeight: '44px', letterSpacing: '-0.01em',
+    transition: `all ${TRANSITIONS.fast}`, opacity: loading || disabled ? 0.55 : 1,
+    width: fullWidth ? '100%' : 'auto', minHeight: '70px', letterSpacing: '-0.01em',
   };
   const variants: Record<string, React.CSSProperties> = {
-    primary: { background: '#0095F6', color: '#fff', border: 'none', padding: '0 20px', boxShadow: 'none' },
-    ghost: { background: 'rgba(255,255,255,0.06)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.08)', padding: '0 20px' },
-    danger: { background: COLORS.error, color: '#fff', border: 'none', padding: '0 22px' },
-    link: { background: 'transparent', color: '#0095F6', border: 'none', padding: 0, minHeight: 'auto', textDecoration: 'underline', textUnderlineOffset: '3px' },
+    primary: { background: '#0095F6', color: '#fff', border: 'none', padding: '0 28px', boxShadow: 'none' },
+    ghost: { background: 'rgba(255,255,255,0.07)', color: '#FAFAFA', border: '1px solid rgba(255,255,255,0.10)', padding: '0 26px' },
+    danger: { background: COLORS.error, color: '#fff', border: 'none', padding: '0 28px' },
+    link: { background: 'transparent', color: '#0095F6', border: 'none', padding: 0, minHeight: 'auto', textDecoration: 'underline', textUnderlineOffset: '4px' },
   };
   return (
     <button ref={ref} {...props} disabled={disabled || loading} style={{ ...base, ...variants[variant], ...style }} className={className}>
@@ -60,7 +60,7 @@ Button.displayName = 'Button';
 interface CardProps { children: React.ReactNode; elevated?: boolean; interactive?: boolean; className?: string; style?: React.CSSProperties; onClick?: () => void; }
 export const Card = ({ children, elevated, interactive, className = '', style, onClick }: CardProps) => {
   const [h, setH] = React.useState(false);
-  return <div className={className} style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: `1px solid ${h && interactive ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)'}`, borderRadius: '20px', boxShadow: elevated ? '0 16px 48px rgba(0,0,0,0.60)' : '0 8px 32px rgba(0,0,0,0.45)', cursor: interactive ? 'pointer' : 'default', transition: `all ${TRANSITIONS.fast}`, ...style }} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} onClick={onClick}>{children}</div>;
+  return <div className={className} style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', border: `1px solid ${h && interactive ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '24px', boxShadow: elevated ? '0 20px 60px rgba(0,0,0,0.65)' : '0 10px 40px rgba(0,0,0,0.50)', cursor: interactive ? 'pointer' : 'default', transition: `all ${TRANSITIONS.fast}`, ...style }} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} onClick={onClick}>{children}</div>;
 };
 interface BadgeProps { children: React.ReactNode; variant?: 'default' | 'success' | 'warning' | 'error' | 'info'; className?: string; style?: React.CSSProperties; }
 export const Badge = ({ children, variant = 'default', className = '', style }: BadgeProps) => {

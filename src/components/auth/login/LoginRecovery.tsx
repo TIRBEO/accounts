@@ -21,31 +21,33 @@ interface LoginRecoveryProps {
 }
 
 const codeInput: React.CSSProperties = {
-  width: '52px',
-  height: '60px',
+  width: '48px',
+  height: '52px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '28px',
+  fontSize: '20px',
   fontWeight: 700,
   fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
   textAlign: 'center',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  caretColor: 'transparent',
+  caretColor: '#38BDF8',
 };
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  height: '56px',
+  height: '48px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '16px',
+  fontSize: '14.5px',
   fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 24px',
+  padding: '0 16px',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
   boxSizing: 'border-box',
@@ -56,24 +58,25 @@ const primaryBtn: React.CSSProperties = {
   height: '44px',
   background: '#0095F6',
   color: '#FFFFFF',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '17px',
+  border: '1px solid #0095F6',
+  borderRadius: '12px',
+  fontSize: '14px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
   transition: 'all 150ms ease',
-  boxShadow: 'none',
+  boxShadow: '0 4px 16px rgba(0,149,246,0.28)',
 };
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '48px',
+  height: '44px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#A1A1AA',
-  fontSize: '15px',
+  fontSize: '14px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -97,13 +100,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   if (recoveryStage === 'password') {
     const canSubmit = newPassword.length >= 8 && confirmPassword === newPassword && !isSubmitting;
     return (
-      <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-            Create new password
+      <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+            Create new <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>password</em>
           </h2>
-          <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
-            Choose a strong password for <span style={{ color: '#A1A1AA' }}>{email}</span>.
+          <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+            Choose a strong password for <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.
           </p>
         </div>
 
@@ -168,17 +171,17 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   }
 
   return (
-    <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          {recoveryMethod === 'magic-link' ? 'Check your email' : 'Enter verification code'}
+    <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          {recoveryMethod === 'magic-link' ? <>Check your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>email</em></> : <>Enter verification <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>code</em></>}
         </h2>
-        <p style={{ fontSize: '15px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px' }}>
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           {recoveryMethod === 'magic-link'
-            ? <>We sent a magic link to <span style={{ color: '#A1A1AA' }}>{email}</span>.</>
+            ? <>We sent a magic link to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.</>
             : recoveryMethod === 'recovery'
-              ? <>We sent a code to <span style={{ color: '#A1A1AA' }}>{loginProfile?.recoveryEmail || 'your recovery email'}</span>.</>
-              : <>We sent a code to <span style={{ color: '#A1A1AA' }}>{email}</span>.</>
+              ? <>We sent a code to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{loginProfile?.recoveryEmail || 'your recovery email'}</span>.</>
+              : <>We sent a code to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.</>
           }
         </p>
       </div>
@@ -200,13 +203,14 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
                 onPaste={(e) => { e.preventDefault(); const p = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, codeLength); if (p.length === codeLength) setRecoveryCode(p); }}
                 style={{
                   ...codeInput,
-                  borderColor: recoveryCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)',
+                  borderColor: recoveryCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)',
+                  boxShadow: recoveryCode[i] ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none',
                 }}
                 data-recovery-index={i}
-                onFocus={(e) => { e.currentTarget.style.borderColor = '#FFFFFF'; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(56,189,248,0.14)'; }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = recoveryCode[i] ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = recoveryCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)';
+                  e.currentTarget.style.boxShadow = recoveryCode[i] ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none';
                 }}
               />
             ))}
@@ -257,6 +261,8 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
               color: recoveryCode.length === codeLength && !isSubmitting ? '#FFFFFF' : '#71717A',
               opacity: 1,
               cursor: recoveryCode.length === codeLength && !isSubmitting ? 'pointer' : 'not-allowed',
+              boxShadow: recoveryCode.length === codeLength && !isSubmitting ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
+              border: `1px solid ${recoveryCode.length === codeLength && !isSubmitting ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
             }}
           >
             {isSubmitting ? (

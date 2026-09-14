@@ -27,14 +27,15 @@ interface SignupStep4Props {
 
 const inputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '56px',
+  height: '48px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '16px',
+  fontSize: '14.5px',
   fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 48px 0 24px',
+  padding: '0 48px 0 16px',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
   boxSizing: 'border-box',
@@ -42,14 +43,15 @@ const inputStyle = (hasError: boolean): React.CSSProperties => ({
 
 const confirmInputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '56px',
+  height: '48px',
   background: 'rgba(255,255,255,0.04)',
+  backdropFilter: 'blur(12px)',
   border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
-  borderRadius: '14px',
+  borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '16px',
+  fontSize: '14.5px',
   fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 24px',
+  padding: '0 16px',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
   boxSizing: 'border-box',
@@ -73,15 +75,15 @@ const gradientBtnStyle = (enabled: boolean): React.CSSProperties => ({
   height: '44px',
   background: enabled ? '#0095F6' : 'rgba(255,255,255,0.08)',
   color: enabled ? '#FFFFFF' : '#71717A',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '17px',
+  border: `1px solid ${enabled ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
+  borderRadius: '12px',
+  fontSize: '14px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: enabled ? 'pointer' : 'not-allowed',
   transition: 'all 150ms ease',
   opacity: 1,
-  boxShadow: 'none',
+  boxShadow: enabled ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
 });
 
 function getPasswordStrength(password: string): number {
@@ -128,13 +130,13 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
     <form
       className="auth-form"
       onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#FAFAFA', marginBottom: '12px', fontFamily: TYPOGRAPHY.fontFamily }}>
-          Create a password
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          Create a <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>password</em>
         </h2>
-        <p style={{ fontSize: '16px', color: '#71717A', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '24px' }}>
+        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           Choose a strong password with at least 8 characters. Use a mix of letters, numbers, and symbols for best security.
         </p>
       </div>
@@ -284,7 +286,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           </span>
         </label>
         {touched.consentTerms && !consentTerms && (
-          <p style={{ fontSize: '14px', color: '#f43f5e', marginLeft: '30px' }}>You must accept the Terms of Service and Privacy Policy</p>
+          <p style={{ fontSize: '14px', color: '#f43f5e', marginLeft: '20px' }}>You must accept the Terms of Service and Privacy Policy</p>
         )}
       </div>
 

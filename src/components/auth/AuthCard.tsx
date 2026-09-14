@@ -705,27 +705,28 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   if (magicSent && mode === 'login') {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 40, background: '#09090B', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}>
-        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /></div>
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '440px', background: 'rgba(20,20,22,0.92)', backdropFilter: 'blur(20px) saturate(1.15)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '32px 28px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)' }}>
-          <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 16px', boxShadow: '0 4px 16px rgba(255,255,255,0.10)' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 40, background: '#050507', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
+        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0, opacity: 0.85 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /><div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(900px 560px at 50% 0%, rgba(56,189,248,0.10), transparent 70%)' }} /></div>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '520px', background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(28px) saturate(1.25)', WebkitBackdropFilter: 'blur(28px) saturate(1.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '22px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 24px 64px rgba(0,0,0,0.60), 0 0 40px rgba(56,189,248,0.06)' }}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '68%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.22), transparent)' }} />
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 12px', boxShadow: '0 4px 18px rgba(255,255,255,0.10), 0 0 20px rgba(56,189,248,0.10)' }}>
             <Mail size={22} color="#09090B" />
           </div>
-          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.02em', color: '#FAFAFA', margin: '0 0 8px' }}>Check your <em style={{ fontStyle: 'italic', color: '#E4E4E7' }}>email</em></h2>
-          <p style={{ fontSize: '13.5px', color: '#A1A1AA', lineHeight: '20px', margin: '0 0 4px' }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>Check your <em style={{ fontStyle: 'italic', color: '#38BDF8', fontWeight: 400 }}>email</em></h2>
+          <p style={{ fontSize: '14.5px', color: '#A1A1AA', lineHeight: '22px', margin: '0 0 4px' }}>
             One-time magic link sent to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>
           </p>
           <p style={{ fontSize: '12.5px', color: '#71717A', lineHeight: '18px', margin: 0 }}>
             Tap the link to sign in — no password needed. Expires in 15 min.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', fontSize: '12px', color: '#A1A1AA', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '18px', padding: '11px 12px', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.10)', borderRadius: '12px', fontSize: '12px', color: '#7DD3FC', fontWeight: 600 }}>
             {remainingSends('magic-link')} sends left • expires in 15 min • one-time
           </div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms ease' }}>
               Back
             </button>
-            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '999px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#FFFFFF', color: isInCooldown('magic-link') ? '#71717A' : '#09090B', border: 'none', fontSize: '13.5px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer' }}>
+            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '12px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6', color: isInCooldown('magic-link') ? '#71717A' : '#FFFFFF', border: `1px solid ${isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6'}`, fontSize: '14px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer', boxShadow: isInCooldown('magic-link') ? 'none' : '0 4px 16px rgba(0,149,246,0.28)', transition: 'all 150ms ease' }}>
               {isInCooldown('magic-link') ? `Resend in ${getCooldownRemaining('magic-link')}s` : 'Resend link'}
             </button>
           </div>
@@ -743,7 +744,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       userSelect: 'none',
-      padding: '20px',
+      padding: '16px',
       width: '100%',
     }}>
       <style>{`
@@ -758,30 +759,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       `}</style>
       <main className={`auth-main accounts-auth-main${isStep2 ? ' auth-main--step2' : ''}`} style={{
         width: '100%',
-        maxWidth: isStep2 ? '860px' : '600px',
+        maxWidth: '520px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '16px',
-        padding: isStep2 ? '12px 20px 40px' : '32px 20px 64px',
+        gap: '14px',
+        padding: '20px',
         transition: 'max-width 200ms ease, padding 200ms ease',
       }}>
-        {/* Main card */}
+        {/* Main card — infinite big glass sky blue */}
         <div
           className={`auth-card${isStep2 ? ' auth-card--step2' : ''}`}
           style={{
             width: '100%',
-            background: 'rgba(20,20,22,0.92)',
-            backdropFilter: 'blur(20px) saturate(1.15)',
+            background: 'rgba(16,16,18,0.90)',
+            backdropFilter: 'blur(22px) saturate(1.15)',
+            WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
             border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '24px',
-            padding: isStep2 ? '48px 44px' : '44px 40px 36px',
+            borderRadius: '22px',
+            padding: '28px',
             overflow: 'visible',
             boxSizing: 'border-box',
             opacity: 1,
-            boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px rgba(0,0,0,0.60)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.60), 0 0 40px rgba(56,189,248,0.04)',
+            position: 'relative',
           }}
         >
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '64%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.18), transparent)', pointerEvents: 'none' }} />
           <div>
             <div style={{ position: 'relative' }}>
               {/* ═══ SIGNUP STEP 1 ═══ */}
@@ -1007,18 +1011,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           </div>
         </div>
 
-        {/* Sign up / Log in bottom card */}
+        {/* Sign up / Log in bottom card — glass compact */}
         <div
           className="auth-card-bottom"
           style={{
             width: '100%',
-            background: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '20px',
-            padding: '22px 24px',
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(20px) saturate(1.15)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.15)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            padding: '16px',
             textAlign: 'center',
             boxSizing: 'border-box',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset',
           }}
         >
           <p style={{
