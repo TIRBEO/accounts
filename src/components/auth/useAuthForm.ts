@@ -99,8 +99,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   const fetchLimits = useCallback(async (forceInit = false) => {
     try {
+      // skip when unauthenticated — endpoint 401s without session and spam is noisy
+      if (typeof document !== 'undefined' && !document.cookie.includes('__session=')) return;
       const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
-      // Initialize limits from DB if not present
       if (forceInit) {
         await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, {
           method: 'POST',
@@ -110,6 +111,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         }).catch(()=>{});
       }
       const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, { credentials: 'include' });
+      if (res.status === 401) return;
       if (res.ok) {
         const data = await res.json();
         if (data?.limits && typeof data.limits === 'object') {
@@ -128,10 +130,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     limitsSyncTimerRef.current = setTimeout(() => { lastLimitsSyncRef.current = 0; }, LIMITS_SYNC_MS);
   }, [fetchLimits]);
 
-  // Init limits from DB on mount
-  useEffect(() => {
-    void fetchLimits(true);
-  }, []);
+  // (removed duplicate init — covered by periodic sync above)
 
   // ─── Send attempts tracking ───
   const [sendAttempts, setSendAttempts] = useState<Record<string, { count: number; windowStart: number }>>({});
@@ -147,13 +146,16 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       const rem = data.remaining || {};
       const now = Date.now();
       const next: Record<string, { count: number; windowStart: number }> = {};
+      const nextResets: Record<string, number> = {};
       for (const [m, info] of Object.entries(rem as Record<string, any>)) {
         const max = info.max ?? sendLimits[m] ?? DEFAULT_SEND_LIMITS[m] ?? 3;
         const remaining = info.remaining ?? max;
         const used = Math.max(0, max - remaining);
         next[m] = { count: used, windowStart: now };
+        if (info.resetAt && remaining <= 0) nextResets[m] = info.resetAt;
       }
       if (Object.keys(next).length) setSendAttempts(prev => ({ ...prev, ...next }));
+      if (Object.keys(nextResets).length) setWindowResetsAt(prev => ({ ...prev, ...nextResets }));
     } catch {}
   }, [email, sendLimits]);
 
@@ -192,16 +194,45 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     return Math.max(0, max - used);
   };
 
+  /** Immediate /api/auth/remaining sync — used by the more-options screen so
+   *  badges show fresh per-method counts on open (not the debounced sync). */
+  const refreshRemaining = useCallback(async () => {
+    await syncFromDb();
+  }, [syncFromDb]);
+
+  // ─── Server-reported window resets (epoch ms per method) ───
+  // Populated from 429 payloads (resetsAt / remaining[x].resetAt) and the
+  // /api/auth/remaining sync. When set and in the future, the UI shows
+  // "Limit reached — resets at HH:MM" straight from server data instead of a
+  // locally guessed 30s cooldown.
+  const [windowResetsAt, setWindowResetsAt] = useState<Record<string, number>>({});
+  const setResetAt = useCallback((method: string, resetsAt?: number) => {
+    if (!resetsAt || resetsAt <= Date.now()) return;
+    setWindowResetsAt(prev => (prev[method] === resetsAt ? prev : { ...prev, [method]: resetsAt }));
+  }, []);
+  const getResetAt = useCallback(
+    (method: string) => {
+      const at = windowResetsAt[method];
+      return at && at > Date.now() ? at : 0;
+    },
+    [windowResetsAt],
+  );
+
   // ─── Per-method cooldown timers ───
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+  const cooldownRef = useRef<Record<string, number>>({});
 
-  const isInCooldown = (key: string) => (cooldowns[key] || 0) > 0;
-  const getCooldownRemaining = (key: string) => cooldowns[key] || 0;
+  const isInCooldown = (key: string) => (cooldowns[key] || 0) > 0 || (cooldownRef.current[key] || 0) > Date.now();
+  const getCooldownRemaining = (key: string) => {
+    if ((cooldownRef.current[key] || 0) > Date.now()) return Math.ceil((cooldownRef.current[key] - Date.now()) / 1000);
+    return cooldowns[key] || 0;
+  };
   const startCooldown = useCallback((key: string) => {
+    cooldownRef.current[key] = Date.now() + COOLDOWN_SECONDS * 1000;
     setCooldowns(prev => ({ ...prev, [key]: COOLDOWN_SECONDS }));
   }, []);
 
-  // Cooldown ticker — single interval
+  // Cooldown ticker — single interval (clears ref when expired)
   useEffect(() => {
     const active = Object.entries(cooldowns).filter(([, v]) => v > 0);
     if (active.length === 0) return;
@@ -210,7 +241,12 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         const next = { ...prev };
         let changed = false;
         for (const [k, v] of Object.entries(next)) {
-          if (v > 0) { next[k] = Math.max(0, v - 1); changed = true; }
+          if (v > 0) {
+            const nv = Math.max(0, v - 1);
+            next[k] = nv;
+            if (nv === 0) delete cooldownRef.current[k];
+            changed = true;
+          }
         }
         return changed ? next : prev;
       });
@@ -291,15 +327,65 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   // ─── Generate username suggestions ───
   const generateSuggestions = useCallback(async (base: string): Promise<string[]> => {
+    const clean = base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 14) || 'user';
+    const randNum = () => String(Math.floor(10 + Math.random() * 90));
+    const randLetters = (n = 2) => Array.from({ length: n }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join('');
+    const words = ['nova','prime','vibe','flux','spark','orbit','apex','wave','forge','nest','drift','bloom','crest','verse','craft','grid','pulse','mint'];
+    const pick = () => words[Math.floor(Math.random() * words.length)];
+    const a = pick(), b = pick(), c = pick(), d = pick();
+    const pool = [
+      `${clean}_${a}`,
+      `${a}_${clean}`,
+      `${clean}${b}`,
+      `${b}${clean}`,
+      `${clean}_${c}${randNum()}`,
+      `${clean}__${randLetters(3)}`,
+      `${clean}x${d}`,
+      `${a}${clean}${randNum().slice(0,1)}`,
+      `${clean}_${randLetters(3)}${randNum().slice(0,1)}`,
+      `the_${clean}_${a}`,
+      `${clean}__${a}`,
+      `${a}__${clean}`,
+    ].filter((v, i, arr) => arr.indexOf(v) === i && v.length >= 3 && v.length <= 30 && /^[a-z0-9_]+$/.test(v));
+
+    // shuffle pool
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
     const suggestions: string[] = [];
-    for (let i = 1; i <= 5 && suggestions.length < 3; i++) {
-      const candidate = `${base}${i}`;
-      const res = await checkUsernameExists(candidate);
-      if (res.ok && res.data?.valid && !res.data?.exists && !res.data?.reserved) {
-        suggestions.push(candidate);
+    // batched parallel checks (3 at a time) to cut 4.7s sequential -> ~1.2s
+    for (let i = 0; i < pool.length && suggestions.length < 4; i += 3) {
+      const batch = pool.slice(i, i + 3);
+      const results = await Promise.all(
+        batch.map(async (c) => {
+          try {
+            const r = await checkUsernameExists(c);
+            return { c, r };
+          } catch {
+            return { c, r: { ok: false } as any };
+          }
+        }),
+      );
+      for (const { c, r } of results) {
+        if (suggestions.length >= 4) break;
+        if (r.ok && r.data?.valid && !r.data?.exists && !r.data?.reserved) suggestions.push(c);
       }
     }
-    return suggestions;
+    // fallback: more distinct variants if still <4 (also batched)
+    const extras = ['nova','pulse','grid','mint','flux'];
+    let n = 0;
+    while (suggestions.length < 4 && n < 20) {
+      const w = extras[n % extras.length];
+      const cand = n % 2 === 0 ? `${clean}_${w}${randNum().slice(0,1)}` : `${w}_${clean}${randLetters(1)}`;
+      if (!pool.includes(cand) && !suggestions.includes(cand) && cand.length >= 3 && cand.length <= 30) {
+        const res = await checkUsernameExists(cand);
+        if (res.ok && res.data?.valid && !res.data?.exists && !res.data?.reserved) suggestions.push(cand);
+      }
+      n++;
+    }
+    return suggestions.slice(0, 4);
   }, []);
 
   // ─── SIGNUP: check email and username together ───
@@ -392,7 +478,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       }
       return;
     }
-    const timer = setTimeout(() => { void checkSignupAvailability(email, username); }, 300);
+    const timer = setTimeout(() => { void checkSignupAvailability(email, username); }, 700);
     return () => clearTimeout(timer);
   }, [mode, signupStep, email, username, checkSignupAvailability]);
 
@@ -441,7 +527,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         setUsernameMessage('Unable to check availability');
         setUsernameSuggestions([]);
       }
-    }, 300);
+    }, 600);
   }, [generateSuggestions]);
 
   // ─── REAL-TIME VALIDATION ───
@@ -633,22 +719,35 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     try {
       const result = await sendFn();
       if (!result.ok && result.status === 429) {
-        const retryAfterMs = (result as any)?.data?.retryAfterMs;
+        const retryAfterMs = (result as any)?.data?.retryAfterMs ?? (result as any)?.retryAfterMs;
         const retrySec = retryAfterMs ? Math.ceil(retryAfterMs / 1000) : COOLDOWN_SECONDS;
         setCooldowns(prev => ({ ...prev, [key]: retrySec }));
+        cooldownRef.current[key] = Date.now() + retrySec * 1000;
+        // Server-reported reset (resetsAt or remaining[key].resetAt) wins over
+        // the locally guessed retryAfter — the UI can show real HH:MM copy.
+        const payload = (result as any)?.data || {};
+        const exceeded = payload.exceeded as string | undefined;
+        const resetsAt =
+          (exceeded && payload.remaining?.[exceeded]?.resetAt) ||
+          payload.remaining?.[method]?.resetAt ||
+          (result as any)?.resetsAt ||
+          (retryAfterMs ? Date.now() + retryAfterMs : undefined);
+        if (resetsAt) setResetAt(method, resetsAt);
+        // mark window as exhausted so next click is blocked locally without 5s server hit
+        const max = getMaxSends(method);
+        setSendAttempts(prev => ({ ...prev, [method]: { count: max, windowStart: Date.now() } }));
       }
       return result;
     } catch {
       return { ok: false, status: 500, error: 'Network error' };
     }
-  }, [canSend, isInCooldown, getCooldownRemaining, incrementSend, startCooldown]);
+  }, [canSend, isInCooldown, getCooldownRemaining, incrementSend, startCooldown, setResetAt, getMaxSends]);
 
   return {
     // Mode
     mode, setMode, switchMode,
     signupStep, setSignupStep,
     loginStep, setLoginStep,
-    // Signup fields
     firstName, setFirstName,
     lastName, setLastName,
     email, setEmail,
@@ -692,7 +791,12 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     canSend,
     incrementSend,
     remainingSends,
+    getMaxSends,
+    refreshRemaining,
     sendLimits,
+    // Server-reported window resets (epoch ms per method)
+    getResetAt,
+    setResetAt,
     // Validation
     errors, setErrors,
     touched, setTouched,

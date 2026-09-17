@@ -2,47 +2,48 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Tirbeo - Sign In</title>
     <meta name="description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
     <meta name="keywords" content="Tirbeo, sign in, login, workspace, collaboration" />
     <meta name="author" content="Tirbeo" />
-    
+
     <!-- Open Graph -->
     <meta property="og:title" content="Tirbeo - Sign In" />
     <meta property="og:description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/logo.png" />
+    <meta property="og:image" content="/logo-opt.png" />
     <meta property="og:url" content="https://tirbeo.app" />
-    
+
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Tirbeo - Sign In" />
     <meta name="twitter:description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
-    <meta name="twitter:image" content="/logo.png" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    
+    <meta name="twitter:image" content="/logo-opt.png" />
+
+    <!-- Favicon: tiny PNG instead of the old 1.1MB .ico -->
+    <link rel="icon" type="image/png" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
     <!-- Theme Color -->
     <meta name="theme-color" content="#000000" />
-    
-    <!-- Fonts - FOUC fix with preload + display=swap -->
+
+    <!-- Fonts: preconnect + display=swap (loads off the critical path) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap"></noscript>
-    
-    <!-- Background handling for responsive images -->
-    <link rel="preload" as="image" href="/background.png" media="(min-width: 1024px)">
-    <link rel="preload" as="image" href="/background-tab.png" media="(max-width: 1023px) and (min-width: 641px)">
-    <link rel="preload" as="image" href="/background-mobile.png" media="(max-width: 640px)">
-    
-  </head>
-  <body class="bg-black text-white antialiased selection:bg-white/20 selection:text-white font-['Inter',sans-serif]">
-    <div id="root"></div>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"></noscript>
+
+    <!-- API preconnect: session check fires on load — warm the connection -->
+    <link rel="preconnect" href="https://api.tirbeo.app" crossorigin>
+
+    <!-- Background preload — single high-priority desktop, others lazy via <picture> -->
+    <link rel="preload" as="image" href="/background.webp" fetchpriority="high">
+
     <script type="module" src="/src/main.tsx"></script>
+  </head>
+  <body class="bg-black text-white antialiased selection:bg-white/20 selection:text-white font-['Google+Sans',sans-serif]">
+    <div id="root"></div>
   </body>
 </html>

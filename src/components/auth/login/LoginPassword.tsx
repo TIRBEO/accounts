@@ -23,12 +23,12 @@ interface LoginPasswordProps {
 
 const primaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '44px',
+  height: '53px',
   background: '#0095F6',
   color: '#FFFFFF',
   border: 'none',
   borderRadius: '12px',
-  fontSize: '14px',
+  fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -38,13 +38,13 @@ const primaryBtn: React.CSSProperties = {
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  height: '48px',
+  height: '70px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '14.5px',
+  fontSize: '17px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 16px',
   outline: 'none',
@@ -54,13 +54,13 @@ const inputBase: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '44px',
+  height: '53px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '12px',
   color: '#A1A1AA',
-  fontSize: '14px',
+  fontSize: '17px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -106,10 +106,10 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           )}
         </div>
 
-        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 8px', lineHeight: 1.1 }}>
-          Hi, <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>{displayName}</em>
+        <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 8px', lineHeight: 1.1 }}>
+          Hi, <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>{displayName}</em>
         </h2>
-        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+        <p style={{ fontSize: '17px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           Enter your password to continue.
         </p>
       </div>
@@ -135,10 +135,11 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           }}
         />
         {password.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            style={{
+           <button
+             type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             aria-label={showPassword ? 'Hide password' : 'Show password'}
+             style={{
               position: 'absolute',
               right: '14px',
               top: '50%',
@@ -167,7 +168,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
         )}
       </div>
       {showPasswordError && (
-        <p style={{ fontSize: '14px', color: '#f43f5e', margin: '-8px 0 0', paddingLeft: '2px' }}>
+        <p style={{ fontSize: '17px', color: '#f43f5e', margin: '-8px 0 0', paddingLeft: '2px' }}>
           {errors.password}
         </p>
       )}
@@ -213,7 +214,7 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
             background: 'none',
             border: 'none',
             color: '#71717A',
-            fontSize: '14px',
+            fontSize: '17px',
             fontWeight: 500,
             fontFamily: TYPOGRAPHY.fontFamily,
             cursor: 'pointer',

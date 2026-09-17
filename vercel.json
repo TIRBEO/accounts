@@ -4,7 +4,17 @@
   "env": {
     "VITE_API_URL": "https://api.tirbeo.app",
     "NEXT_PUBLIC_API_URL": "https://api.tirbeo.app",
-    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.app"
+    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.app",
+    "VITE_PUSHER_KEY_PRIMARY": "95ec31012edaf673af92",
+    "VITE_PUSHER_CLUSTER_PRIMARY": "mt1",
+    "VITE_PUSHER_KEY_SECONDARY": "c6716f35ee695ef14918",
+    "VITE_PUSHER_CLUSTER_SECONDARY": "mt1",
+    "VITE_PUSHER_KEY_TERTIARY": "439f77585f04cd6a3025",
+    "VITE_PUSHER_CLUSTER_TERTIARY": "mt1",
+    "VITE_PUSHER_KEY_AP2": "0dc7b602fa2883797f86",
+    "VITE_PUSHER_CLUSTER_AP2": "ap2",
+    "VITE_PUSHER_KEY_AP4": "30d7c6e7fe9433069371",
+    "VITE_PUSHER_CLUSTER_AP4": "ap4"
   },
   "rewrites": [
     {
@@ -16,8 +26,59 @@
       "destination": "/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/magic-sent",
       "destination": "/index.html"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(background|background-tab|background-mobile)\\.webp",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(logo-opt|apple-touch-icon|favicon-48)\\.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ]
 }

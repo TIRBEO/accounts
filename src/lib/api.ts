@@ -13,7 +13,8 @@ const configuredApiUrl =
   (import.meta.env.VITE_API_URL as string | undefined) ||
   (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined);
 
-const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
+// Exported for realtime.ts (Pusher channel auth endpoint on the same origin)
+export const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
   (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
 
 export interface ApiResult<T = unknown> {
@@ -173,9 +174,24 @@ export interface EmailExistsData {
   recoveryEmail?: string | null;
 }
 
-/** Check whether an email is already registered (API-backed). */
+/** Check whether an email is already registered (API-backed). — 30s TTL + in-flight dedupe to cut 5s duplicate POSTs */
+const emailExistsFrontCache = new Map<string, { result: ApiResult<EmailExistsData>; exp: number }>();
+const emailExistsInFlight = new Map<string, Promise<ApiResult<EmailExistsData>>>();
 export async function checkEmailExists(email: string): Promise<ApiResult<EmailExistsData>> {
-  return apiPost<EmailExistsData>('/api/auth/email-exists', { email });
+  const key = email.toLowerCase().trim();
+  const now = Date.now();
+  const cached = emailExistsFrontCache.get(key);
+  if (cached && cached.exp > now) return cached.result;
+  const inflight = emailExistsInFlight.get(key);
+  if (inflight) return inflight;
+  const p = apiPost<EmailExistsData>('/api/auth/email-exists', { email }).then((res) => {
+    // cache success only (avoid caching 5xx)
+    if (res.ok) emailExistsFrontCache.set(key, { result: res, exp: now + 30_000 });
+    emailExistsInFlight.delete(key);
+    return res;
+  });
+  emailExistsInFlight.set(key, p);
+  return p;
 }
 
 export interface UsernameExistsData {
@@ -184,22 +200,29 @@ export interface UsernameExistsData {
   reserved: boolean;
 }
 
-export interface SignupAvailabilityData {
-  email: EmailExistsData;
-  username: UsernameExistsData;
-}
+// NOTE: a combined checkSignupAvailability() helper was removed — it called
+// POST /api/auth/signup-availability, an endpoint that has never existed in
+// apps/api (verified by route inventory + live 404 probe). The signup form
+// (useAuthForm.checkSignupAvailability) composes checkEmailExists +
+// checkUsernameExists instead, which are the real working endpoints.
 
-/** Check email and username availability in one request. */
-export async function checkSignupAvailability(
-  email: string,
-  username: string,
-): Promise<ApiResult<SignupAvailabilityData>> {
-  return apiPost<SignupAvailabilityData>('/api/auth/signup-availability', { email, username });
-}
-
-/** Check whether a username is already taken (API-backed). */
+/** Check whether a username is already taken (API-backed). — 30s TTL + in-flight dedupe */
+const usernameExistsFrontCache = new Map<string, { result: ApiResult<UsernameExistsData>; exp: number }>();
+const usernameExistsInFlight = new Map<string, Promise<ApiResult<UsernameExistsData>>>();
 export async function checkUsernameExists(username: string): Promise<ApiResult<UsernameExistsData>> {
-  return apiPost<UsernameExistsData>('/api/auth/username-exists', { username });
+  const key = username.toLowerCase().trim();
+  const now = Date.now();
+  const cached = usernameExistsFrontCache.get(key);
+  if (cached && cached.exp > now) return cached.result;
+  const inflight = usernameExistsInFlight.get(key);
+  if (inflight) return inflight;
+  const p = apiPost<UsernameExistsData>('/api/auth/username-exists', { username }).then((res) => {
+    if (res.ok) usernameExistsFrontCache.set(key, { result: res, exp: now + 30_000 });
+    usernameExistsInFlight.delete(key);
+    return res;
+  });
+  usernameExistsInFlight.set(key, p);
+  return p;
 }
 
 // ═══ SIGNUP ═══
@@ -332,6 +355,26 @@ export interface MagicLinkRequestResult {
   message?: string;
   error?: string;
   retryAfterMs?: number;
+  /** Which limit tripped: 'magic-link' | 'global-email' | 'global-ip' | undefined. */
+  exceeded?: string;
+  /** Epoch ms when the exhausted window resets (server clock). */
+  resetsAt?: number;
+}
+
+/** Per-method limit status returned by /api/auth/remaining and send 429s. */
+export interface RemainingInfo {
+  used: number;
+  remaining: number;
+  max: number;
+  resetAt: number;
+  exceeded?: boolean;
+}
+
+/** Shared 429 payload shape from the auth send endpoints. */
+export interface RateLimitPayload {
+  retryAfterMs?: number;
+  exceeded?: string;
+  remaining?: Record<string, RemainingInfo>;
 }
 
 /**
@@ -340,9 +383,20 @@ export interface MagicLinkRequestResult {
  * (prevents account enumeration), so the UI should show a generic message.
  */
 export async function requestMagicLink(email: string): Promise<MagicLinkRequestResult> {
-  const result = await apiPost<{ message?: string; retryAfterMs?: number }>('/api/auth/magic-link/request', { email });
+  const result = await apiPost<{ message?: string; retryAfterMs?: number; exceeded?: string } & RateLimitPayload>('/api/auth/magic-link/request', { email });
   if (!result.ok) {
-    return { ok: false, status: result.status, error: readableError(result, 'Failed to send magic link. Please try again.'), retryAfterMs: result.data?.retryAfterMs };
+    // Cooldown 429s carry the human copy in `message` (not `error`) — surface it.
+    // resetsAt: prefer the tripped limit's own resetAt, else now + retryAfterMs.
+    const tripped = result.data?.exceeded ? result.data?.remaining?.[result.data.exceeded] : undefined;
+    const retryAfterMs = result.data?.retryAfterMs;
+    return {
+      ok: false,
+      status: result.status,
+      error: result.data?.message || readableError(result, 'Failed to send magic link. Please try again.'),
+      retryAfterMs,
+      exceeded: result.data?.exceeded,
+      resetsAt: tripped?.resetAt ?? (retryAfterMs ? Date.now() + retryAfterMs : undefined),
+    };
   }
   return { ok: true, message: result.data?.message };
 }

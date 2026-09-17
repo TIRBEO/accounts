@@ -24,7 +24,7 @@ export const COLORS = {
   borderFocus: 'rgba(0,149,246,0.50)',
 
   primary: '#0095F6',
-  primaryHover: '#0084DB',
+  primaryHover: '#0081D6',
   primaryActive: '#0077C5',
   primaryMuted: 'rgba(0,149,246,0.12)',
   primaryText: '#FFFFFF',
@@ -37,8 +37,8 @@ export const COLORS = {
   error: '#FF3040',
   errorMuted: 'rgba(255,48,64,0.08)',
   errorBorder: 'rgba(255,48,64,0.18)',
-  success: '#00C950',
-  successMuted: 'rgba(0,201,80,0.08)',
+  success: '#10B981',
+  successMuted: 'rgba(16,185,129,0.08)',
   warning: '#FFB800',
 
   googleBg: '#FFFFFF',
@@ -49,20 +49,21 @@ export const COLORS = {
   discordText: '#FFFFFF',
 };
 
-export const SPACING = { xs: '6px', sm: '10px', md: '16px', lg: '22px', xl: '29px', xxl: '38px', '3xl': '53px' };
-export const RADIUS = { xs: '11px', sm: '13px', md: '17px', lg: '22px', xl: '29px', '2xl': '34px', pill: '9999px', full: '50%' };
+export const SPACING = { xs: '7px', sm: '12px', md: '19px', lg: '26px', xl: '35px', xxl: '46px', '3xl': '64px' };
+export const RADIUS = { xs: '13px', sm: '16px', md: '20px', lg: '26px', xl: '35px', '2xl': '41px', pill: '9999px', full: '50%' };
 
 export const TYPOGRAPHY = {
-  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  fontDisplay: "'Inter', sans-serif",
+  fontFamily: "'Google Sans', 'Google Sans Text', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontDisplay: "'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif",
   fontMono: "'JetBrains Mono', monospace",
-  h1: { size: '38px', weight: '750', lineHeight: '38px', letterSpacing: '-0.03em' },
-  h2: { size: '26px', weight: '700', lineHeight: '29px', letterSpacing: '-0.02em' },
-  h3: { size: '19px', weight: '650', lineHeight: '26px' },
-  body: { size: '17px', weight: '400', lineHeight: '25px' },
-  bodySmall: { size: '16px', weight: '400', lineHeight: '23px' },
-  caption: { size: '12.5px', weight: '700', lineHeight: '15px', letterSpacing: '0.07em', textTransform: 'uppercase' as const },
-  link: { size: '16px', weight: '600', lineHeight: '23px' },
+  h1: { size: '44px', weight: '700', lineHeight: '46px', letterSpacing: '-0.04em' },
+  h2: { size: '32px', weight: '700', lineHeight: '34px', letterSpacing: '-0.03em' },
+  h3: { size: '24px', weight: '700', lineHeight: '30px', letterSpacing: '-0.02em' },
+  body: { size: '19px', weight: '400', lineHeight: '28px', letterSpacing: '-0.01em' },
+  bodySmall: { size: '17px', weight: '400', lineHeight: '25px', letterSpacing: '-0.01em' },
+  caption: { size: '13px', weight: '700', lineHeight: '17px', letterSpacing: '0.1em', textTransform: 'uppercase' as const },
+  link: { size: '17px', weight: '600', lineHeight: '25px' },
+  display: { size: '32px', weight: '700', lineHeight: '34px', letterSpacing: '-0.04em' },
 };
 
 export const SHADOWS = {
@@ -82,12 +83,12 @@ export const BREAKPOINTS = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px
 export const INPUT_STYLES = {
   base: {
     width: '100%',
-    height: '60px',
-    background: 'rgba(255,255,255,0.05)',
+    height: '56px',
+    background: 'rgba(255,255,255,0.04)',
     border: `1px solid ${COLORS.border}`,
-    borderRadius: '14px',
+    borderRadius: '12px',
     color: COLORS.text,
-    fontSize: '17px',
+    fontSize: '16px',
     fontFamily: TYPOGRAPHY.fontFamily,
     padding: '0 16px',
     outline: 'none',
@@ -99,29 +100,29 @@ export const BUTTON_STYLES = {
   primary: {
     background: '#0095F6',
     color: '#FFF',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '17px',
-    fontWeight: 650,
+    border: '1px solid #0095F6',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: 700,
     fontFamily: TYPOGRAPHY.fontFamily,
-    height: '58px',
-    padding: '0 24px',
+    height: '52px',
+    padding: '0 20px',
     cursor: 'pointer',
-    boxShadow: 'none',
+    boxShadow: '0 4px 14px rgba(0,149,246,0.22)',
   },
   ghost: {
-    background: 'rgba(255,255,255,0.05)',
+    background: 'rgba(255,255,255,0.04)',
     color: COLORS.text,
     border: `1px solid ${COLORS.border}`,
-    borderRadius: '10px',
+    borderRadius: '12px',
     fontSize: '16px',
     fontWeight: 600,
     fontFamily: TYPOGRAPHY.fontFamily,
-    padding: '0 22px',
-    height: '58px',
+    padding: '0 20px',
+    height: '52px',
     cursor: 'pointer',
   },
-  danger: { background: COLORS.error, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 700, fontFamily: TYPOGRAPHY.fontFamily, height: '58px', padding: '0 24px', cursor: 'pointer' },
+  danger: { background: COLORS.error, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 700, fontFamily: TYPOGRAPHY.fontFamily, height: '52px', padding: '0 20px', cursor: 'pointer' },
   link: { background: 'transparent', color: '#0095F6', border: 'none', fontSize: '15px', fontWeight: 600, fontFamily: TYPOGRAPHY.fontFamily, padding: 0, cursor: 'pointer' },
 };
 
@@ -134,7 +135,7 @@ export const ANIMATION = {
   fadeIn: { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } },
   slideUp: { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
 };
-export const KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg); } } @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`;
+export const KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg); } } @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 8px rgba(0,149,246,0.2); } 50% { box-shadow: 0 0 24px rgba(0,149,246,0.4); } }`;
 export function injectGlobalStyles() {
   if (typeof document === 'undefined') return;
   if (document.getElementById('accounts-design-keyframes')) return;

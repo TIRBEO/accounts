@@ -1,54 +1,107 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
 export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
   const [visible, setVisible] = useState(active);
+  const reduceMotion = useReducedMotion();
+
   useEffect(() => {
     if (!active) {
-      const t = setTimeout(() => setVisible(false), 650);
+      const t = setTimeout(() => setVisible(false), 320);
       return () => clearTimeout(t);
-    } else setVisible(true);
+    }
+    setVisible(true);
   }, [active]);
 
   if (!visible) return null;
+
   return (
     <motion.div
-      initial={false}
-      animate={active ? 'visible' : 'hidden'}
-      style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: active ? 'auto' : 'none', overflow: 'hidden', background: 'transparent' }}
+      aria-hidden="true"
+      role="presentation"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: active ? 1 : 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'grid',
+        placeItems: 'center',
+        background: 'rgba(9,9,11,0.88)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        pointerEvents: active ? 'auto' : 'none',
+      }}
     >
-      {/* top — pure black */}
       <motion.div
-        variants={{ visible: { y: 0 }, hidden: { y: '-100%' } }}
-        transition={{ duration: 0.62, ease: [0.76, 0, 0.24, 1] }}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50.5%', background: '#000000', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '18px' }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 6 }}
+        transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 14,
+        }}
       >
-        <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)' }}>Tirbeo</span>
-      </motion.div>
-      {/* bottom — pure black */}
-      <motion.div
-        variants={{ visible: { y: 0 }, hidden: { y: '100%' } }}
-        transition={{ duration: 0.62, ease: [0.76, 0, 0.24, 1] }}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50.5%', background: '#000000', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '18px' }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)' }}>Accounts</span>
-      </motion.div>
-      {/* center track — no T */}
-      <motion.div
-        variants={{ visible: { opacity: 1, scale: 1 }, hidden: { opacity: 0, scale: 0.92 } }}
-        transition={{ duration: 0.28, ease: 'easeOut' }}
-        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-      >
-        <div style={{ width: '48px', height: '2px', borderRadius: '999px', background: 'rgba(255,255,255,0.14)', overflow: 'hidden', position: 'relative' }}>
-          <motion.div animate={{ x: ['-48px', '48px'] }} transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }} style={{ position: 'absolute', top: 0, bottom: 0, width: '22px', background: '#0095F6', borderRadius: '999px' }} />
+        <img
+          src="/logo-opt.png"
+          alt=""
+          width={96}
+          height={64}
+          draggable={false}
+          decoding="async"
+          style={{ width: 72, height: 'auto', filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.35))', userSelect: 'none' }}
+        />
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <span
+            style={{
+              fontFamily: "'Google Sans', sans-serif",
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              color: '#FAFAFA',
+              lineHeight: 1,
+              textShadow: '0 1px 10px rgba(0,0,0,0.35)',
+            }}
+          >
+            Tirbeo
+          </span>
+
+          {/* big slider track */}
+          <div
+            style={{
+              width: 148,
+              height: 4,
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.14)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <motion.div
+              animate={reduceMotion ? undefined : { x: [-52, 148] }}
+              transition={
+                reduceMotion
+                  ? undefined
+                  : { duration: 1.1, repeat: Infinity, ease: [0.42, 0, 0.58, 1] }
+              }
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                width: 52,
+                borderRadius: 999,
+                background: '#fff',
+                boxShadow: '0 0 10px rgba(255,255,255,0.5)',
+              }}
+            />
+          </div>
         </div>
       </motion.div>
-      {/* hairline */}
-      <motion.div
-        variants={{ visible: { scaleX: 1, opacity: 1 }, hidden: { scaleX: 0, opacity: 0 } }}
-        transition={{ duration: 0.32 }}
-        style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.08)', transformOrigin: 'center', zIndex: 1 }}
-      />
     </motion.div>
   );
 };

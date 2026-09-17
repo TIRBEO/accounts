@@ -24,7 +24,7 @@ import {
 } from '../../lib/api';
 import type { BlockInfo } from '../../lib/api';
 import { validatePassword, validateEmail, validateUsername, validateDob } from '../../lib/validations';
-import { Sentry } from '../../lib/sentry';
+import { captureException } from '../../lib/sentry';
 import { haptic } from '../../lib/haptics';
 import { useAuthForm } from './useAuthForm';
 import { SignupStep1 } from './signup/SignupStep1';
@@ -90,6 +90,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       isSubmitting, setIsSubmitting,
       cooldowns, setCooldowns, isInCooldown, getCooldownRemaining, startCooldown,
       canSend, incrementSend, remainingSends, sendWithRateLimit,
+      getMaxSends, refreshRemaining, getResetAt, setResetAt,
       errors, setErrors,
       touched, setTouched,
       validateField, handleBlur, validateStep,
@@ -158,7 +159,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         if (!result.ok) {
           onShowToast(result.error || 'Error creating account');
           haptic('error');
-          Sentry.captureException(new Error(result.error || 'Signup failed'));
+          captureException(new Error(result.error || 'Signup failed'));
           setIsSubmitting(false);
           return;
         }
@@ -211,7 +212,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       }
     } catch (err) {
       onShowToast('An unexpected error occurred');
-      Sentry.captureException(err);
+      captureException(err);
       haptic('error');
       setIsSubmitting(false);
     }
@@ -298,7 +299,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           if (lockAccount(result)) return;
           onShowToast(result.error || 'Invalid email or password');
           haptic('error');
-          Sentry.captureException(new Error(result.error || 'Login failed'));
+          captureException(new Error(result.error || 'Login failed'));
           setIsSubmitting(false);
           return;
         }
@@ -373,7 +374,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           if (lockAccount(result)) return;
           onShowToast(result.error || (loginWithBackup ? 'Invalid backup code' : 'Invalid 2FA code'));
           haptic('error');
-          Sentry.captureException(new Error(result.error || '2FA verification failed'));
+          captureException(new Error(result.error || '2FA verification failed'));
           setIsSubmitting(false);
           return;
         }
@@ -384,10 +385,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       }
     } catch (err) {
       onShowToast('An unexpected error occurred');
-      Sentry.captureException(err);
+      captureException(err);
       haptic('error');
       setIsSubmitting(false);
     }
+  };
+
+  /** Human copy for a server-reported window reset: "resets at HH:MM". */
+  const resetCopy = (resetsAt?: number) => {
+    if (!resetsAt || resetsAt <= Date.now()) return '';
+    return ` — resets at ${new Date(resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
   const handleLoginOtpResend = async () => {
@@ -398,9 +405,19 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       setLoginStep('otp');
       onShowToast('Verification code resent to ' + email);
     } else if (result.status === 429) {
-      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      const payload: any = (result as any).data || {};
+      const exceeded = payload.exceeded as string | undefined;
+      const resetsAt: number | undefined =
+        (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.['login-otp']?.resetAt;
+      if (resetsAt) setResetAt('login-otp', resetsAt);
+      const retryAfter = resetsAt
+        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
+        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, 'login-otp': retryAfter }));
-      onShowToast(result.error || 'Please wait before resending');
+      const limitMsg = resetsAt
+        ? `Limit reached for code sends${resetCopy(resetsAt)}`
+        : (result.error || 'Please wait before resending');
+      onShowToast(limitMsg);
     } else {
       if (lockAccount(result as any)) return;
       onShowToast(result.error || 'Failed to resend code');
@@ -495,7 +512,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const sendFn = method === 'code'
       ? () => requestLoginOtp(email)
       : () => requestMagicLink(email);
+    // magic-link: optimistic navigation within 1s so page shows fast even if API 5s
+    let navigated = false;
+    const doNav = () => {
+      if (navigated) return;
+      navigated = true;
+      try {
+        window.history.pushState(null, '', `/magic-sent?email=${encodeURIComponent(email)}`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      } catch {}
+    };
+    let navTimer: ReturnType<typeof setTimeout> | null = null;
+    if (method === 'magic-link') {
+      setErrors({});
+      setTouched({});
+      // show page in ~700ms max
+      navTimer = setTimeout(doNav, 700);
+    }
     const result = await sendWithRateLimit(key, sendFn, { cooldownKey: key });
+    if (navTimer) clearTimeout(navTimer);
     if (result.ok) {
       if (method === 'code') {
         setLoginOtpCode('');
@@ -503,18 +538,40 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         setLoginStep('otp');
         onShowToast('One-time code sent to ' + email);
       } else {
-        setErrors({});
-        setTouched({});
         onShowToast('Magic link sent to ' + email + ' — one-time link, direct login.');
-        setMagicSent(true);
+        doNav();
       }
-    } else if (result.status === 429) {
-      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      return;
+    }
+    // Failure AFTER the optimistic navigation: return to /login so the error
+    // toast is shown in context instead of stranding the user on the sent
+    // page. (requestMagicLink returns retryAfterMs at the top level.)
+    const backToLogin = () => {
+      if (window.location.pathname.startsWith('/magic-sent')) {
+        try {
+          window.history.pushState(null, '', '/login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch {}
+      }
+    };
+    if (result.status === 429) {
+      const retryAfterMs = result.retryAfterMs || (result as any).data?.retryAfterMs;
+      const resetsAt = (result as any).resetsAt || (retryAfterMs ? Date.now() + retryAfterMs : undefined);
+      if (resetsAt) setResetAt(key, resetsAt);
+      const retryAfter = resetsAt
+        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
+        : retryAfterMs ? Math.ceil(retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
-      onShowToast(result.error || 'Please wait before requesting again');
+      backToLogin();
+      onShowToast(
+        resetsAt
+          ? `Limit reached for magic link sends${resetCopy(resetsAt)}`
+          : (result.error || 'Please wait before requesting again'),
+      );
     } else {
-      if (lockAccount(result as any)) return;
-      onShowToast(result.error || 'Failed to send');
+      if (lockAccount(result as any)) { backToLogin(); return; }
+      backToLogin();
+      onShowToast(result.error || 'Failed to send. Please try again.');
     }
   };
 
@@ -539,9 +596,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           : 'Reset code sent to ' + email,
       );
     } else if (result.status === 429) {
-      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      const payload: any = (result as any).data || {};
+      const exceeded = payload.exceeded as string | undefined;
+      const resetsAt: number | undefined =
+        (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.[key]?.resetAt;
+      if (resetsAt) setResetAt(key, resetsAt);
+      const retryAfter = resetsAt
+        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
+        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
-      onShowToast(result.error || 'Please wait before requesting another code');
+      onShowToast(
+        resetsAt
+          ? `Limit reached${resetCopy(resetsAt)}`
+          : (result.error || 'Please wait before requesting another code'),
+      );
     } else {
       onShowToast(result.error || 'Failed to send the reset code');
     }
@@ -582,9 +650,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (result.ok) {
       onShowToast('Verification code resent to ' + email);
     } else if (result.status === 429) {
-      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
+      const payload: any = (result as any).data || {};
+      const exceeded = payload.exceeded as string | undefined;
+      const resetsAt: number | undefined =
+        (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.['signup-otp']?.resetAt;
+      if (resetsAt) setResetAt('signup-otp', resetsAt);
+      const retryAfter = resetsAt
+        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
+        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, 'signup-otp': retryAfter }));
-      onShowToast(result.error || 'Please wait before resending');
+      onShowToast(
+        resetsAt
+          ? `Limit reached for verification codes${resetCopy(resetsAt)}`
+          : (result.error || 'Please wait before resending'),
+      );
     } else {
       onShowToast(result.error || 'Error sending verification code');
     }
@@ -602,7 +681,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (!result.ok || !result.data?.resetToken) {
       onShowToast(result.error || 'Invalid or expired code');
       haptic('error');
-      Sentry.captureException(new Error(result.error || 'Reset code verification failed'));
+      captureException(new Error(result.error || 'Reset code verification failed'));
       return;
     }
     setResetToken(result.data.resetToken);
@@ -628,7 +707,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (!result.ok) {
       onShowToast(result.error || 'Failed to reset password');
       haptic('error');
-      Sentry.captureException(new Error(result.error || 'Password reset failed'));
+      captureException(new Error(result.error || 'Password reset failed'));
       return;
     }
 
@@ -703,30 +782,31 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     consentPrivacy,
   );
 
-  if (magicSent && mode === 'login') {
+  if (magicSent) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 40, background: '#050507', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
-        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0, opacity: 0.85 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /><div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(900px 560px at 50% 0%, rgba(56,189,248,0.10), transparent 70%)' }} /></div>
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '520px', background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(28px) saturate(1.25)', WebkitBackdropFilter: 'blur(28px) saturate(1.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '22px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 24px 64px rgba(0,0,0,0.60), 0 0 40px rgba(56,189,248,0.06)' }}>
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '68%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.22), transparent)' }} />
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 12px', boxShadow: '0 4px 18px rgba(255,255,255,0.10), 0 0 20px rgba(56,189,248,0.10)' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: '#050507', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '12px' : '16px', overflow: 'hidden' }}>
+        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0, opacity: 0.85 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /><div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(900px 560px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} /></div>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: isMobile ? 'min(440px, 100vw - 24px)' : '520px', background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(28px) saturate(1.25)', WebkitBackdropFilter: 'blur(28px) saturate(1.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: isMobile ? '16px' : '20px', padding: isMobile ? '18px' : '22px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 24px 64px rgba(0,0,0,0.60), 0 0 40px rgba(0,149,246,0.06)' }}>
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '68%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0,149,246,0.22), transparent)' }} />
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 12px', boxShadow: '0 4px 18px rgba(255,255,255,0.10), 0 0 20px rgba(0,149,246,0.10)' }}>
             <Mail size={22} color="#09090B" />
           </div>
-          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>Check your <em style={{ fontStyle: 'italic', color: '#38BDF8', fontWeight: 400 }}>email</em></h2>
-          <p style={{ fontSize: '14.5px', color: '#A1A1AA', lineHeight: '22px', margin: '0 0 4px' }}>
+          <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: isMobile ? '24px' : '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>Check your <em style={{ fontStyle: 'normal', color: '#0095F6', fontWeight: 700 }}>email</em></h2>
+          <p style={{ fontSize: isMobile ? '13px' : '14.5px', color: '#A1A1AA', lineHeight: '22px', margin: '0 0 4px' }}>
             One-time magic link sent to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>
           </p>
-          <p style={{ fontSize: '12.5px', color: '#71717A', lineHeight: '18px', margin: 0 }}>
+          <p style={{ fontSize: isMobile ? '11.5px' : '12.5px', color: '#71717A', lineHeight: '18px', margin: 0 }}>
             Tap the link to sign in — no password needed. Expires in 15 min.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '18px', padding: '11px 12px', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.10)', borderRadius: '12px', fontSize: '12px', color: '#7DD3FC', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '18px', padding: '11px 12px', background: 'rgba(0,149,246,0.06)', border: '1px solid rgba(0,149,246,0.10)', borderRadius: '12px', fontSize: '15px', color: '#7DD3FC', fontWeight: 600 }}>
             {remainingSends('magic-link')} sends left • expires in 15 min • one-time
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms ease' }}>
+            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '17px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms ease' }}>
               Back
             </button>
-            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '12px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6', color: isInCooldown('magic-link') ? '#71717A' : '#FFFFFF', border: `1px solid ${isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6'}`, fontSize: '14px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer', boxShadow: isInCooldown('magic-link') ? 'none' : '0 4px 16px rgba(0,149,246,0.28)', transition: 'all 150ms ease' }}>
+            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '12px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6', color: isInCooldown('magic-link') ? '#71717A' : '#FFFFFF', border: `1px solid ${isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6'}`, fontSize: '17px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer', boxShadow: isInCooldown('magic-link') ? 'none' : '0 4px 16px rgba(0,149,246,0.28)', transition: 'all 150ms ease' }}>
               {isInCooldown('magic-link') ? `Resend in ${getCooldownRemaining('magic-link')}s` : 'Resend link'}
             </button>
           </div>
@@ -744,7 +824,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       userSelect: 'none',
-      padding: '16px',
+      padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '8px' : '16px',
       width: '100%',
     }}>
       <style>{`
@@ -753,39 +833,39 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           .auth-card--step2 { overflow: visible; max-height: none; }
         }
         @media (max-width: 1024px) {
-          .auth-main--step2 { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+          .auth-main--step2 { overflow: hidden; }
           .auth-card--step2 { overflow: visible; }
         }
       `}</style>
-      <main className={`auth-main accounts-auth-main${isStep2 ? ' auth-main--step2' : ''}`} style={{
-        width: '100%',
-        maxWidth: '520px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '20px',
-        transition: 'max-width 200ms ease, padding 200ms ease',
-      }}>
-        {/* Main card — infinite big glass sky blue */}
-        <div
-          className={`auth-card${isStep2 ? ' auth-card--step2' : ''}`}
-          style={{
-            width: '100%',
-            background: 'rgba(16,16,18,0.90)',
-            backdropFilter: 'blur(22px) saturate(1.15)',
-            WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '22px',
-            padding: '28px',
-            overflow: 'visible',
-            boxSizing: 'border-box',
-            opacity: 1,
-            boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.60), 0 0 40px rgba(56,189,248,0.04)',
-            position: 'relative',
-          }}
-        >
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '64%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.18), transparent)', pointerEvents: 'none' }} />
+        <div className={`auth-main accounts-auth-main${isStep2 ? ' auth-main--step2' : ''}`} style={{
+         width: '100%',
+         maxWidth: 'min(640px, 100vw - 38px)',
+         display: 'flex',
+         flexDirection: 'column',
+         alignItems: 'center',
+         gap: '17px',
+         padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '14px' : '24px',
+         transition: 'max-width 200ms ease, padding 200ms ease',
+       }}>
+        {/* Main card — amber glass */}
+<div
+           className={`auth-card${isStep2 ? ' auth-card--step2' : ''}`}
+           style={{
+             width: '100%',
+             background: 'rgba(16,16,18,0.90)',
+             backdropFilter: 'blur(22px) saturate(1.15)',
+             WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
+             border: '1px solid rgba(255,255,255,0.08)',
+             borderRadius: typeof window !== 'undefined' && window.innerWidth <= 640 ? '18px' : '22px',
+             padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '20px 16px' : '28px',
+             overflow: 'visible',
+             boxSizing: 'border-box',
+             opacity: 1,
+             boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.60), 0 0 40px rgba(0,149,246,0.04)',
+             position: 'relative',
+           }}
+         >
+          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '64%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0,149,246,0.18), transparent)', pointerEvents: 'none' }} />
           <div>
             <div style={{ position: 'relative' }}>
               {/* ═══ SIGNUP STEP 1 ═══ */}
@@ -981,6 +1061,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   getCooldownRemaining={getCooldownRemaining}
                   onRequestCode={() => handleDirectLoginRequest('code')}
                   onRequestMagicLink={() => handleDirectLoginRequest('magic-link')}
+                  getMaxSends={getMaxSends}
+                  refreshRemaining={refreshRemaining}
+                  getResetAt={getResetAt}
                   onRequestForgotPassword={() => handlePasswordResetRequest('otp')}
                   onRequestRecoveryEmail={() => handlePasswordResetRequest('recovery')}
                   onBack={goBack}
@@ -1012,23 +1095,23 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         </div>
 
         {/* Sign up / Log in bottom card — glass compact */}
-        <div
-          className="auth-card-bottom"
-          style={{
-            width: '100%',
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(20px) saturate(1.15)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.15)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '16px',
-            padding: '16px',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset',
-          }}
-        >
+<div
+           className="auth-card-bottom"
+           style={{
+             width: '100%',
+             background: 'rgba(255,255,255,0.04)',
+             backdropFilter: 'blur(20px) saturate(1.15)',
+             WebkitBackdropFilter: 'blur(20px) saturate(1.15)',
+             border: '1px solid rgba(255,255,255,0.07)',
+             borderRadius: typeof window !== 'undefined' && window.innerWidth <= 640 ? '14px' : '16px',
+             padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '12px' : '16px',
+             textAlign: 'center',
+             boxSizing: 'border-box',
+             boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset',
+           }}
+         >
           <p style={{
-            fontSize: '14px',
+            fontSize: '17px',
             color: 'rgba(255,255,255,0.55)',
             fontFamily: TYPOGRAPHY.fontFamily,
             margin: 0,
@@ -1042,7 +1125,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     background: 'none',
                     border: 'none',
                     color: '#ffffff',
-                    fontSize: '14px',
+                    fontSize: '17px',
                     fontWeight: 700,
                     fontFamily: TYPOGRAPHY.fontFamily,
                     cursor: 'pointer',
@@ -1064,7 +1147,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     background: 'none',
                     border: 'none',
                     color: '#ffffff',
-                    fontSize: '14px',
+                    fontSize: '17px',
                     fontWeight: 700,
                     fontFamily: TYPOGRAPHY.fontFamily,
                     cursor: 'pointer',
@@ -1080,7 +1163,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             )}
           </p>
         </div>
-      </main>
+        </div>
 
       {/* Image Crop Editor */}
       {showImageEditor && tempImageUrl && (

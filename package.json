@@ -14,18 +14,17 @@
   },
   "dependencies": {
     "@simplewebauthn/browser": "^9.0.0",
-    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.1.14",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "pusher-js": "^8.6.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-easy-crop": "^6.2.3",
-    "vite": "^6.2.3",
-    "zxcvbn": "^4.4.2"
+    "vite": "^6.2.3"
   },
   "devDependencies": {
     "@axe-core/react": "^4.13.0",
@@ -37,7 +36,6 @@
     "@storybook/react-vite": "^8.6.18",
     "@storybook/test": "^8.6.18",
     "@types/node": "^22.14.0",
-    "@types/zxcvbn": "^4.4.5",
     "autoprefixer": "^10.4.21",
     "axe-core": "^4.13.0",
     "esbuild": "^0.25.0",

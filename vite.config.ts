@@ -21,7 +21,6 @@ export default defineConfig(() => {
         output: {
           manualChunks: {
             'motion': ['motion/react'],
-            'supabase': ['@supabase/supabase-js'],
             'lucide': ['lucide-react'],
             'react-vendor': ['react', 'react-dom'],
           },

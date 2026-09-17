@@ -16,6 +16,7 @@ export function SessionGate({ children }: SessionGateProps) {
   }
 
   if (isAuthenticated && user) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
     const dashboardUrl = getRedirectTarget();
     const initials = (user.name || user.email || '?')
       .split(' ')
@@ -26,7 +27,7 @@ export function SessionGate({ children }: SessionGateProps) {
       .toUpperCase();
 
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '19px' : '24px' }}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -35,12 +36,12 @@ export function SessionGate({ children }: SessionGateProps) {
             position: 'relative',
             zIndex: 10,
             width: '100%',
-            maxWidth: '420px',
+            maxWidth: isMobile ? 'min(504px, 100vw - 38px)' : '504px',
             background: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(24px)',
+            backdropFilter: 'blur(29px)',
             border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '20px',
-            padding: '48px 40px',
+            borderRadius: isMobile ? '19px' : '24px',
+            padding: isMobile ? '29px' : '58px 48px',
             textAlign: 'center',
             boxSizing: 'border-box',
           }}
@@ -49,21 +50,21 @@ export function SessionGate({ children }: SessionGateProps) {
             <img
               src={user.photoUrl}
               alt={user.name || user.email}
-              style={{ width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 16px', objectFit: 'cover', border: '2px solid #2a2a2a' }}
+              style={{ width: '77px', height: '77px', borderRadius: '50%', margin: '0 auto 19px', objectFit: 'cover', border: '2px solid #2a2a2a' }}
             />
           ) : (
             <div style={{
-              width: '64px',
-              height: '64px',
+              width: '77px',
+              height: '77px',
               borderRadius: '50%',
-              margin: '0 auto 16px',
+              margin: '0 auto 19px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               background: '#111111',
               border: '2px solid #2a2a2a',
               color: '#f5f5f5',
-              fontSize: '22px',
+              fontSize: '26px',
               fontWeight: 600,
               fontFamily: TYPOGRAPHY.fontFamily,
             }}>
@@ -71,37 +72,38 @@ export function SessionGate({ children }: SessionGateProps) {
             </div>
           )}
 
-          <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.18em', color: '#606060', marginBottom: '8px', fontFamily: TYPOGRAPHY.fontFamily }}>
+          <p style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.18em', color: '#606060', marginBottom: '10px', fontFamily: TYPOGRAPHY.fontFamily }}>
             Signed in as
           </p>
-          <p style={{ fontSize: '17px', fontWeight: 600, color: '#f5f5f5', marginBottom: '4px', fontFamily: TYPOGRAPHY.fontFamily, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, color: '#f5f5f5', marginBottom: '5px', fontFamily: TYPOGRAPHY.fontFamily, overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user.email}
           </p>
           {user.name && (
-            <p style={{ fontSize: '14px', color: '#707070', marginBottom: '32px', fontFamily: TYPOGRAPHY.fontFamily }}>
+            <p style={{ fontSize: isMobile ? '16px' : '17px', color: '#707070', marginBottom: isMobile ? '24px' : '38px', fontFamily: TYPOGRAPHY.fontFamily }}>
               {user.name}
             </p>
           )}
-          {!user.name && <div style={{ marginBottom: '32px' }} />}
+          {!user.name && <div style={{ marginBottom: isMobile ? '24px' : '38px' }} />}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <a
               href={dashboardUrl}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: '10px',
                 width: '100%',
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#0095f6',
-                color: '#ffffff',
-                fontSize: '15px',
+                padding: '17px',
+                borderRadius: '14px',
+                background: '#0095F6',
+                color: '#FFFFFF',
+                fontSize: '18px',
                 fontWeight: 600,
                 fontFamily: TYPOGRAPHY.fontFamily,
                 textDecoration: 'none',
                 transition: 'opacity 150ms',
+                boxShadow: '0 4px 16px rgba(0,149,246,0.28)',
               }}
             >
               Continue to dashboard
@@ -117,14 +119,14 @@ export function SessionGate({ children }: SessionGateProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: '10px',
                 width: '100%',
-                padding: '14px',
-                borderRadius: '12px',
+                padding: '17px',
+                borderRadius: '14px',
                 background: 'transparent',
                 border: '1px solid #2a2a2a',
                 color: '#707070',
-                fontSize: '15px',
+                fontSize: '18px',
                 fontWeight: 600,
                 fontFamily: TYPOGRAPHY.fontFamily,
                 cursor: 'pointer',

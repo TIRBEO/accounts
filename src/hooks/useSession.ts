@@ -8,7 +8,8 @@ const configuredApiUrl =
 const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
   (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
 
-const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes
+const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates the session before the 15-min access token expires
+const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange often fire together; coalesce them
 
 export interface SessionState {
   user: CurrentUserData | null;
@@ -39,6 +40,7 @@ export function useSession() {
   const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const syncRef = useRef<BroadcastChannel | null>(null);
   const lastUserIdRef = useRef<string | null>(null);
+  const lastCheckRef = useRef(0);
 
   const clearKeepalive = useCallback(() => {
     if (keepaliveRef.current) {
@@ -54,17 +56,24 @@ export function useSession() {
     }, KEEPALIVE_MS);
   }, [clearKeepalive]);
 
-  const checkSession = useCallback(async () => {
+  const checkSession = useCallback(async (debounced = false) => {
+    if (debounced) {
+      const now = Date.now();
+      if (now - lastCheckRef.current < CHECK_DEBOUNCE_MS) return;
+      lastCheckRef.current = now;
+    }
     const result = await getCurrentUser();
     if (result.ok && result.data) {
-      const changed = lastUserIdRef.current !== result.data.id;
+      const prev = lastUserIdRef.current;
       lastUserIdRef.current = result.data.id;
       setState({ user: result.data, loading: false, isAuthenticated: true });
       startKeepalive();
       // Remember which user the shared session belongs to so other apps can
       // detect a stale bearer token minted for a previously signed-in account.
       try { localStorage.setItem('tirbeo:token-user', result.data.id); } catch {}
-      if (changed) notifyTabs('login', { userId: result.data.id });
+      // Only broadcast when the signed-in user actually changed — previously
+      // every tab broadcast a 'login' on page load, waking every other tab.
+      if (prev !== null && prev !== result.data.id) notifyTabs('login', { userId: result.data.id });
     } else {
       const wasAuth = lastUserIdRef.current !== null;
       lastUserIdRef.current = null;
@@ -85,7 +94,7 @@ export function useSession() {
         setState({ user: null, loading: false, isAuthenticated: false });
         clearKeepalive();
       } else if (e.data?.type === 'login') {
-        checkSession();
+        checkSession(true);
       }
     };
     bc?.addEventListener('message', onBc);
@@ -99,32 +108,38 @@ export function useSession() {
             setState({ user: null, loading: false, isAuthenticated: false });
             clearKeepalive();
           } else if (v?.type === 'login') {
-            checkSession();
+            checkSession(true);
           }
-        } catch { checkSession(); }
+        } catch { checkSession(true); }
       }
     };
     window.addEventListener('storage', onStorage);
 
-    // cross-subdomain tabs (accounts ↔ dashboard ↔ forms): cookie is shared
-    // on api.tirbeo.app, but localStorage is not. Poll visibility + focus +
-    // interval so a login/logout in another app is picked up within seconds.
-    const onFocus = () => { if (document.visibilityState === 'visible') checkSession(); };
+    // cross-subdomain tabs (accounts ↔ dashboard ↔ forms): the cookie is shared
+    // on api.tirbeo.app, but localStorage is not — so re-probe when the user
+    // returns to this tab. Event-driven instead of the old 5-second poll.
+    // Also pauses the session keepalive while hidden: background tabs don't
+    // need token rotation, and it saves wake-ups/battery on mobile.
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession(true);
+        if (lastUserIdRef.current) startKeepalive();
+      } else {
+        clearKeepalive();
+      }
+    };
     document.addEventListener('visibilitychange', onFocus);
     window.addEventListener('focus', onFocus);
-    // 5s poll for instant cross-app + localhost sync (different ports are different origins)
-    const poll = setInterval(checkSession, 5000);
 
     return () => {
       clearKeepalive();
-      clearInterval(poll);
       bc?.removeEventListener('message', onBc);
       bc?.close();
       window.removeEventListener('storage', onStorage);
       document.removeEventListener('visibilitychange', onFocus);
       window.removeEventListener('focus', onFocus);
     };
-  }, [checkSession, clearKeepalive]);
+  }, [checkSession, clearKeepalive, startKeepalive]);
 
   const refresh = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true }));

@@ -21,7 +21,7 @@ interface LoginRecoveryProps {
 }
 
 const codeInput: React.CSSProperties = {
-  width: '48px',
+  width: '58px',
   height: '52px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
@@ -34,18 +34,18 @@ const codeInput: React.CSSProperties = {
   textAlign: 'center',
   outline: 'none',
   transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  caretColor: '#38BDF8',
+  caretColor: '#0095F6',
 };
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  height: '48px',
+  height: '70px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '14.5px',
+  fontSize: '17px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 16px',
   outline: 'none',
@@ -55,12 +55,12 @@ const inputBase: React.CSSProperties = {
 
 const primaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '44px',
+  height: '53px',
   background: '#0095F6',
   color: '#FFFFFF',
   border: '1px solid #0095F6',
   borderRadius: '12px',
-  fontSize: '14px',
+  fontSize: '17px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -70,13 +70,13 @@ const primaryBtn: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   width: '100%',
-  height: '44px',
+  height: '53px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: '12px',
   color: '#A1A1AA',
-  fontSize: '14px',
+  fontSize: '17px',
   fontWeight: 600,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: 'pointer',
@@ -102,10 +102,10 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
     return (
       <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
-            Create new <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>password</em>
+          <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+            Create new <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>password</em>
           </h2>
-          <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+          <p style={{ fontSize: '17px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
             Choose a strong password for <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.
           </p>
         </div>
@@ -118,8 +118,8 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)}
-              style={{
+             <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}
+               style={{
                 position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
                 background: 'none', border: 'none', color: '#71717A', cursor: 'pointer',
                 padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -139,7 +139,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
             onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
           />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p style={{ fontSize: '14px', color: '#f43f5e', marginTop: '-4px' }}>Passwords don&apos;t match</p>
+            <p style={{ fontSize: '17px', color: '#f43f5e', marginTop: '-4px' }}>Passwords don&apos;t match</p>
           )}
         </div>
 
@@ -173,10 +173,10 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   return (
     <div className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
-          {recoveryMethod === 'magic-link' ? <>Check your <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>email</em></> : <>Enter verification <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>code</em></>}
+        <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          {recoveryMethod === 'magic-link' ? <>Check your <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>email</em></> : <>Enter verification <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>code</em></>}
         </h2>
-        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+        <p style={{ fontSize: '17px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           {recoveryMethod === 'magic-link'
             ? <>We sent a magic link to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.</>
             : recoveryMethod === 'recovery'
@@ -203,14 +203,14 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
                 onPaste={(e) => { e.preventDefault(); const p = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, codeLength); if (p.length === codeLength) setRecoveryCode(p); }}
                 style={{
                   ...codeInput,
-                  borderColor: recoveryCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)',
-                  boxShadow: recoveryCode[i] ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none',
+                  borderColor: recoveryCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)',
+                  boxShadow: recoveryCode[i] ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none',
                 }}
                 data-recovery-index={i}
-                onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(56,189,248,0.14)'; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#0095F6'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0,149,246,0.14)'; }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = recoveryCode[i] ? 'rgba(56,189,248,0.28)' : 'rgba(255,255,255,0.07)';
-                  e.currentTarget.style.boxShadow = recoveryCode[i] ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none';
+                  e.currentTarget.style.borderColor = recoveryCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)';
+                  e.currentTarget.style.boxShadow = recoveryCode[i] ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none';
                 }}
               />
             ))}
@@ -218,7 +218,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
 
           <div style={{ textAlign: 'center' }}>
             {isInCooldown(cooldownKey) ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '17px', fontFamily: TYPOGRAPHY.fontFamily }}>
                 <span>Resend in {getCooldownRemaining(cooldownKey)}s</span>
                 <span style={{
                   padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
@@ -233,7 +233,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                 <button type="button" onClick={onResend}
                   style={{
-                    background: 'none', border: 'none', color: '#71717A', fontSize: '14px',
+                    background: 'none', border: 'none', color: '#71717A', fontSize: '17px',
                     fontFamily: TYPOGRAPHY.fontFamily, cursor: 'pointer', padding: 0,
                     transition: 'color 150ms ease',
                   }}
@@ -278,13 +278,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
       {recoveryMethod === 'magic-link' && (
         <div style={{ textAlign: 'center' }}>
           {isInCooldown(cooldownKey) ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '14px', fontFamily: TYPOGRAPHY.fontFamily }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '17px', fontFamily: TYPOGRAPHY.fontFamily }}>
               <span>Resend in {getCooldownRemaining(cooldownKey)}s</span>
             </div>
           ) : (
             <button type="button" onClick={onResend}
               style={{
-                background: 'none', border: 'none', color: '#71717A', fontSize: '14px',
+                background: 'none', border: 'none', color: '#71717A', fontSize: '17px',
                 fontFamily: TYPOGRAPHY.fontFamily, cursor: 'pointer', padding: 0,
                 transition: 'color 150ms ease',
               }}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, type ReactNode, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useRef, useCallback, type ReactNode, lazy, Suspense } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 const AuthCard = lazy(() => import('./components/auth/AuthCard').then((m) => ({ default: m.AuthCard })));
@@ -8,8 +8,10 @@ import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SplitLoader } from './components/SplitLoader';
+import { RealtimeBanner } from './components/RealtimeBanner';
 import { getCurrentUser, verifyMagicLink } from './lib/api';
 import { getRedirectTarget, redirectBlockedToDashboard } from './lib/redirect';
+import { subscribeToUser, disconnectRealtime } from './lib/realtime';
 
 const isCallbackPath = () => window.location.pathname.startsWith('/callback');
 const isMagicSentPath = () => window.location.pathname.startsWith('/magic-sent');
@@ -22,44 +24,87 @@ const inferToastType = (msg: string): ToastType => {
 };
 const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={18} />, error: <AlertCircle size={18} />, info: <Info size={18} /> };
 
+/**
+ * Background — one responsive image per device class via <picture>.
+ * The browser downloads ONLY the variant matching the viewport
+ * (desktop 84KB / tablet 80KB / mobile 60KB WebP) and re-evaluates the
+ * media queries on resize. Previously all three 1.6–1.8MB PNGs were
+ * downloaded on every device, which was the single biggest load-time cost.
+ */
 function Bg() {
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(min-width: 1024px)" />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background-tab.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(max-width: 1023px) and (min-width: 641px)" />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/background-mobile.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} media="(max-width: 640px)" />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.52) 100%)' }} />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'radial-gradient(900px 600px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} />
+      <picture style={{ position: 'fixed', inset: 0, zIndex: 0, display: 'block' }} aria-hidden="true">
+        <source media="(min-width: 1024px)" srcSet="/background.webp" />
+        <source media="(min-width: 641px) and (max-width: 1023px)" srcSet="/background-tab.webp" />
+        <source media="(max-width: 640px)" srcSet="/background-mobile.webp" />
+        <img
+          src="/background-mobile.webp"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          draggable={false}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', userSelect: 'none', pointerEvents: 'none' }}
+        />
+      </picture>
+      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.52) 100%)' }} />
+      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'radial-gradient(900px 600px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} />
     </>
   );
 }
+
+// Notifications moved to the dashboard app: the bell + web-push opt-in live
+// there (persistent session, settings page). Accounts stays a lean auth
+// surface — realtime (session revoked / notification toasts) still works via
+// Pusher Channels, but there is no push-registration UI here.
 function TopBar() {
   return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'transparent', border: 'none', minHeight: '56px' }}>
-      <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-        <img src="/logo.png" alt="Tirbeo" style={{ height: '36px', width: 'auto', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }} />
-        <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>Tirbeo</span>
+    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '12px 17px' : '19px 29px', background: 'transparent', border: 'none', minHeight: '67px' }}>
+      <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+        <img
+          src="/logo-opt.png"
+          alt=""
+          width={432}
+          height={288}
+          decoding="async"
+          style={{ height: typeof window !== 'undefined' && window.innerWidth <= 640 ? '34px' : '43px', width: 'auto', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+        />
+        <span style={{ fontSize: typeof window !== 'undefined' && window.innerWidth <= 640 ? '22px' : '26px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }} aria-hidden="false">Tirbeo</span>
       </a>
-      <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>Accounts</span>
+      <span style={{ fontSize: '16px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>Accounts</span>
     </nav>
   );
 }
 
+/** 'checking' → auth probe in flight · 'guest' → show auth UI · 'redirecting' → signed in, navigating away */
+type AuthState = 'checking' | 'guest' | 'redirecting';
+
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(!isCallbackPath());
+  const [authState, setAuthState] = useState<AuthState>(() =>
+    isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
+  );
   const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const lastIdRef = useRef<string | null>(null);
-  const showToast = (msg: string, type?: ToastType) => { setToast({ msg, type: type || inferToastType(msg) }); setTimeout(() => setToast((c) => (c?.msg === msg ? null : c)), 3200); };
-  const notifyTabs = (type: 'login' | 'logout') => {
+  const authStateRef = useRef<AuthState>(authState);
+  useEffect(() => { authStateRef.current = authState; }, [authState]);
+
+  const showToast = useCallback((msg: string, type?: ToastType) => {
+    setToast({ msg, type: type || inferToastType(msg) });
+    setTimeout(() => setToast((c) => (c?.msg === msg ? null : c)), 3200);
+  }, []);
+
+  const notifyTabs = useCallback((type: 'login' | 'logout') => {
     try { localStorage.setItem('tirbeo_session', JSON.stringify({ type, ts: Date.now() })); } catch {}
     try { new BroadcastChannel('tirbeo:session')?.postMessage({ type, ts: Date.now() }); } catch {}
-  };
-  // Split-loader state — declared before any early returns (rules of hooks:
-  // hook order must be identical on every render, including callback paths).
+  }, []);
+
+  // ── Route-change loader (split screen) ──
   const [pageChanging, setPageChanging] = useState(false);
-  const [initialSplit, setInitialSplit] = useState(() => (typeof window !== 'undefined' ? (window.location.pathname.startsWith('/callback') || window.location.pathname.startsWith('/magic-sent')) : false));
+  const [initialSplit, setInitialSplit] = useState(() =>
+    typeof window !== 'undefined' && (isCallbackPath() || isMagicSentPath()),
+  );
   const pathRef = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
   useEffect(() => {
     if (initialSplit) {
@@ -68,12 +113,12 @@ export default function App() {
     }
   }, [initialSplit]);
   useEffect(() => {
+    // Wrap history mutations to detect SPA navigations instantly — no polling.
     const trigger = () => {
-      if (typeof window === 'undefined') return;
       if (window.location.pathname !== pathRef.current) {
         pathRef.current = window.location.pathname;
         setPageChanging(true);
-        setTimeout(() => setPageChanging(false), 700);
+        setTimeout(() => setPageChanging(false), 500);
       }
     };
     window.addEventListener('popstate', trigger);
@@ -81,10 +126,16 @@ export default function App() {
     const origReplace = history.replaceState.bind(history);
     (history as any).pushState = (...a: any[]) => { (origPush as any)(...a); trigger(); };
     (history as any).replaceState = (...a: any[]) => { (origReplace as any)(...a); trigger(); };
-    const iv = setInterval(trigger, 300);
-    return () => { window.removeEventListener('popstate', trigger); (history as any).pushState = origPush; (history as any).replaceState = origReplace; clearInterval(iv); };
+    return () => {
+      window.removeEventListener('popstate', trigger);
+      (history as any).pushState = origPush;
+      (history as any).replaceState = origReplace;
+    };
   }, []);
-  const showLoader = isLoading || isAuthenticated || pageChanging || initialSplit;
+
+  const showLoader = authState !== 'guest' || pageChanging || initialSplit;
+
+  // ── Boot: magic-link exchange + session probe (runs once) ──
   useEffect(() => {
     if (isCallbackPath() || isMagicSentPath()) return;
     let cancelled = false;
@@ -97,123 +148,179 @@ export default function App() {
         const result = await verifyMagicLink(magicToken);
         if (cancelled) return;
         if (result.block) { redirectBlockedToDashboard(result.block); return; }
-        if (result.ok) { setIsAuthenticated(true); showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`); notifyTabs('login'); setTimeout(() => { window.location.href = redirectTarget; }, 800); return; }
+        if (result.ok) {
+          setAuthState('redirecting');
+          showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`);
+          notifyTabs('login');
+          setTimeout(() => { window.location.href = redirectTarget; }, 800);
+          return;
+        }
         showToast(result.error || 'This magic link is invalid or has expired.');
       }
       const session = await getCurrentUser();
+      if (cancelled) return;
       if (session.block) { redirectBlockedToDashboard(session.block); return; }
-      if (session.ok && session.data) { lastIdRef.current = session.data.id; setIsAuthenticated(true); window.location.href = redirectTarget; return; }
-      if (!cancelled) setIsLoading(false);
+      if (session.ok && session.data) {
+        lastIdRef.current = session.data.id;
+        setUserId(session.data.id);
+        setAuthState('redirecting');
+        window.location.href = redirectTarget;
+        return;
+      }
+      setAuthState('guest');
     };
     init();
     return () => { cancelled = true; };
-  }, []);
+  }, [showToast, notifyTabs]);
+
+  // ── Cross-tab / cross-app session sync ──
+  // Event-driven only: BroadcastChannel + storage events cover same-origin tabs;
+  // visibilitychange/focus re-probes the shared cookie session when the user
+  // returns to the tab (covers logins made in dashboard/forms subdomains).
+  // The previous 5-second polling loop burned battery and caused reload loops.
   useEffect(() => {
     if (isCallbackPath() || isMagicSentPath()) return;
+    let lastCheck = 0;
+    const checkOnce = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastCheck < 1000) return; // debounce focus+visibility firing together
+      lastCheck = now;
+      getCurrentUser().then((s) => {
+        if (s.block) { redirectBlockedToDashboard(s.block); return; }
+        const authed = !!s.ok && !!s.data;
+        const newId = s.data?.id || null;
+        if (authed && newId !== lastIdRef.current) {
+          lastIdRef.current = newId;
+          if (authStateRef.current !== 'redirecting') {
+            setAuthState('redirecting');
+            window.location.href = getRedirectTarget();
+          }
+        } else if (!authed && lastIdRef.current) {
+          // Signed out elsewhere — drop back to the auth form without a reload.
+          lastIdRef.current = null;
+          if (authStateRef.current !== 'guest') setAuthState('guest');
+        }
+      }).catch(() => {});
+    };
+    const onLogout = () => {
+      lastIdRef.current = null;
+      setAuthState('guest');
+      window.location.reload();
+    };
     const bc = (() => { try { return new BroadcastChannel('tirbeo:session'); } catch { return null; } })();
     const onBc = (e: MessageEvent) => {
-      if (e.data?.type === 'login' && !isCallbackPath()) {
-        setIsLoading(true);
-        getCurrentUser().then((s) => {
-          if (s.ok && s.data) {
-            const newId = s.data.id;
-            if (newId !== lastIdRef.current) { lastIdRef.current = newId; setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-            else if (!isAuthenticated) { setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-            else window.location.reload();
-          } else setIsLoading(false);
-        }).catch(() => setIsLoading(false));
-      }
-      if (e.data?.type === 'logout') { lastIdRef.current = null; setIsAuthenticated(false); setIsLoading(false); window.location.reload(); }
+      if (e.data?.type === 'login') checkOnce(true);
+      else if (e.data?.type === 'logout') onLogout();
     };
     bc?.addEventListener('message', onBc);
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'tirbeo_session' && !isCallbackPath()) {
-        try { const v = e.newValue ? JSON.parse(e.newValue) : null; if (v?.type === 'logout') { lastIdRef.current = null; setIsAuthenticated(false); setIsLoading(false); window.location.reload(); return; } } catch {}
-        setIsLoading(true);
-        getCurrentUser().then((session) => {
-          if (session.ok && session.data) {
-            const newId = session.data.id;
-            if (newId !== lastIdRef.current) { lastIdRef.current = newId; setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-            else { setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-          } else { lastIdRef.current = null; setIsLoading(false); }
-        }).catch(() => setIsLoading(false));
-      }
+      if (e.key !== 'tirbeo_session') return;
+      try {
+        const v = e.newValue ? JSON.parse(e.newValue) : null;
+        if (v?.type === 'logout') { onLogout(); return; }
+        if (v?.type === 'login') checkOnce(true);
+      } catch {}
     };
-    window.addEventListener('storage', handleStorage);
-    const onVisible = () => {
-      if (document.visibilityState === 'visible' && !isCallbackPath()) {
-        getCurrentUser().then((s) => {
-          const authed = !!s.ok && !!s.data; const newId = s.data?.id || null;
-          if (authed && newId !== lastIdRef.current) { lastIdRef.current = newId; setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-          else if (authed && !isAuthenticated) { setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-          else if (!authed && isAuthenticated) { lastIdRef.current = null; setIsAuthenticated(false); setIsLoading(false); window.location.reload(); }
-          else if (!authed && lastIdRef.current && newId !== lastIdRef.current) window.location.reload();
-        }).catch(() => {});
-      }
-    };
+    const onVisible = () => { if (document.visibilityState === 'visible') checkOnce(); };
+    bc && window.addEventListener('storage', handleStorage);
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
-    const poll = setInterval(() => {
-      if (isCallbackPath()) return;
-      getCurrentUser().then((s) => {
-        const authed = !!s.ok && !!s.data; const newId = s.data?.id || null;
-        if (newId !== lastIdRef.current) {
-          if (authed) { lastIdRef.current = newId; setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-          else if (isAuthenticated || lastIdRef.current) { lastIdRef.current = null; setIsAuthenticated(false); setIsLoading(false); window.location.reload(); }
-        } else if (authed !== isAuthenticated) {
-          if (authed) { setIsAuthenticated(true); window.location.href = getRedirectTarget(); }
-          else { lastIdRef.current = null; setIsAuthenticated(false); setIsLoading(false); }
-        }
-      }).catch(() => {});
-    }, 5000);
-    return () => { bc?.removeEventListener('message', onBc); bc?.close(); window.removeEventListener('storage', handleStorage); document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('focus', onVisible); clearInterval(poll); };
-  }, [isAuthenticated]);
-  const handleSuccessAuth = async (email: string, provider: string) => {
+    return () => {
+      bc?.removeEventListener('message', onBc);
+      bc?.close();
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, []);
+
+  const handleSuccessAuth = useCallback((email: string, provider: string) => {
     showToast(provider === 'Email Registration' ? 'Account created — welcome to Tirbeo' : `Signed in as ${email}`);
     notifyTabs('login');
+    setAuthState('redirecting');
     setTimeout(() => { window.location.href = getRedirectTarget(); }, 600);
-  };
+  }, [showToast, notifyTabs]);
 
-  if (isCallbackPath()) {
-    return (
-      <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <Bg /><TopBar />
-        <SplitLoader active={showLoader} />
-        <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 16px 24px', minHeight: 0 }}>
-          <div style={{ width: '100%', maxWidth: '760px', height: 'auto' }}><CallbackView onToast={showToast} /></div>
-        </div>
-        <AnimatePresence>{toast && <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast"><span>{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span></motion.div>}</AnimatePresence>
-      </div>
-    );
-  }
-  if (isMagicSentPath()) {
-    return (
-      <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <Bg /><TopBar />
-        <SplitLoader active={showLoader} />
-        <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '76px 18px 24px', minHeight: 0 }}>
-          <div style={{ width: '100%', maxWidth: '760px', height: 'auto' }}><MagicLinkSentPage /></div>
-        </div>
-        <AnimatePresence>{toast && <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast"><span>{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span></motion.div>}</AnimatePresence>
-      </div>
-    );
-  }
+  // ── Realtime (Pusher Channels) ──
+  // When a session id is known, subscribe to the user's private channel so
+  // server-driven events (session revoked elsewhere, notifications) arrive
+  // instantly. pusher-js is lazy-loaded — zero cost on the critical path.
+  useEffect(() => {
+    if (!userId) return;
+    let cleanup: (() => void) | null = null;
+    let disposed = false;
+    subscribeToUser(userId, (data) => {
+      // Event contract (apps/api/lib/notifications.ts createNotification):
+      //   'notification' → { id, type, title, body?, message?, link? }
+      //   'session'      → { type: 'session_revoked' }
+      const ev = data as {
+        type?: string;
+        message?: string;
+        title?: string;
+        body?: string | null;
+      } | null;
+      if (ev?.type === 'session_revoked') {
+        window.location.reload();
+        return;
+      }
+      // createNotification sends title/body; legacy/pusherToastUser sends message.
+      const text = ev?.message || (ev?.title ? (ev?.body ? `${ev.title} — ${ev.body}` : ev.title) : '');
+      if (text) showToast(text);
+    }).then((unsub) => {
+      if (disposed && unsub) unsub();
+      else cleanup = unsub;
+    });
+    return () => {
+      disposed = true;
+      cleanup?.();
+      disconnectRealtime();
+    };
+  }, [userId, showToast]);
 
-  return (
+  const toastNode = (
+    <div role="region" aria-label="Notifications" aria-live="polite" aria-atomic="true">
+      <AnimatePresence>
+        {toast && (
+          <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast" role="status">
+            <span aria-hidden="true">{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  const page = (content: ReactNode, maxWidth: string, topPad: string) => (
     <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <Bg /><TopBar />
+      <RealtimeBanner />
       <SplitLoader active={showLoader} />
-      <main style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 18px 24px', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: '600px', height: 'auto' }}>
-          <SessionGate>
-            <Suspense fallback={null}>
-              <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />
-            </Suspense>
-          </SessionGate>
-        </div>
+      <main id="main-content" className="app-page-pad" style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: topPad, minHeight: 0, overflowY: 'hidden', overflowX: 'hidden' }}>
+        <div style={{ width: '100%', maxWidth: 'min(' + maxWidth + ', 100vw - 32px)', height: 'auto' }}>{content}</div>
       </main>
       <TermsModal isOpen={!!modalType} type={modalType} onClose={() => setModalType(null)} />
-      <AnimatePresence>{toast && <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast"><span>{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span></motion.div>}</AnimatePresence>
+      {toastNode}
     </div>
+  );
+
+  const topPad = typeof window !== 'undefined' && window.innerWidth <= 640 ? '77px 14px 24px' : '86px 22px 29px';
+  const callbackMaxWidth = typeof window !== 'undefined' && window.innerWidth <= 640 ? '760px' : '760px';
+
+  // Wrap in MotionConfig so every animation respects prefers-reduced-motion.
+  return (
+    <MotionConfig reducedMotion="user">
+      {isCallbackPath()
+        ? page(<CallbackView onToast={showToast} />, callbackMaxWidth, topPad)
+        : isMagicSentPath()
+          ? page(<MagicLinkSentPage />, callbackMaxWidth, topPad)
+          : page(
+              <SessionGate>
+                <Suspense fallback={null}>
+                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />
+                </Suspense>
+              </SessionGate>,
+              '600px',
+              topPad,
+            )}
+    </MotionConfig>
   );
 }

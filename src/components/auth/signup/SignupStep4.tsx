@@ -27,13 +27,13 @@ interface SignupStep4Props {
 
 const inputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '48px',
+  height: '56px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
   borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '14.5px',
+  fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 48px 0 16px',
   outline: 'none',
@@ -43,13 +43,13 @@ const inputStyle = (hasError: boolean): React.CSSProperties => ({
 
 const confirmInputStyle = (hasError: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '48px',
+  height: '56px',
   background: 'rgba(255,255,255,0.04)',
   backdropFilter: 'blur(12px)',
   border: `1px solid ${hasError ? '#f43f5e' : 'rgba(255,255,255,0.07)'}`,
   borderRadius: '12px',
   color: '#FAFAFA',
-  fontSize: '14.5px',
+  fontSize: '16px',
   fontFamily: TYPOGRAPHY.fontFamily,
   padding: '0 16px',
   outline: 'none',
@@ -58,26 +58,26 @@ const confirmInputStyle = (hasError: boolean): React.CSSProperties => ({
 });
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '15px',
+  fontSize: '18px',
   fontWeight: 500,
   color: '#A1A1AA',
   marginBottom: '4px',
 };
 
 const errorStyle: React.CSSProperties = {
-  fontSize: '14px',
+  fontSize: '16px',
   color: '#f43f5e',
   marginTop: '-8px',
 };
 
 const gradientBtnStyle = (enabled: boolean): React.CSSProperties => ({
   width: '100%',
-  height: '44px',
+  height: '52px',
   background: enabled ? '#0095F6' : 'rgba(255,255,255,0.08)',
   color: enabled ? '#FFFFFF' : '#71717A',
   border: `1px solid ${enabled ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
   borderRadius: '12px',
-  fontSize: '14px',
+  fontSize: '16px',
   fontWeight: 700,
   fontFamily: TYPOGRAPHY.fontFamily,
   cursor: enabled ? 'pointer' : 'not-allowed',
@@ -133,10 +133,10 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
       style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: '22px', fontWeight: 400, letterSpacing: '-0.03em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
-          Create a <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#38BDF8' }}>password</em>
+        <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
+          Create a <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>password</em>
         </h2>
-        <p style={{ fontSize: '14.5px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
+        <p style={{ fontSize: '16px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
           Choose a strong password with at least 8 characters. Use a mix of letters, numbers, and symbols for best security.
         </p>
       </div>
@@ -213,7 +213,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               />
             ))}
             <span style={{
-              fontSize: '12px',
+              fontSize: '18px',
               fontWeight: 600,
               color: '#71717A',
               marginLeft: '8px',
@@ -274,7 +274,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               marginTop: '1px',
             }}
           />
-          <span style={{ fontSize: '15px', color: '#A1A1AA', lineHeight: '22px' }}>
+          <span style={{ fontSize: '18px', color: '#A1A1AA', lineHeight: '22px' }}>
             I agree to the{' '}
             <button type="button" onClick={() => onOpenLegalModal('terms')} style={{ color: '#FFFFFF', background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
               Terms of Service
@@ -286,7 +286,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           </span>
         </label>
         {touched.consentTerms && !consentTerms && (
-          <p style={{ fontSize: '14px', color: '#f43f5e', marginLeft: '20px' }}>You must accept the Terms of Service and Privacy Policy</p>
+          <p style={{ fontSize: '16px', color: '#f43f5e', marginLeft: '20px' }}>You must accept the Terms of Service and Privacy Policy</p>
         )}
       </div>
 

@@ -9,12 +9,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, h
   const [focused, setFocused] = React.useState(false);
   return (
     <div style={{ width: fullWidth ? '100%' : 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {label && <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: error ? COLORS.error : '#A1A1AA' }}>{label}</label>}
+      {label && <label style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: error ? COLORS.error : '#A1A1AA' }}>{label}</label>}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         {leftIcon && <span style={{ position: 'absolute', left: '16px', display: 'flex', color: focused ? '#A1A1AA' : '#71717A', pointerEvents: 'none' }}>{leftIcon}</span>}
         <input ref={ref} {...props}
           style={{
-            width: '100%', height: '72px',
+            width: '100%', height: '56px',
             background: focused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)',
             border: `1px solid ${focused ? COLORS.borderFocus : error ? COLORS.errorBorder : 'rgba(255,255,255,0.08)'}`,
             borderRadius: '14px', color: '#FFF', fontSize: '17px', fontFamily: FONT,
@@ -25,8 +25,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, h
           onFocus={(e) => { setFocused(true); onFocus?.(e); }} onBlur={(e) => { setFocused(false); onBlur?.(e); }} className={className} />
         {rightIcon && <span style={{ position: 'absolute', right: '16px', display: 'flex', color: '#71717A' }}>{rightIcon}</span>}
       </div>
-      {error && <p style={{ fontSize: '13px', color: COLORS.error, margin: 0, display: 'flex', gap: '6px', fontWeight: 600 }}><span>⚠</span>{error}</p>}
-      {hint && !error && <p style={{ fontSize: '13px', color: '#71717A', margin: 0 }}>{hint}</p>}
+      {error && <p style={{ fontSize: '19px', color: COLORS.error, margin: 0, display: 'flex', gap: '6px', fontWeight: 600 }}><span>⚠</span>{error}</p>}
+      {hint && !error && <p style={{ fontSize: '19px', color: '#71717A', margin: 0 }}>{hint}</p>}
     </div>
   );
 });
@@ -64,7 +64,7 @@ export const Card = ({ children, elevated, interactive, className = '', style, o
 };
 interface BadgeProps { children: React.ReactNode; variant?: 'default' | 'success' | 'warning' | 'error' | 'info'; className?: string; style?: React.CSSProperties; }
 export const Badge = ({ children, variant = 'default', className = '', style }: BadgeProps) => {
-  const m: any = { default: { bg: 'rgba(255,255,255,0.06)', c: '#A1A1AA' }, success: { bg: 'rgba(0,201,80,0.10)', c: '#00C950' }, warning: { bg: 'rgba(255,184,0,0.10)', c: '#FFB800' }, error: { bg: 'rgba(255,48,64,0.10)', c: '#FF3040' }, info: { bg: 'rgba(0,149,246,0.12)', c: '#0095F6' } };
+  const m: any = { default: { bg: 'rgba(255,255,255,0.06)', c: '#A1A1AA' }, success: { bg: 'rgba(0,201,80,0.10)', c: '#0095F6' }, warning: { bg: 'rgba(255,184,0,0.10)', c: '#FFB800' }, error: { bg: 'rgba(255,48,64,0.10)', c: '#FF3040' }, info: { bg: 'rgba(0,149,246,0.12)', c: '#0095F6' } };
   const v = m[variant] || m.default;
   return <span className={className} style={{ display: 'inline-flex', padding: '4px 10px', fontSize: '11px', fontWeight: 750, letterSpacing: '0.06em', textTransform: 'uppercase', borderRadius: '999px', background: v.bg, color: v.c, ...style }}>{children}</span>;
 };
@@ -90,7 +90,7 @@ export const Switch = ({ checked, onChange, disabled, label, className = '' }: S
       <span style={{ position: 'absolute', top: '3px', left: checked ? '23px' : '3px', width: '22px', height: '22px', borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.3)', transition: `all ${TRANSITIONS.fast}` }} />
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
     </div>
-    {label && <span style={{ fontSize: '14px', color: '#FAFAFA' }}>{label}</span>}
+    {label && <span style={{ fontSize: '17px', color: '#FAFAFA' }}>{label}</span>}
   </label>
 );
 Switch.displayName = 'Switch';
@@ -101,7 +101,7 @@ export const Checkbox = ({ checked, onChange, disabled, label, className = '' }:
       {checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>}
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} style={{ position: 'absolute', opacity: 0 }} />
     </div>
-    {label && <span style={{ fontSize: '14px', color: '#FAFAFA' }}>{label}</span>}
+    {label && <span style={{ fontSize: '17px', color: '#FAFAFA' }}>{label}</span>}
   </label>
 );
 Checkbox.displayName = 'Checkbox';
