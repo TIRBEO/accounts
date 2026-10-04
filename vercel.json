@@ -2,9 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
-    "VITE_API_URL": "https://api.tirbeo.app",
-    "NEXT_PUBLIC_API_URL": "https://api.tirbeo.app",
-    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.app",
+    "VITE_API_URL": "https://api.tirbeo.com",
+    "NEXT_PUBLIC_API_URL": "https://api.tirbeo.com",
+    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.com",
     "VITE_PUSHER_KEY_PRIMARY": "95ec31012edaf673af92",
     "VITE_PUSHER_CLUSTER_PRIMARY": "mt1",
     "VITE_PUSHER_KEY_SECONDARY": "c6716f35ee695ef14918",
@@ -45,11 +45,11 @@
       ]
     },
     {
-      "source": "/(background|background-tab|background-mobile)\\.webp",
+      "source": "/background\\.jpg",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=604800"
         }
       ]
     },

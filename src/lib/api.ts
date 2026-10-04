@@ -1,6 +1,6 @@
 // ═══ TIRBEO API CLIENT ═══
 // Talks to apps/api (Next.js). The API runs on localhost:3000 in dev and
-// https://api.tirbeo.app in prod — same convention as the other apps in the
+// https://api.tirbeo.com in prod — same convention as the other apps in the
 // monorepo (dashboard, forms, support, admin).
 //
 // All auth is cookie-session based: successful login/signup/2FA/OTP/magic-link
@@ -15,7 +15,7 @@ const configuredApiUrl =
 
 // Exported for realtime.ts (Pusher channel auth endpoint on the same origin)
 export const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
 
 export interface ApiResult<T = unknown> {
   ok: boolean;
@@ -55,7 +55,7 @@ async function postJson<T>(path: string, body: unknown): Promise<{ status: numbe
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
     // Send/receive cookies so the __session cookie set by the API is stored
-    // for the API domain (shared with the dashboard on .tirbeo.app).
+    // for the API domain (shared with the dashboard on .tirbeo.com).
     credentials: 'include',
     body: JSON.stringify(body),
   });
@@ -91,10 +91,10 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
     return 'Your request could not be verified. Please refresh the page and try again.';
   }
   if (msg === 'account_deleted') {
-    return 'Your account has been deleted. If this is a mistake, please contact support@tirbeo.app.';
+    return 'Your account has been deleted. If this is a mistake, please contact support@tirbeo.com.';
   }
   if (msg === 'account_banned') {
-    return 'Your account has been permanently banned. Please contact support@tirbeo.app if you believe this is a mistake.';
+    return 'Your account has been permanently banned. Please contact support@tirbeo.com if you believe this is a mistake.';
   }
   if (msg === 'account_suspended') {
     return 'Your account is temporarily suspended. You will be able to sign in again when the suspension ends.';
@@ -153,10 +153,66 @@ export async function apiPost<T = Record<string, unknown>>(path: string, body: u
   }
 }
 
+async function requestJson<T>(
+  path: string,
+  method: 'GET' | 'DELETE',
+): Promise<{ status: number; data: T | null }> {
+  const csrf = getCsrfToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: { ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
+    credentials: 'include',
+  });
+
+  let data: T | null = null;
+  try {
+    data = (await res.json()) as T;
+  } catch {
+    data = null;
+  }
+  return { status: res.status, data };
+}
+
+export async function apiGet<T = Record<string, unknown>>(path: string): Promise<ApiResult<T>> {
+  try {
+    const { status, data } = await requestJson<T>(path, 'GET');
+    const raw = data as (Record<string, unknown> & { error?: string }) | null;
+    const error = sanitizeApiError(status, raw?.error);
+    return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
+  } catch {
+    return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
+  }
+}
+
+export async function apiDelete<T = Record<string, unknown>>(path: string): Promise<ApiResult<T>> {
+  try {
+    const { status, data } = await requestJson<T>(path, 'DELETE');
+    const raw = data as (Record<string, unknown> & { error?: string }) | null;
+    const error = sanitizeApiError(status, raw?.error);
+    return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
+  } catch {
+    return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
+  }
+}
+
+/**
+ * Human copy for a failed magic-link / OTP call.
+ *
+ * These two are the one place a 401 or 403 is NOT an expired session: a
+ * consumed link, an expired token or a wrong code all come back that way, and
+ * telling someone their session expired on a page they never signed in to is
+ * both wrong and unactionable. Only a body that actually talks about
+ * authentication is remapped; anything else falls through to the server's own
+ * message, or a link-specific fallback.
+ */
 function readableError<T>(result: ApiResult<T>, fallback: string): string {
   if (result.block) return result.block.message || result.error || fallback;
-  if (result.status === 401 || result.status === 403) {
+  const raw = (result.error || '').toLowerCase();
+  if (raw.startsWith('authentication required') || raw.includes('provide a session cookie')) {
     return 'Your session has expired. Please sign in again.';
+  }
+  if (result.status === 401 || result.status === 403) {
+    return result.error || fallback;
   }
   return result.error || (result.status >= 500 ? 'Something went wrong. Please try again.' : fallback);
 }
@@ -236,9 +292,11 @@ export interface SignupPayload {
   dob?: string;
   gender?: string;
   photoUrl?: string;
-  occupation?: string;
+  /** Work — the same wire names the settings app PATCHes to /api/profile. */
+  companyRole?: string;
   companyName?: string;
-  role?: string;
+  jobPlace?: string;
+  jobStarted?: string;
   recoveryEmail?: string;
   totpSecret?: string;
   is2FAEnabled?: boolean;
@@ -472,8 +530,9 @@ export function refreshSession(): Promise<boolean> {
  * the user as signed out.
  */
 export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
-  // If there's no session cookie at all, don't even try — avoids 401 → refresh → 401 cascade.
-  if (typeof document !== 'undefined' && !document.cookie.includes('__session=')) {
+  // __session is httpOnly and invisible to document.cookie — __csrf is its
+  // JS-readable twin (set/cleared/rotated with every session), so gate on it.
+  if (typeof document !== 'undefined' && !document.cookie.includes('__csrf=')) {
     return { ok: false, status: 401, data: null };
   }
   for (let attempt = 0; attempt < 2; attempt++) {

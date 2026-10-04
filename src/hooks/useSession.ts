@@ -6,7 +6,7 @@ const configuredApiUrl =
   (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined);
 
 const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
 
 const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates the session before the 15-min access token expires
 const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange often fire together; coalesce them
@@ -116,7 +116,7 @@ export function useSession() {
     window.addEventListener('storage', onStorage);
 
     // cross-subdomain tabs (accounts ↔ dashboard ↔ forms): the cookie is shared
-    // on api.tirbeo.app, but localStorage is not — so re-probe when the user
+    // on api.tirbeo.com, but localStorage is not — so re-probe when the user
     // returns to this tab. Event-driven instead of the old 5-second poll.
     // Also pauses the session keepalive while hidden: background tabs don't
     // need token rotation, and it saves wake-ups/battery on mobile.
@@ -154,9 +154,16 @@ export function useSession() {
         credentials: 'include',
       }).catch(() => {});
     } finally {
+      // Drop every browser-side trace of the session, not just React state.
+      try {
+        localStorage.removeItem('tirbeo:token-user');
+        localStorage.removeItem('tirbeo:security');
+        localStorage.removeItem('tirbeo:last-active');
+      } catch {}
       lastUserIdRef.current = null;
       setState({ user: null, loading: false, isAuthenticated: false });
       notifyTabs('logout');
+      window.location.assign('/login');
     }
   }, [clearKeepalive]);
 

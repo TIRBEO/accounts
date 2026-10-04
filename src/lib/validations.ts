@@ -15,9 +15,10 @@ export interface FormErrors {
   recoveryCode?: string;
   dob?: string;
   gender?: string;
-  occupation?: string;
-  company?: string;
-  role?: string;
+  jobRole?: string;
+  jobCompany?: string;
+  jobPlace?: string;
+  jobStartedOn?: string;
   consentTerms?: string;
   consentPrivacy?: string;
 }

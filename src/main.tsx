@@ -4,13 +4,11 @@ import {Analytics} from '@vercel/analytics/react';
 import {SpeedInsights} from '@vercel/speed-insights/react';
 import {initSentry} from './lib/sentry';
 import {initA11yDevTools} from './lib/a11y';
-import {injectGlobalStyles} from './lib/design';
 import App from './App.tsx';
 import './index.css';
 
 initSentry();
 initA11yDevTools();
-injectGlobalStyles();
 
 if (window.location.pathname === '/' || window.location.pathname === '') {
   window.history.replaceState(null, '', '/login');

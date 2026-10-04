@@ -6,9 +6,8 @@ import {
   Image as ImageIcon,
   RotateCw,
   X,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
+import { RangeSlider } from "./ui/ig-ui";
 
 interface ImageCropEditorProps {
   imageUrl: string;
@@ -166,24 +165,23 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
 
   return (
     <div
-      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
-        className="image-crop-editor-panel w-full max-w-[520px] overflow-hidden rounded-[28px] border border-[color-mix(in_srgb,var(--tb-outline-variant)_40%,transparent)] bg-[var(--tb-surface-container)] text-[var(--tb-on-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
+        className="image-crop-editor-panel glass w-full max-w-[600px] overflow-hidden rounded-3xl text-fg"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Edit photo"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[color-mix(in_srgb,var(--tb-outline-variant)_50%,transparent)] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-divider px-6 py-4">
           <div>
-            <h3 className="text-[15px] font-semibold text-[var(--tb-text)]">
+            <h3 className="text-[20px] text-white/90">
               Edit photo
             </h3>
-            <p className="mt-0.5 text-xs text-[var(--tb-on-surface-variant)]">
+            <p className="mt-1 text-[15px] text-white/45">
               Crop and save your profile photo.
             </p>
           </div>
@@ -191,7 +189,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="Close"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[var(--tb-on-surface-variant)] transition-colors hover:bg-[color-mix(in_srgb,var(--tb-on-surface)_8%,transparent)]"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-muted transition-colors hover:bg-hover hover:text-fg"
           >
             <X size={18} />
           </button>
@@ -200,18 +198,18 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Cropper */}
         <div className="image-crop-editor-stage relative h-[360px] w-full overflow-hidden bg-black/70">
           {mediaLoading && !mediaError && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
-              <span className="text-xs">Loading…</span>
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-bg/85 text-white/55">
+              <span className="text-[16px]">Loading…</span>
             </div>
           )}
           {mediaError ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-8 text-center text-white">
-              <ImageIcon size={28} className="opacity-70" />
-              <span className="text-sm">{mediaError}</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg p-8 text-center text-white/90">
+              <ImageIcon size={28} className="text-muted" />
+              <span className="text-[17px]">{mediaError}</span>
               <button
                 type="button"
                 onClick={onCancel}
-                className="mt-2 cursor-pointer rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-black transition hover:bg-white"
+                className="mt-2 cursor-pointer rounded-xl border border-white/[0.12] bg-white/[0.08] px-3.5 py-2 text-[16px] text-white/85 transition-colors hover:bg-white/[0.15]"
               >
                 Close
               </button>
@@ -233,29 +231,22 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         </div>
 
         {/* Controls */}
-        <div className="image-crop-editor-controls space-y-4 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <ZoomOut size={16} className="shrink-0 text-[var(--tb-on-surface-variant)]" />
-            <input
-              type="range"
-              min={MIN_ZOOM}
-              max={MAX_ZOOM}
-              step={0.01}
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[color-mix(in_srgb,var(--tb-on-surface)_12%,transparent)] accent-[var(--tb-primary)]"
-            />
-            <ZoomIn size={16} className="shrink-0 text-[var(--tb-on-surface-variant)]" />
-          </div>
+        <div className="image-crop-editor-controls space-y-5 px-6 py-5">
+          <RangeSlider
+            label="Zoom"
+            value={zoom}
+            onChange={setZoom}
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
+            step={0.01}
+            format={(v) => `${Math.round(v * 100)}%`}
+          />
 
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-medium text-[var(--tb-on-surface-variant)]">
-              Zoom
-            </span>
             <button
               type="button"
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--tb-outline-variant)] bg-[var(--tb-surface-container-high)] px-3.5 py-2 text-xs font-semibold text-[var(--tb-text)] transition-colors hover:bg-[var(--tb-surface-container-highest)]"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-white/[0.14] px-3.5 py-2.5 text-[16px] text-white/80 transition-colors hover:bg-white/[0.07]"
             >
               <RotateCw size={13} />
               Rotate
@@ -263,7 +254,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
           </div>
 
           {mediaError && (
-            <div className="flex items-center gap-2 text-xs text-[var(--tb-error)]">
+            <div className="flex items-center gap-2 text-[15px] text-danger">
               <AlertCircle size={13} className="shrink-0" />
               {mediaError}
             </div>
@@ -273,7 +264,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="cursor-pointer rounded-full border-none bg-transparent px-5 py-2.5 text-[13.5px] font-semibold text-[var(--tb-on-surface-variant)] transition-colors hover:bg-[color-mix(in_srgb,var(--tb-on-surface)_8%,transparent)]"
+              className="cursor-pointer border-none bg-transparent px-4 py-2.5 text-[17px] text-white/60 transition-colors hover:text-white"
             >
               Cancel
             </button>
@@ -281,7 +272,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--tb-primary)] px-6 py-2.5 text-[13.5px] font-semibold text-[var(--tb-on-primary)] shadow-[0_6px_20px_color-mix(in_srgb,var(--tb-primary)_40%,transparent)] transition-all duration-150 hover:brightness-105 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.1] px-5 py-2.5 text-[17px] text-white/90 transition-colors hover:bg-white/[0.16] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}

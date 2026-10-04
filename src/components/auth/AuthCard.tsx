@@ -1,10 +1,21 @@
 import React from 'react';
-import { Mail, ArrowLeft } from 'lucide-react';
 import { redirectBlockedToDashboard } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
-import { getRedirectTarget } from '../../lib/redirect';
-import { RADIUS, TYPOGRAPHY, TRANSITIONS } from '../../lib/design';
+import { AuthShell, StepProgress } from '../ui/ig-ui';
+
+/**
+ * Switching between sign in and sign up is navigation, not a task. It gets
+ * highlighted type rather than a filled box: bold, full-contrast, with a real
+ * 44px hit area so it is still comfortable to tap. A second box down here just
+ * competes with the one action the screen is actually asking for.
+ */
+const FOOTER_ACTION =
+  'inline-flex min-h-11 items-center rounded-xl px-1 text-[17px] font-bold tracking-[-0.01em] ' +
+  'text-white underline decoration-white/40 decoration-2 underline-offset-[6px] ' +
+  'transition-colors duration-150 hover:decoration-white ' +
+  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-white ' +
+  'focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.45)]';
 import {
   login,
   verify2FA,
@@ -25,6 +36,7 @@ import {
 import type { BlockInfo } from '../../lib/api';
 import { validatePassword, validateEmail, validateUsername, validateDob } from '../../lib/validations';
 import { captureException } from '../../lib/sentry';
+import { PasskeyError, authenticatePasskey } from '../../lib/passkeys';
 import { haptic } from '../../lib/haptics';
 import { useAuthForm } from './useAuthForm';
 import { SignupStep1 } from './signup/SignupStep1';
@@ -56,19 +68,21 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const {
       mode, switchMode,
       signupStep, setSignupStep,
-      loginStep, setLoginStep,
+      loginStep, setLoginStep, noAccountEmail, setNoAccountEmail,
       firstName, setFirstName,
       lastName, setLastName,
       email, setEmail,
       password, setPassword,
       confirmPassword, setConfirmPassword,
       showPassword, setShowPassword,
+      showConfirm, setShowConfirm,
       gender, setGender,
       dob, setDob,
       username, setUsername,
-      occupation, setOccupation,
-      company, setCompany,
-      role, setRole,
+      jobRole, setJobRole,
+      jobCompany, setJobCompany,
+      jobPlace, setJobPlace,
+      jobStartedOn, setJobStartedOn,
       verificationCode, setVerificationCode,
       profilePic, setProfilePic,
       showImageEditor, setShowImageEditor,
@@ -88,8 +102,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       consentTerms, setConsentTerms,
       consentPrivacy, setConsentPrivacy,
       isSubmitting, setIsSubmitting,
-      cooldowns, setCooldowns, isInCooldown, getCooldownRemaining, startCooldown,
-      canSend, incrementSend, remainingSends, sendWithRateLimit,
+      isPasskeyLoading, setIsPasskeyLoading,
+      setCooldowns, isInCooldown, getCooldownRemaining,
+      canSend, remainingSends, sendWithRateLimit,
       getMaxSends, refreshRemaining, getResetAt, setResetAt,
       errors, setErrors,
       touched, setTouched,
@@ -97,11 +112,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       usernameStatus, usernameMessage, usernameSuggestions,
       emailCheckStatus,
       checkUsername,
-      resetToHome, clearValidation, resetLoginPassword, resetRecovery,
+      resetLoginPassword,
     } = form;
-
-  const [magicSent, setMagicSent] = React.useState(false);
-  React.useEffect(() => { setMagicSent(false); }, [email]);
 
   const lockAccount = (result: { block?: BlockInfo | null }): boolean => {
     if (!result.block) return false;
@@ -109,11 +121,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setIsSubmitting(false);
     void redirectBlockedToDashboard(result.block);
     return true;
-  };
-
-  const handlePasskeyLogin = () => {
-    onShowToast('Signed in with passkey');
-    setTimeout(() => { window.location.href = getRedirectTarget(); }, 500);
   };
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
@@ -149,9 +156,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           username,
           gender: gender || undefined,
           dob: dob || undefined,
-          occupation: occupation || undefined,
-          companyName: company || undefined,
-          role: role || undefined,
+          // Work — sent under the names the settings app uses, so the answer
+          // a person gives here is what their Work sheet shows later.
+          companyRole: jobRole || undefined,
+          companyName: jobCompany || undefined,
+          jobPlace: jobPlace || undefined,
+          jobStarted: jobStartedOn || undefined,
           policyAccepted: consentTerms && consentPrivacy,
           otpCode: verificationCode,
         });
@@ -218,6 +228,37 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
   };
 
+  /**
+   * Sign in with a passkey instead of a password.
+   *
+   * The API issues the challenge against the caller's session, so the honest
+   * failure here is "no session" — we say exactly that rather than pretending
+   * the passkey was rejected, and we never leave the form in a half state.
+   */
+  const handlePasskeySignIn = async () => {
+    if (isPasskeyLoading) return;
+    setIsPasskeyLoading(true);
+    try {
+      const account = await authenticatePasskey();
+      haptic('success');
+      onShowToast(`Signed in as ${account.email || 'your account'}`);
+      if (account.id) {
+        try {
+          localStorage.setItem('tirbeo_session_user_id', account.id);
+        } catch {}
+      }
+      onSuccessAuth(account.email || email, 'Passkey');
+    } catch (err) {
+      const failure = err instanceof PasskeyError ? err : new PasskeyError('Passkey sign-in failed.');
+      if (!failure.cancelled) {
+        haptic('error');
+        onShowToast(failure.message);
+      }
+    } finally {
+      setIsPasskeyLoading(false);
+    }
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -268,7 +309,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         let profile = loginProfile;
         if (!profile || profile.email !== email) {
           const res = await checkEmailExists(email);
-          if (res.ok && res.data?.exists) {
+          /* A lookup that failed is not a lookup that said "no". Reporting the
+             outage as "No account found with this email" tells someone with a
+             perfectly good account that they do not have one, and sends them
+             to sign up for a duplicate. Say we could not check, and let them
+             try again. */
+          if (!res.ok) {
+            const message = 'Could not check that email. Please try again.';
+            setErrors({ email: message });
+            setTouched({ email: true });
+            onShowToast(message);
+            setIsSubmitting(false);
+            return;
+          }
+          if (res.data?.exists) {
             profile = {
               email,
               exists: true,
@@ -284,12 +338,18 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           }
         }
         if (!profile.exists) {
-          setErrors({ email: 'No account found with this email' });
-          setTouched({ email: true });
-          onShowToast('No account found with this email');
+          /* No account for this address. Stay exactly where we are and say so
+             under the field: the next move is the visitor's to make, and the
+             email stays on screen so they can retype it after a typo. The
+             sign-up route is offered as text, not taken for them. */
+          setErrors({});
+          setTouched({ email: false });
+          haptic('error');
+          setNoAccountEmail(email);
           setIsSubmitting(false);
           return;
         }
+        setNoAccountEmail(null);
         setLoginStep('password');
         setIsSubmitting(false);
       } else if (loginStep === 'password') {
@@ -721,15 +781,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     haptic('success');
   };
 
-  const handleResetToHome = () => {
-    switchMode('signup');
-    setSignupStep(1 as SignupStep);
-    setLoginStep('email');
-    setLoginProfile(null);
-    setErrors({});
-    setTouched({});
-  };
-
   const goBack = () => {
     setErrors({});
     setTouched({});
@@ -755,13 +806,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
   };
 
-  const getProviderDisplayName = () => {
-    if (email.includes('@gmail.com')) return 'Google';
-    if (email.includes('@outlook.com') || email.includes('@hotmail.com')) return 'Microsoft';
-    if (email.includes('@yahoo.com')) return 'Yahoo';
-    return 'Email';
-  };
-
   const emailValid = !validateEmail(email);
   const usernameValid = validateUsername(username) === undefined;
   const step1Complete = Boolean(
@@ -773,7 +817,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     emailCheckStatus === 'available',
   );
   const step2Complete = Boolean(gender && dob && !validateDob(dob));
-  const isStep2 = mode === 'signup' && signupStep === 2;
   const step4Complete = Boolean(
     password &&
     !validatePassword(password).error &&
@@ -782,358 +825,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     consentPrivacy,
   );
 
-  if (magicSent) {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9998, background: '#050507', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '12px' : '16px', overflow: 'hidden' }}>
-        <div className="accounts-noir-bg" style={{ position: 'fixed', inset: 0, opacity: 0.85 }}><div className="accounts-noir-grid" /><div className="accounts-noir-noise" /><div className="accounts-noir-vignette" /><div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(900px 560px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} /></div>
-        <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: isMobile ? 'min(440px, 100vw - 24px)' : '520px', background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(28px) saturate(1.25)', WebkitBackdropFilter: 'blur(28px) saturate(1.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: isMobile ? '16px' : '20px', padding: isMobile ? '18px' : '22px', textAlign: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 24px 64px rgba(0,0,0,0.60), 0 0 40px rgba(0,149,246,0.06)' }}>
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '68%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0,149,246,0.22), transparent)' }} />
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FFFFFF', display: 'grid', placeItems: 'center', margin: '0 auto 12px', boxShadow: '0 4px 18px rgba(255,255,255,0.10), 0 0 20px rgba(0,149,246,0.10)' }}>
-            <Mail size={22} color="#09090B" />
-          </div>
-          <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: isMobile ? '24px' : '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>Check your <em style={{ fontStyle: 'normal', color: '#0095F6', fontWeight: 700 }}>email</em></h2>
-          <p style={{ fontSize: isMobile ? '13px' : '14.5px', color: '#A1A1AA', lineHeight: '22px', margin: '0 0 4px' }}>
-            One-time magic link sent to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>
-          </p>
-          <p style={{ fontSize: isMobile ? '11.5px' : '12.5px', color: '#71717A', lineHeight: '18px', margin: 0 }}>
-            Tap the link to sign in — no password needed. Expires in 15 min.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '18px', padding: '11px 12px', background: 'rgba(0,149,246,0.06)', border: '1px solid rgba(0,149,246,0.10)', borderRadius: '12px', fontSize: '15px', color: '#7DD3FC', fontWeight: 600 }}>
-            {remainingSends('magic-link')} sends left • expires in 15 min • one-time
-          </div>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button type="button" onClick={() => setMagicSent(false)} style={{ flex: 1, height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', fontSize: '17px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms ease' }}>
-              Back
-            </button>
-            <button type="button" onClick={() => handleDirectLoginRequest('magic-link')} disabled={isInCooldown('magic-link')} style={{ flex: 1, height: '44px', borderRadius: '12px', background: isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6', color: isInCooldown('magic-link') ? '#71717A' : '#FFFFFF', border: `1px solid ${isInCooldown('magic-link') ? 'rgba(255,255,255,0.06)' : '#0095F6'}`, fontSize: '17px', fontWeight: 700, cursor: isInCooldown('magic-link') ? 'not-allowed' : 'pointer', boxShadow: isInCooldown('magic-link') ? 'none' : '0 4px 16px rgba(0,149,246,0.28)', transition: 'all 150ms ease' }}>
-              {isInCooldown('magic-link') ? `Resend in ${getCooldownRemaining('magic-link')}s` : 'Resend link'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /* Signup is a fixed four-step flow, so it gets the step slider and a title
+     per step. Login's step count is unknowable up front — an OTP challenge
+     only sometimes appears — so its steps keep their own headings. */
+  const SIGNUP_STEPS = [
+    { title: 'Create your account', label: 'Your details' },
+    { title: 'Tell us about you', label: 'About you' },
+    { title: 'Verify your email', label: 'Verify email' },
+    { title: 'Secure your account', label: 'Set password' },
+  ] as const;
+
+  const signupCopy = SIGNUP_STEPS[signupStep - 1];
+  /* Remounts the panel on every step change so the enter animation replays. */
+  const panelKey = `${mode}:${signupStep}:${loginStep}`;
 
   return (
-    <div className="accounts-auth-shell" style={{
-      position: 'relative',
-      zIndex: 10,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      userSelect: 'none',
-      padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '8px' : '16px',
-      width: '100%',
-    }}>
-      <style>{`
-        @media (min-width: 1025px) {
-          .auth-main--step2 { overflow: visible; }
-          .auth-card--step2 { overflow: visible; max-height: none; }
-        }
-        @media (max-width: 1024px) {
-          .auth-main--step2 { overflow: hidden; }
-          .auth-card--step2 { overflow: visible; }
-        }
-      `}</style>
-        <div className={`auth-main accounts-auth-main${isStep2 ? ' auth-main--step2' : ''}`} style={{
-         width: '100%',
-         maxWidth: 'min(640px, 100vw - 38px)',
-         display: 'flex',
-         flexDirection: 'column',
-         alignItems: 'center',
-         gap: '17px',
-         padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '14px' : '24px',
-         transition: 'max-width 200ms ease, padding 200ms ease',
-       }}>
-        {/* Main card — amber glass */}
-<div
-           className={`auth-card${isStep2 ? ' auth-card--step2' : ''}`}
-           style={{
-             width: '100%',
-             background: 'rgba(16,16,18,0.90)',
-             backdropFilter: 'blur(22px) saturate(1.15)',
-             WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
-             border: '1px solid rgba(255,255,255,0.08)',
-             borderRadius: typeof window !== 'undefined' && window.innerWidth <= 640 ? '18px' : '22px',
-             padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '20px 16px' : '28px',
-             overflow: 'visible',
-             boxSizing: 'border-box',
-             opacity: 1,
-             boxShadow: '0 1px 0 rgba(255,255,255,0.07) inset, 0 32px 80px rgba(0,0,0,0.60), 0 0 40px rgba(0,149,246,0.04)',
-             position: 'relative',
-           }}
-         >
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '64%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0,149,246,0.18), transparent)', pointerEvents: 'none' }} />
-          <div>
-            <div style={{ position: 'relative' }}>
-              {/* ═══ SIGNUP STEP 1 ═══ */}
-              {mode === 'signup' && signupStep === 1 && (
-                <SignupStep1
-                  key="signup-step-1"
-                  firstName={firstName}
-                  setFirstName={setFirstName}
-                  lastName={lastName}
-                  setLastName={setLastName}
-                  email={email}
-                  setEmail={setEmail}
-                  username={username}
-                  setUsername={setUsername}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  checkUsername={checkUsername}
-                  usernameStatus={usernameStatus}
-                  usernameMessage={usernameMessage}
-                  usernameSuggestions={usernameSuggestions}
-                  emailCheckStatus={emailCheckStatus}
-                  isSubmitting={isSubmitting}
-                  step1Complete={step1Complete}
-                  onSwitchToLogin={() => { switchMode('login'); setLoginStep('email'); }}
-                  onSubmit={handleSignupSubmit}
-                />
-              )}
-
-              {/* ═══ SIGNUP STEP 2 ═══ */}
-              {mode === 'signup' && signupStep === 2 && (
-                <SignupStep2
-                  key="signup-step-2"
-                  gender={gender}
-                  setGender={setGender}
-                  dob={dob}
-                  setDob={setDob}
-                  occupation={occupation}
-                  setOccupation={setOccupation}
-                  company={company}
-                  setCompany={setCompany}
-                  role={role}
-                  setRole={setRole}
-                  profilePic={profilePic}
-                  fileInputRef={fileInputRef}
-                  onFileSelect={handleFileSelect}
-                  onRemoveProfilePic={handleRemoveProfilePic}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  isSubmitting={isSubmitting}
-                  step2Complete={step2Complete}
-                  onSubmit={handleSignupSubmit}
-                />
-              )}
-
-              {/* ═══ SIGNUP STEP 3 ═══ */}
-              {mode === 'signup' && signupStep === 3 && (
-                <SignupStep3
-                  key="signup-step-3"
-                  email={email}
-                  verificationCode={verificationCode}
-                  setVerificationCode={setVerificationCode}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  isSubmitting={isSubmitting}
-                  isInCooldown={isInCooldown}
-                  getCooldownRemaining={getCooldownRemaining}
-                  onResend={handleResendCode}
-                  onSubmit={handleSignupSubmit}
-                  remainingSends={remainingSends}
-                />
-              )}
-
-              {/* ═══ SIGNUP STEP 4 ═══ */}
-              {mode === 'signup' && signupStep === 4 && (
-                <SignupStep4
-                  key="signup-step-4"
-                  email={email}
-                  password={password}
-                  setPassword={setPassword}
-                  confirmPassword={confirmPassword}
-                  setConfirmPassword={setConfirmPassword}
-                  showPassword={showPassword}
-                  setShowPassword={setShowPassword}
-                  consentTerms={consentTerms}
-                  setConsentTerms={setConsentTerms}
-                  consentPrivacy={consentPrivacy}
-                  setConsentPrivacy={setConsentPrivacy}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  setErrors={setErrors}
-                  isSubmitting={isSubmitting}
-                  step4Complete={step4Complete}
-                  onOpenLegalModal={onOpenLegalModal}
-                  onSubmit={handleSignupSubmit}
-                />
-              )}
-
-              {/* ═══ LOGIN EMAIL ═══ */}
-              {mode === 'login' && loginStep === 'email' && (
-                <LoginEmail
-                  key="login-email"
-                  email={email}
-                  setEmail={setEmail}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  loginProfile={loginProfile}
-                  isSubmitting={isSubmitting}
-                  setLoginStep={setLoginStep}
-                  onSubmit={handleLoginSubmit}
-                  onPasskeyLogin={handlePasskeyLogin}
-                  onMagicLink={() => {
-                    handleDirectLoginRequest('magic-link');
-                  }}
-                />
-              )}
-
-              {/* ═══ LOGIN PASSWORD ═══ */}
-              {mode === 'login' && loginStep === 'password' && (
-                <LoginPassword
-                  key="login-password"
-                  email={email}
-                  password={password}
-                  setPassword={setPassword}
-                  showPassword={showPassword}
-                  setShowPassword={setShowPassword}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  loginProfile={loginProfile}
-                  isSubmitting={isSubmitting}
-                  setLoginStep={setLoginStep}
-                  onSwitchAccount={() => { resetLoginPassword(); setLoginStep('email'); }}
-                  onSubmit={handleLoginSubmit}
-                  onMoreOptions={() => setLoginStep('more-options')}
-                />
-              )}
-
-              {/* ═══ LOGIN OTP ═══ */}
-              {mode === 'login' && loginStep === 'otp' && (
-                <LoginOtp
-                  key="login-otp"
-                  email={email}
-                  loginOtpCode={loginOtpCode}
-                  setLoginOtpCode={setLoginOtpCode}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  loginPending2fa={loginPending2fa}
-                  isSubmitting={isSubmitting}
-                  isInCooldown={isInCooldown}
-                  getCooldownRemaining={getCooldownRemaining}
-                  onResend={handleLoginOtpResend}
-                  onSubmit={handleLoginSubmit}
-                  remainingSends={remainingSends}
-                />
-              )}
-
-              {/* ═══ LOGIN 2FA ═══ */}
-              {mode === 'login' && loginStep === '2fa' && (
-                <Login2FA
-                  key="login-2fa"
-                  twoFactorCode={twoFactorCode}
-                  setTwoFactorCode={setTwoFactorCode}
-                  backupCode={backupCode}
-                  setBackupCode={setBackupCode}
-                  loginWithBackup={loginWithBackup}
-                  setLoginWithBackup={setLoginWithBackup}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  isSubmitting={isSubmitting}
-                  setRecoveryMethod={setRecoveryMethod}
-                  setLoginStep={setLoginStep}
-                  onSubmit={handleLoginSubmit}
-                />
-              )}
-
-              {/* ═══ LOGIN MORE OPTIONS ═══ */}
-              {mode === 'login' && loginStep === 'more-options' && (
-                <LoginMoreOptions
-                  key="more-options"
-                  email={email}
-                  loginProfile={loginProfile}
-                  isSubmitting={isSubmitting}
-                  canSend={canSend}
-                  remainingSends={remainingSends}
-                  isInCooldown={isInCooldown}
-                  getCooldownRemaining={getCooldownRemaining}
-                  onRequestCode={() => handleDirectLoginRequest('code')}
-                  onRequestMagicLink={() => handleDirectLoginRequest('magic-link')}
-                  getMaxSends={getMaxSends}
-                  refreshRemaining={refreshRemaining}
-                  getResetAt={getResetAt}
-                  onRequestForgotPassword={() => handlePasswordResetRequest('otp')}
-                  onRequestRecoveryEmail={() => handlePasswordResetRequest('recovery')}
-                  onBack={goBack}
-                />
-              )}
-
-              {/* ═══ LOGIN RECOVERY ═══ */}
-              {mode === 'login' && loginStep === 'recovery' && (
-                <LoginRecovery
-                  key="login-recovery"
-                  email={email}
-                  loginProfile={loginProfile}
-                  recoveryMethod={recoveryMethod}
-                  recoveryStage={recoveryStage}
-                  recoveryCode={recoveryCode}
-                  setRecoveryCode={setRecoveryCode}
-                  isSubmitting={isSubmitting}
-                  isInCooldown={isInCooldown}
-                  getCooldownRemaining={getCooldownRemaining}
-                  onResend={handleResendRecoveryCode}
-                  onBack={goBack}
-                  onSubmitCode={handleRecoveryCodeSubmit}
-                  onSubmitNewPassword={handleRecoveryNewPassword}
-                  remainingSends={remainingSends}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Sign up / Log in bottom card — glass compact */}
-<div
-           className="auth-card-bottom"
-           style={{
-             width: '100%',
-             background: 'rgba(255,255,255,0.04)',
-             backdropFilter: 'blur(20px) saturate(1.15)',
-             WebkitBackdropFilter: 'blur(20px) saturate(1.15)',
-             border: '1px solid rgba(255,255,255,0.07)',
-             borderRadius: typeof window !== 'undefined' && window.innerWidth <= 640 ? '14px' : '16px',
-             padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '12px' : '16px',
-             textAlign: 'center',
-             boxSizing: 'border-box',
-             boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset',
-           }}
-         >
-          <p style={{
-            fontSize: '17px',
-            color: 'rgba(255,255,255,0.55)',
-            fontFamily: TYPOGRAPHY.fontFamily,
-            margin: 0,
-          }}>
+    <AuthShell
+      title={mode === 'signup' ? signupCopy.title : undefined}
+      footer={
+        <>
+          <span className="block text-center text-[15px] text-white/55">
             {mode === 'signup' ? (
               <>
                 Already have an account?{' '}
                 <button
+                  type="button"
                   onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ffffff',
-                    fontSize: '17px',
-                    fontWeight: 700,
-                    fontFamily: TYPOGRAPHY.fontFamily,
-                    cursor: 'pointer',
-                    padding: 0,
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '3px',
-                    textDecorationColor: 'rgba(255,255,255,0.25)',
-                  }}
+                  className={FOOTER_ACTION}
                 >
                   Log in
                 </button>
@@ -1142,30 +860,296 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               <>
                 Don&apos;t have an account?{' '}
                 <button
+                  type="button"
                   onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ffffff',
-                    fontSize: '17px',
-                    fontWeight: 700,
-                    fontFamily: TYPOGRAPHY.fontFamily,
-                    cursor: 'pointer',
-                    padding: 0,
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '3px',
-                    textDecorationColor: 'rgba(255,255,255,0.25)',
-                  }}
+                  className={FOOTER_ACTION}
                 >
-                  Sign up
+                  Create one
                 </button>
               </>
             )}
-          </p>
-        </div>
-        </div>
+          </span>
+          {/* The legal pages are reachable from the first screen, not only from
+              the consent checkboxes on the last signup step. Spans, not <p>:
+              AuthShell already wraps the footer in a paragraph. */}
+          <span className="mt-2 flex items-center justify-center gap-2 text-[14px] text-white/55">
+            <button
+              type="button"
+              onClick={() => onOpenLegalModal('terms')}
+              className="-my-1 inline-block rounded-xl px-1 py-2 text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:text-white"
+            >
+              Terms of Service
+            </button>
+            <span aria-hidden="true" className="text-white/25">
+              ·
+            </span>
+            <button
+              type="button"
+              onClick={() => onOpenLegalModal('privacy')}
+              className="-my-1 inline-block rounded-xl px-1 py-2 text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:text-white"
+            >
+              Privacy Policy
+            </button>
+          </span>
+        </>
+      }
+    >
+      <div className="w-full">
+        {mode === 'signup' ? (
+          <StepProgress
+            className="mb-7"
+            current={signupStep}
+            total={4}
+            labels={SIGNUP_STEPS.map((s) => s.label)}
+            onSelect={(step) => setSignupStep(step as SignupStep)}
+          />
+        ) : null}
 
-      {/* Image Crop Editor */}
+        <div key={panelKey} className="animate-rise">
+          {/* ═══ SIGNUP STEP 1 ═══ */}
+          {mode === 'signup' && signupStep === 1 && (
+          <SignupStep1
+            key="signup-step-1"
+            firstName={firstName}
+            setFirstName={setFirstName}
+            lastName={lastName}
+            setLastName={setLastName}
+            email={email}
+            setEmail={setEmail}
+            username={username}
+            setUsername={setUsername}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            checkUsername={checkUsername}
+            usernameStatus={usernameStatus}
+            usernameMessage={usernameMessage}
+            usernameSuggestions={usernameSuggestions}
+            emailCheckStatus={emailCheckStatus}
+            isSubmitting={isSubmitting}
+            step1Complete={step1Complete}
+            onSwitchToLogin={() => { switchMode('login'); setLoginStep('email'); }}
+            onSubmit={handleSignupSubmit}
+          />
+        )}
+
+        {/* ═══ SIGNUP STEP 2 ═══ */}
+        {mode === 'signup' && signupStep === 2 && (
+          <SignupStep2
+            key="signup-step-2"
+            gender={gender}
+            setGender={setGender}
+            dob={dob}
+            setDob={setDob}
+            jobRole={jobRole}
+            setJobRole={setJobRole}
+            jobCompany={jobCompany}
+            setJobCompany={setJobCompany}
+            jobPlace={jobPlace}
+            setJobPlace={setJobPlace}
+            jobStartedOn={jobStartedOn}
+            setJobStartedOn={setJobStartedOn}
+            profilePic={profilePic}
+            fileInputRef={fileInputRef}
+            onFileSelect={handleFileSelect}
+            onRemoveProfilePic={handleRemoveProfilePic}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            isSubmitting={isSubmitting}
+            step2Complete={step2Complete}
+            onSubmit={handleSignupSubmit}
+          />
+        )}
+
+        {/* ═══ SIGNUP STEP 3 ═══ */}
+        {mode === 'signup' && signupStep === 3 && (
+          <SignupStep3
+            key="signup-step-3"
+            email={email}
+            verificationCode={verificationCode}
+            setVerificationCode={setVerificationCode}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            isSubmitting={isSubmitting}
+            isInCooldown={isInCooldown}
+            getCooldownRemaining={getCooldownRemaining}
+            onResend={handleResendCode}
+            onSubmit={handleSignupSubmit}
+            remainingSends={remainingSends}
+          />
+        )}
+
+        {/* ═══ SIGNUP STEP 4 ═══ */}
+        {mode === 'signup' && signupStep === 4 && (
+          <SignupStep4
+            key="signup-step-4"
+            email={email}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            showConfirm={showConfirm}
+            setShowConfirm={setShowConfirm}
+            consentTerms={consentTerms}
+            setConsentTerms={setConsentTerms}
+            consentPrivacy={consentPrivacy}
+            setConsentPrivacy={setConsentPrivacy}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            setErrors={setErrors}
+            isSubmitting={isSubmitting}
+            step4Complete={step4Complete}
+            onOpenLegalModal={onOpenLegalModal}
+            onSubmit={handleSignupSubmit}
+          />
+        )}
+
+        {/* ═══ LOGIN EMAIL ═══ */}
+        {mode === 'login' && loginStep === 'email' && (
+          <LoginEmail
+            key="login-email"
+            email={email}
+            setEmail={setEmail}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            loginProfile={loginProfile}
+            isSubmitting={isSubmitting}
+            setLoginStep={setLoginStep}
+            onSubmit={handleLoginSubmit}
+            onMagicLink={() => {
+              handleDirectLoginRequest('magic-link');
+            }}
+            onPasskeySignIn={handlePasskeySignIn}
+            noAccountEmail={noAccountEmail}
+            onCreateAccount={() => {
+              /* Carry the address over — the visitor already typed it, and the
+                 sign-up form opens pre-filled with it. */
+              setErrors({});
+              setTouched({ email: false });
+              switchMode('signup');
+              setSignupStep(1 as SignupStep);
+            }}
+            passkeyLoading={isPasskeyLoading}
+          />
+        )}
+
+        {/* ═══ LOGIN PASSWORD ═══ */}
+        {mode === 'login' && loginStep === 'password' && (
+          <LoginPassword
+            key="login-password"
+            email={email}
+            password={password}
+            setPassword={setPassword}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            loginProfile={loginProfile}
+            isSubmitting={isSubmitting}
+            setLoginStep={setLoginStep}
+            onSwitchAccount={() => { resetLoginPassword(); setLoginStep('email'); }}
+            onSubmit={handleLoginSubmit}
+            onMoreOptions={() => setLoginStep('more-options')}
+          />
+        )}
+
+        {/* ═══ LOGIN OTP ═══ */}
+        {mode === 'login' && loginStep === 'otp' && (
+          <LoginOtp
+            key="login-otp"
+            email={email}
+            loginOtpCode={loginOtpCode}
+            setLoginOtpCode={setLoginOtpCode}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            loginPending2fa={loginPending2fa}
+            isSubmitting={isSubmitting}
+            isInCooldown={isInCooldown}
+            getCooldownRemaining={getCooldownRemaining}
+            onResend={handleLoginOtpResend}
+            onSubmit={handleLoginSubmit}
+            onBack={goBack}
+            remainingSends={remainingSends}
+          />
+        )}
+
+        {/* ═══ LOGIN 2FA ═══ */}
+        {mode === 'login' && loginStep === '2fa' && (
+          <Login2FA
+            key="login-2fa"
+            twoFactorCode={twoFactorCode}
+            setTwoFactorCode={setTwoFactorCode}
+            backupCode={backupCode}
+            setBackupCode={setBackupCode}
+            loginWithBackup={loginWithBackup}
+            setLoginWithBackup={setLoginWithBackup}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            isSubmitting={isSubmitting}
+            setRecoveryMethod={setRecoveryMethod}
+            setLoginStep={setLoginStep}
+            onSubmit={handleLoginSubmit}
+            onBack={goBack}
+          />
+        )}
+
+        {/* ═══ LOGIN MORE OPTIONS ═══ */}
+        {mode === 'login' && loginStep === 'more-options' && (
+          <LoginMoreOptions
+            key="more-options"
+            email={email}
+            loginProfile={loginProfile}
+            isSubmitting={isSubmitting}
+            canSend={canSend}
+            remainingSends={remainingSends}
+            isInCooldown={isInCooldown}
+            getCooldownRemaining={getCooldownRemaining}
+            onRequestCode={() => handleDirectLoginRequest('code')}
+            onRequestMagicLink={() => handleDirectLoginRequest('magic-link')}
+            getMaxSends={getMaxSends}
+            refreshRemaining={refreshRemaining}
+            getResetAt={getResetAt}
+            onRequestForgotPassword={() => handlePasswordResetRequest('otp')}
+            onRequestRecoveryEmail={() => handlePasswordResetRequest('recovery')}
+            onBack={goBack}
+          />
+        )}
+
+        {/* ═══ LOGIN RECOVERY ═══ */}
+        {mode === 'login' && loginStep === 'recovery' && (
+          <LoginRecovery
+            key="login-recovery"
+            email={email}
+            loginProfile={loginProfile}
+            recoveryMethod={recoveryMethod}
+            recoveryStage={recoveryStage}
+            recoveryCode={recoveryCode}
+            setRecoveryCode={setRecoveryCode}
+            isSubmitting={isSubmitting}
+            isInCooldown={isInCooldown}
+            getCooldownRemaining={getCooldownRemaining}
+            onResend={handleResendRecoveryCode}
+            onBack={goBack}
+            onSubmitCode={handleRecoveryCodeSubmit}
+            onSubmitNewPassword={handleRecoveryNewPassword}
+            remainingSends={remainingSends}
+          />
+          )}
+        </div>
+      </div>
+
+      {/* Image Crop Editor — deliberately outside the keyed step panel: it is a
+          modal over the current step, and remounting it would drop the canvas
+          mid-crop. */}
       {showImageEditor && tempImageUrl && (
         <React.Suspense fallback={null}>
           <ImageCropEditor
@@ -1176,6 +1160,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           />
         </React.Suspense>
       )}
-    </div>
+    </AuthShell>
   );
 };

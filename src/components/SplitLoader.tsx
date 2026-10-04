@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { BrandMark } from './ui/ig-ui';
 
 export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
   const [visible, setVisible] = useState(active);
@@ -22,84 +23,32 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: active ? 1 : 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'grid',
-        placeItems: 'center',
-        background: 'rgba(9,9,11,0.88)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        pointerEvents: active ? 'auto' : 'none',
-      }}
+      className="fixed inset-0 z-9999 grid place-items-center bg-bg/70 backdrop-blur-2xl"
+      style={{ pointerEvents: active ? 'auto' : 'none' }}
     >
       <motion.div
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 6 }}
-        transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 14,
-        }}
+        transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-col items-center gap-7"
       >
-        <img
-          src="/logo-opt.png"
-          alt=""
-          width={96}
-          height={64}
-          draggable={false}
-          decoding="async"
-          style={{ width: 72, height: 'auto', filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.35))', userSelect: 'none' }}
-        />
+        <BrandMark size="lg" />
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <span
-            style={{
-              fontFamily: "'Google Sans', sans-serif",
-              fontSize: 28,
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              color: '#FAFAFA',
-              lineHeight: 1,
-              textShadow: '0 1px 10px rgba(0,0,0,0.35)',
-            }}
-          >
-            Tirbeo
-          </span>
-
-          {/* big slider track */}
-          <div
-            style={{
-              width: 148,
-              height: 4,
-              borderRadius: 999,
-              background: 'rgba(255,255,255,0.14)',
-              overflow: 'hidden',
-              position: 'relative',
-            }}
-          >
-            <motion.div
-              animate={reduceMotion ? undefined : { x: [-52, 148] }}
-              transition={
-                reduceMotion
-                  ? undefined
-                  : { duration: 1.1, repeat: Infinity, ease: [0.42, 0, 0.58, 1] }
-              }
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                width: 52,
-                borderRadius: 999,
-                background: '#fff',
-                boxShadow: '0 0 10px rgba(255,255,255,0.5)',
-              }}
-            />
-          </div>
+        {/* Indeterminate rail — a travelling azure segment, the standard
+            "working, duration unknown" signal. */}
+        <div
+          className="relative h-px w-[168px] overflow-hidden rounded-full bg-white/[0.12]"
+          role="presentation"
+        >
+          <motion.div
+            className="absolute inset-y-0 w-[54px] rounded-full bg-white/80"
+            animate={reduceMotion ? undefined : { x: ['-54px', '168px'] }}
+            transition={
+              reduceMotion
+                ? undefined
+                : { duration: 1.15, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }
+            }
+          />
         </div>
       </motion.div>
     </motion.div>

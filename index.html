@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -13,7 +13,7 @@
     <meta property="og:description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/logo-opt.png" />
-    <meta property="og:url" content="https://tirbeo.app" />
+    <meta property="og:url" content="https://tirbeo.com" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
@@ -26,24 +26,28 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Theme Color -->
-    <meta name="theme-color" content="#000000" />
-
-    <!-- Fonts: preconnect + display=swap (loads off the critical path) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"></noscript>
+    <meta name="theme-color" content="#0f0f11" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f0f0f2" media="(prefers-color-scheme: light)">
 
     <!-- API preconnect: session check fires on load — warm the connection -->
-    <link rel="preconnect" href="https://api.tirbeo.app" crossorigin>
+    <link rel="preconnect" href="https://api.tirbeo.com" crossorigin>
 
-    <!-- Background preload — single high-priority desktop, others lazy via <picture> -->
-    <link rel="preload" as="image" href="/background.webp" fetchpriority="high">
+    <!-- Inter: the UI face. display=swap renders in the system stack first, so
+         the login card is never blocked waiting on the webfont. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    </noscript>
+
+    <!-- Full-bleed auth backdrop — start the fetch before React mounts -->
+    <link rel="preload" as="image" href="/background.jpg" fetchpriority="high" />
 
     <script type="module" src="/src/main.tsx"></script>
   </head>
-  <body class="bg-black text-white antialiased selection:bg-white/20 selection:text-white font-['Google+Sans',sans-serif]">
+  <body class="bg-bg text-fg antialiased">
     <div id="root"></div>
   </body>
 </html>

@@ -49,29 +49,9 @@ export const RealtimeBanner: React.FC = () => {
   return (
     <div
       role="status"
-      style={{
-        position: 'fixed',
-        top: '64px',
-        left: '50%',
-        translate: '-50% 0',
-        zIndex: 40,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        maxWidth: 'min(560px, calc(100vw - 32px))',
-        padding: '9px 14px',
-        background: 'rgba(9,9,11,0.82)',
-        backdropFilter: 'blur(16px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-        border: '1px solid rgba(0,149,246,0.22)',
-        borderRadius: '12px',
-        boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
-        fontSize: '19px',
-        fontWeight: 550,
-        color: '#E4E4E7',
-      }}
+      className="fixed left-1/2 top-16 z-40 flex max-w-[min(560px,calc(100vw-32px))] -translate-x-1/2 items-center gap-2 glass rounded-full px-4 py-2 text-[13px] font-medium text-white shadow-pop"
     >
-      <Megaphone size={15} color="#0095F6" style={{ flexShrink: 0 }} />
+      <Megaphone size={15} className="shrink-0 text-accent" />
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{message}</span>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TYPOGRAPHY } from '../../../lib/design';
+import { OtpBoxes, PrimaryButton, TextButton } from '../../ui/ig-ui';
 
 interface SignupStep3Props {
   email: string;
@@ -18,172 +18,64 @@ interface SignupStep3Props {
   remainingSends: (method: string) => number;
 }
 
-const codeInputStyle: React.CSSProperties = {
-  width: '58px',
-  height: '52px',
-  background: 'rgba(255,255,255,0.04)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '12px',
-  color: '#FAFAFA',
-  fontSize: '16px',
-  fontWeight: 700,
-  fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
-  textAlign: 'center',
-  outline: 'none',
-  transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  caretColor: '#0095F6',
-};
-
-const gradientBtn = (enabled: boolean): React.CSSProperties => ({
-  width: '100%',
-  height: '52px',
-  background: enabled ? '#0095F6' : 'rgba(255,255,255,0.08)',
-  color: enabled ? '#FFFFFF' : '#71717A',
-  border: `1px solid ${enabled ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
-  borderRadius: '12px',
-  fontSize: '16px',
-  fontWeight: 700,
-  fontFamily: TYPOGRAPHY.fontFamily,
-  cursor: enabled ? 'pointer' : 'not-allowed',
-  transition: 'all 150ms ease',
-  opacity: 1,
-  boxShadow: enabled ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
-});
-
 export const SignupStep3: React.FC<SignupStep3Props> = ({
   email, verificationCode, setVerificationCode, errors, touched, handleBlur,
   isSubmitting, isInCooldown, getCooldownRemaining, onResend, onSubmit, remainingSends,
 }) => {
   const showCodeError = touched.verificationCode && errors.verificationCode;
   const codeComplete = verificationCode.length === 6;
+  const limitReached = remainingSends('signup-otp') === 0;
+
+  const sendsBadge = (
+    <span
+      className={`rounded-xl px-1.5 py-1 text-[15px] ${
+        limitReached ? 'text-danger' : 'text-white/45'
+      }`}
+    >
+      {limitReached ? 'limit reached' : `${remainingSends('signup-otp')} left`}
+    </span>
+  );
 
   return (
-    <form
-      className="auth-form"
-      onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-    >
-      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
-          Verify your <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>email</em>
-        </h2>
-        <p style={{ fontSize: '16px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
-          We sent a code to <span style={{ color: '#FAFAFA', fontWeight: 600 }}>{email}</span>.
+    <form className="space-y-5" onSubmit={onSubmit}>
+      <div>
+        <p className="text-center text-[16px] leading-relaxed text-white/50">
+          We sent a code to <span className="text-white/75">{email}</span>.
         </p>
       </div>
 
-      <div className="otp-grid" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-        {[...Array(6)].map((_, i) => (
-          <input
-            key={i}
-            type="text"
-            maxLength={1}
-            value={verificationCode[i] || ''}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, '');
-              const nextCode = verificationCode.split('');
-              nextCode[i] = value;
-              setVerificationCode(nextCode.join(''));
-              if (i < 5 && value) {
-                const nextInput = document.querySelector(`input[data-code-index="${i + 1}"]`) as HTMLInputElement | null;
-                nextInput?.focus();
-              } else if (i > 0 && !value) {
-                const prevInput = document.querySelector(`input[data-code-index="${i - 1}"]`) as HTMLInputElement | null;
-                prevInput?.focus();
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Backspace' && !e.currentTarget.value && i > 0) {
-                const prevInput = document.querySelector(`input[data-code-index="${i - 1}"]`) as HTMLInputElement | null;
-                prevInput?.focus();
-              }
-            }}
-            onPaste={(e) => {
-              e.preventDefault();
-              const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-              if (pasted.length === 6) {
-                setVerificationCode(pasted);
-              }
-            }}
-            style={{
-              ...codeInputStyle,
-              borderColor: showCodeError ? '#f43f5e' : verificationCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)',
-              boxShadow: verificationCode[i] && !showCodeError ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none',
-            }}
-            data-code-index={i}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#0095F6';
-              e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0,149,246,0.14)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = showCodeError ? '#f43f5e' : verificationCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)';
-              e.currentTarget.style.boxShadow = verificationCode[i] && !showCodeError ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none';
-            }}
-          />
-        ))}
-      </div>
-
-      <input type="hidden" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} onBlur={() => handleBlur('verificationCode')} />
+      <OtpBoxes
+        label="Verification code"
+        value={verificationCode}
+        onChange={setVerificationCode}
+        error={Boolean(showCodeError)}
+      />
 
       {showCodeError && (
-        <p style={{ textAlign: 'center', fontSize: '16px', color: '#f43f5e', marginTop: '-12px' }}>{errors.verificationCode}</p>
+        <p role="alert" className="text-center text-[16px] leading-snug text-danger">
+          {errors.verificationCode}
+        </p>
       )}
 
-      <div style={{ textAlign: 'center' }}>
+      <div className="text-center">
         {isInCooldown('signup-otp') ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#71717A', fontSize: '16px', fontFamily: TYPOGRAPHY.fontFamily }}>
-            <span>Resend in {getCooldownRemaining('signup-otp')}s</span>
-            <span style={{
-              padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-              background: remainingSends('signup-otp') === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
-              color: remainingSends('signup-otp') === 0 ? '#f43f5e' : '#A1A1AA',
-              border: `1px solid ${remainingSends('signup-otp') === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
-            }}>
-              {remainingSends('signup-otp') === 0 ? 'limit reached' : `${remainingSends('signup-otp')} left`}
-            </span>
-          </div>
+          <span className="inline-flex items-center justify-center gap-2 text-[16px] text-white/50">
+            Resend in {getCooldownRemaining('signup-otp')}s
+            {sendsBadge}
+          </span>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-            <button type="button" onClick={onResend}
-              style={{
-                background: 'none', border: 'none', color: '#71717A', fontSize: '16px',
-                fontFamily: TYPOGRAPHY.fontFamily, cursor: 'pointer', padding: 0,
-                transition: 'color 150ms ease',
-              }}
-              onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; }}
-              onMouseOut={e => { e.currentTarget.style.color = '#71717A'; }}
-            >
+          <span className="inline-flex items-center justify-center gap-3">
+            <TextButton type="button" onClick={onResend}>
               Resend code
-            </button>
-            <span style={{
-              padding: '2px 7px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
-              background: remainingSends('signup-otp') === 0 ? 'rgba(244,63,94,0.1)' : '#141416',
-              color: remainingSends('signup-otp') === 0 ? '#f43f5e' : '#A1A1AA',
-              border: `1px solid ${remainingSends('signup-otp') === 0 ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.07)'}`,
-            }}>
-              {remainingSends('signup-otp') === 0 ? 'limit reached' : `${remainingSends('signup-otp')} left`}
-            </span>
-          </div>
+            </TextButton>
+            {sendsBadge}
+          </span>
         )}
       </div>
 
-      <div style={{ marginTop: '8px' }}>
-        <button
-          type="submit"
-          disabled={!codeComplete || isSubmitting}
-          style={gradientBtn(codeComplete && !isSubmitting)}
-        >
-          {isSubmitting ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: 'spin 0.8s linear infinite' }}>
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="30 70" />
-              </svg>
-              Verifying...
-            </span>
-          ) : 'Verify & Continue'}
-        </button>
-      </div>
+      <PrimaryButton type="submit" disabled={!codeComplete} loading={isSubmitting}>
+        {isSubmitting ? 'Verifying...' : 'Verify & Continue'}
+      </PrimaryButton>
     </form>
   );
 };

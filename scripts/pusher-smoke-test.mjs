@@ -55,7 +55,7 @@ async function publishBeams() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${BEAMS.primaryKey}` },
       body: JSON.stringify({
         interests: ['hello'],
-        web: { notification: { title: 'Tirbeo', body: 'Beams publish OK ✅', deep_link: 'https://tirbeo.app' } },
+        web: { notification: { title: 'Tirbeo', body: 'Beams publish OK ✅', deep_link: 'https://tirbeo.com' } },
       }),
     },
   );

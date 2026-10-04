@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, FileText, Check } from "lucide-react";
+import { X, ShieldCheck, FileText } from "lucide-react";
+import { PrimaryButton } from "./ui/ig-ui";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
     <AnimatePresence>
       {isOpen && type && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -53,13 +54,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             type="button"
             aria-label="Close dialog"
             onClick={onClose}
-            className="
-              absolute
-              inset-0
-              cursor-default
-              bg-black/75
-              backdrop-blur-md
-            "
+            className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -67,97 +62,31 @@ export const TermsModal: React.FC<TermsModalProps> = ({
 
           {/* Modal */}
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 28,
-              scale: 0.97,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              y: 20,
-              scale: 0.97,
-            }}
-            transition={{
-              duration: 0.24,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            className="
-              relative
-              z-10
-              flex
-              max-h-[92dvh]
-              w-full
-              max-w-2xl
-              flex-col
-              overflow-hidden
-              rounded-t-[28px]
-              border
-              border-white/[0.09]
-              bg-[#000000]
-              shadow-[0_30px_100px_rgba(0,0,0,0.65)]
-              sm:max-h-[min(760px,90vh)]
-              sm:rounded-[28px]
-            "
+            initial={{ opacity: 0, y: 28, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl glass text-fg sm:max-h-[min(760px,90vh)] sm:rounded-3xl"
           >
-            {/* Mobile handle */}
-            <div className="flex justify-center pt-2.5 sm:hidden">
-              <div className="h-1 w-9 rounded-full bg-white/15" />
-            </div>
-
             {/* Header */}
-            <header
-              className="
-                flex
-                shrink-0
-                items-center
-                justify-between
-                border-b
-                border-white/[0.07]
-                px-5
-                py-4
-                sm:px-6
-                sm:py-5
-              "
-            >
-              <div className="flex min-w-0 items-center gap-3.5">
-                <div
-                  className="
-                    flex
-                    h-10
-                    w-10
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-xl
-                    border
-                    border-white/[0.08]
-                    bg-white/[0.045]
-                    text-white/75
-                  "
-                >
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-2xl border border-white/12 text-white/70">
                   {isTerms ? (
-                    <FileText className="h-[18px] w-[18px]" />
+                    <FileText className="size-[18px]" />
                   ) : (
-                    <ShieldCheck className="h-[19px] w-[19px]" />
+                    <ShieldCheck className="size-[18px]" />
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-white/30">
-                    Tirbeo
-                  </div>
-
                   <h2
                     id="legal-modal-title"
-                    className="truncate text-base font-semibold tracking-tight text-white/90 sm:text-lg"
+                    className="truncate text-[22px] text-white/90"
                   >
                     {isTerms ? "Terms of Service" : "Privacy Policy"}
                   </h2>
+                  <p className="text-[15px] text-white/45">Tirbeo</p>
                 </div>
               </div>
 
@@ -165,53 +94,15 @@ export const TermsModal: React.FC<TermsModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="
-                  ml-3
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-transparent
-                  text-white/40
-                  transition
-                  hover:border-white/[0.07]
-                  hover:bg-white/[0.05]
-                  hover:text-white/80
-                  active:scale-95
-                "
+                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-none bg-transparent text-muted transition-colors hover:bg-hover hover:text-fg"
               >
-                <X className="h-[18px] w-[18px]" />
+                <X className="size-[18px]" />
               </button>
             </header>
 
             {/* Content */}
-            <main
-              className="
-                min-h-0
-                flex-1
-                overflow-y-auto
-                overscroll-contain
-                px-5
-                py-5
-                sm:px-7
-                sm:py-6
-              "
-            >
-              <div
-                className="
-                  space-y-5
-                  text-[13px]
-                  leading-7
-                  text-white/55
-                  [&::-webkit-scrollbar]:w-1
-                  [&::-webkit-scrollbar-thumb]:rounded-full
-                  [&::-webkit-scrollbar-thumb]:bg-white/10
-                "
-              >
+            <main className="min-h-0 max-h-[60vh] flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+              <div className="space-y-4 text-[18px] leading-relaxed text-white/70">
                 {isTerms ? (
                   <>
                     <p>
@@ -270,53 +161,10 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             </main>
 
             {/* Footer */}
-            <footer
-              className="
-                flex
-                shrink-0
-                items-center
-                justify-between
-                gap-4
-                border-t
-                border-white/[0.07]
-                bg-[#000000]
-                px-5
-                py-4
-                sm:px-7
-                sm:py-5
-              "
-            >
-              <div className="hidden items-center gap-2 text-[11px] text-white/30 sm:flex">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Your information matters.</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="
-                  flex
-                  h-11
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-full
-                  bg-white
-                  px-6
-                  text-sm
-                  font-semibold
-                  text-black
-                  shadow-[0_8px_30px_rgba(255,255,255,0.08)]
-                  transition-all
-                  hover:bg-white/90
-                  active:scale-[0.98]
-                  sm:w-auto
-                "
-              >
-                <Check className="h-4 w-4" />
-                I Understand
-              </button>
+            <footer className="shrink-0 border-t border-divider px-5 py-4 sm:px-6">
+              <PrimaryButton type="button" onClick={onClose}>
+                I understand
+              </PrimaryButton>
             </footer>
           </motion.div>
         </motion.div>
@@ -335,10 +183,8 @@ const LegalSection: React.FC<LegalSectionProps> = ({
   children,
 }) => {
   return (
-    <section className="rounded-2xl border border-white/[0.055] bg-white/[0.018] px-4 py-4 sm:px-5">
-      <h3 className="mb-2 text-sm font-semibold tracking-tight text-white/85">
-        {title}
-      </h3>
+    <section className="border-b border-white/[0.07] pb-4">
+      <h3 className="mb-2 text-[19px] text-white/90">{title}</h3>
 
       <p>{children}</p>
     </section>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { checkEmailExists, checkUsernameExists, requestSignupOtp } from '../../lib/api';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
+import { workFieldMeta } from '../../lib/profile-fields';
 
 const COOLDOWN_SECONDS = 30;
 const WINDOW_MS = 15 * 60 * 1000;
@@ -33,6 +34,11 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   );
   const [signupStep, setSignupStep] = useState<SignupStep>(1);
   const [loginStep, setLoginStep] = useState<LoginStep>('email');
+  /* Set when a lookup finds no account for the address. The screen holds its
+     ground and says so inline instead of swapping itself for the sign-up form:
+     yanking someone out of the flow they were in is how you get a typo'd email
+     turned into a half-registered account. */
+  const [noAccountEmail, setNoAccountEmail] = useState<string | null>(null);
 
   const switchMode = useCallback((next: 'login' | 'signup') => {
     setMode(next);
@@ -59,12 +65,17 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   const [gender, setGender] = useState('');
   const [dob, setDob] = useState('');
   const [username, setUsername] = useState('');
-  const [occupation, setOccupation] = useState('');
-  const [company, setCompany] = useState('');
-  const [role, setRole] = useState('');
+  // Work — the same four answers the settings app's Work sheet holds
+  // (apps/accounts/src/lib/profile-fields.ts).
+  const [jobRole, setJobRole] = useState('');
+  const [jobCompany, setJobCompany] = useState('');
+  const [jobPlace, setJobPlace] = useState('');
+  const [jobStartedOn, setJobStartedOn] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
 
   // ─── Profile picture ───
@@ -99,9 +110,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   const fetchLimits = useCallback(async (forceInit = false) => {
     try {
-      // skip when unauthenticated — endpoint 401s without session and spam is noisy
-      if (typeof document !== 'undefined' && !document.cookie.includes('__session=')) return;
-      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
       if (forceInit) {
         await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, {
           method: 'POST',
@@ -139,7 +148,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const syncFromDb = useCallback(async () => {
     if (!email || !email.includes('@')) return;
     try {
-      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.app');
+      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
       const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/remaining?email=${encodeURIComponent(email)}`, { credentials: 'include' });
       if (!res.ok) return;
       const data: any = await res.json();
@@ -572,11 +581,14 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       case 'gender':
         error = value ? undefined : 'Gender is required';
         break;
-      case 'occupation':
-      case 'company':
-      case 'role':
-        if (value.length > 200) error = `${field.charAt(0).toUpperCase() + field.slice(1)} must be 200 characters or less`;
+      case 'jobRole':
+      case 'jobCompany':
+      case 'jobPlace':
+      case 'jobStartedOn': {
+        const meta = workFieldMeta(field);
+        if (value.length > meta.maxLength) error = `${meta.label} must be ${meta.maxLength} characters or less`;
         break;
+      }
     }
     setErrors(prev => ({ ...prev, [field]: error }));
     return error;
@@ -612,9 +624,10 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       case 'recoveryCode': return recoveryCode;
       case 'dob': return dob;
       case 'gender': return gender;
-      case 'occupation': return occupation;
-      case 'company': return company;
-      case 'role': return role;
+      case 'jobRole': return jobRole;
+      case 'jobCompany': return jobCompany;
+      case 'jobPlace': return jobPlace;
+      case 'jobStartedOn': return jobStartedOn;
       default: return '';
     }
   };
@@ -747,19 +760,27 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     // Mode
     mode, setMode, switchMode,
     signupStep, setSignupStep,
-    loginStep, setLoginStep,
+    loginStep, setLoginStep, noAccountEmail, setNoAccountEmail,
     firstName, setFirstName,
     lastName, setLastName,
-    email, setEmail,
+    email, setEmail: (v: string) => {
+      // Retyping invalidates the "no account" notice — it was about the
+      // previous address, and leaving it up would accuse the new one.
+      setEmail(v);
+      setNoAccountEmail((cur) => (cur !== null && cur !== v ? null : cur));
+    },
     password, setPassword,
     confirmPassword, setConfirmPassword,
     showPassword, setShowPassword,
+    showConfirm, setShowConfirm,
+    isPasskeyLoading, setIsPasskeyLoading,
     gender, setGender,
     dob, setDob,
     username, setUsername,
-    occupation, setOccupation,
-    company, setCompany,
-    role, setRole,
+    jobRole, setJobRole,
+    jobCompany, setJobCompany,
+    jobPlace, setJobPlace,
+    jobStartedOn, setJobStartedOn,
     verificationCode, setVerificationCode,
     // Profile picture
     profilePic, setProfilePic,

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { TYPOGRAPHY } from '../../../lib/design';
 import type { LoginStep } from '../../../lib/validations';
+import { Field, OtpBoxes, PrimaryButton, Segmented, TextButton } from '../../ui/ig-ui';
 
 interface Login2FAProps {
   twoFactorCode: string;
@@ -18,236 +18,91 @@ interface Login2FAProps {
   setRecoveryMethod: (method: 'code' | 'magic-link' | 'recovery' | null) => void;
   setLoginStep: (step: LoginStep) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
 }
-
-const codeInput: React.CSSProperties = {
-  width: '58px',
-  height: '52px',
-  background: 'rgba(255,255,255,0.04)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '12px',
-  color: '#FAFAFA',
-  fontSize: '20px',
-  fontWeight: 700,
-  fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
-  textAlign: 'center',
-  outline: 'none',
-  transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  caretColor: '#0095F6',
-};
-
-const tabStyle = (active: boolean): React.CSSProperties => ({
-  flex: 1,
-  padding: '14px',
-  fontSize: '17px',
-  fontWeight: 600,
-  color: active ? '#FAFAFA' : '#71717A',
-  background: active ? 'rgba(0,149,246,0.10)' : 'transparent',
-  border: active ? '1px solid rgba(0,149,246,0.14)' : '1px solid transparent',
-  borderRadius: '12px',
-  cursor: 'pointer',
-  transition: 'background 150ms ease, color 150ms ease, border-color 150ms ease',
-  fontFamily: TYPOGRAPHY.fontFamily,
-});
-
-const primaryBtn: React.CSSProperties = {
-  width: '100%',
-  height: '53px',
-  background: '#0095F6',
-  color: '#FFFFFF',
-  border: '1px solid #0095F6',
-  borderRadius: '12px',
-  fontSize: '17px',
-  fontWeight: 700,
-  fontFamily: TYPOGRAPHY.fontFamily,
-  cursor: 'pointer',
-  transition: 'all 150ms ease',
-  boxShadow: '0 4px 16px rgba(0,149,246,0.28)',
-};
-
-const inputBase: React.CSSProperties = {
-  width: '100%',
-  height: '70px',
-  background: 'rgba(255,255,255,0.04)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: '12px',
-  color: '#FAFAFA',
-  fontSize: '17px',
-  fontFamily: TYPOGRAPHY.fontFamily,
-  padding: '0 16px',
-  outline: 'none',
-  transition: 'border-color 150ms ease, box-shadow 150ms ease',
-  boxSizing: 'border-box',
-};
 
 export const Login2FA: React.FC<Login2FAProps> = ({
   twoFactorCode, setTwoFactorCode, backupCode, setBackupCode,
   loginWithBackup, setLoginWithBackup, errors, touched, handleBlur,
-  isSubmitting, onSubmit,
+  isSubmitting, onSubmit, onBack,
 }) => {
   const showCodeError = touched.twoFactorCode && errors.twoFactorCode;
   const showBackupError = touched.backupCode && errors.backupCode;
 
   return (
-    <form
-      className="auth-form"
-      onSubmit={onSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-    >
-      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2 style={{ fontFamily: "'Google Sans', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', color: '#FAFAFA', margin: '0 0 10px', lineHeight: 1.1 }}>
-          Two-factor <em style={{ fontStyle: 'normal', fontWeight: 700, color: '#0095F6' }}>authentication</em>
-        </h2>
-        <p style={{ fontSize: '17px', color: '#A1A1AA', fontFamily: TYPOGRAPHY.fontFamily, lineHeight: '22px', margin: 0 }}>
-          Enter the 6-digit code from your authenticator app.
-        </p>
-      </div>
+    <form onSubmit={onSubmit}>
+      <h2 className="tb-heading">Two-factor authentication</h2>
+      <p className="tb-sub mt-1.5">
+        {loginWithBackup
+          ? 'Enter one of your 8-character backup codes.'
+          : 'Enter the 6-digit code from your authenticator app.'}
+      </p>
 
-      <div style={{
-        display: 'flex',
-        gap: '4px',
-        background: 'rgba(255,255,255,0.03)',
-        backdropFilter: 'blur(12px)',
-        borderRadius: '28px',
-        border: '1px solid rgba(255,255,255,0.06)',
-        padding: '6px',
-      }}>
-        <button type="button" onClick={() => { setLoginWithBackup(false); setTwoFactorCode(''); }}
-          style={tabStyle(!loginWithBackup)}
-        >
-          Authenticator
-        </button>
-        <button type="button" onClick={() => { setLoginWithBackup(true); setBackupCode(''); }}
-          style={tabStyle(loginWithBackup)}
-        >
-          Backup Code
-        </button>
-      </div>
-
-      {!loginWithBackup && (
-        <div className="otp-grid" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          {[...Array(6)].map((_, i) => (
-            <input key={i} type="text" maxLength={1} value={twoFactorCode[i] || ''}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                const nextCode = Array.from({ length: 6 }, (_, j) => twoFactorCode[j] || '');
-                nextCode[i] = value;
-                setTwoFactorCode(nextCode.join(''));
-                if (i < 5 && value) (document.querySelector(`input[data-2fa-index="${i + 1}"]`) as HTMLInputElement | null)?.focus();
-                else if (i > 0 && !value) (document.querySelector(`input[data-2fa-index="${i - 1}"]`) as HTMLInputElement | null)?.focus();
-              }}
-              onKeyDown={(e) => { if (e.key === 'Backspace' && !e.currentTarget.value && i > 0) (document.querySelector(`input[data-2fa-index="${i - 1}"]`) as HTMLInputElement | null)?.focus(); }}
-              onPaste={(e) => { e.preventDefault(); const p = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6); if (p.length === 6) setTwoFactorCode(p); }}
-              style={{
-                ...codeInput,
-                borderColor: showCodeError ? '#f43f5e' : twoFactorCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)',
-                boxShadow: twoFactorCode[i] && !showCodeError ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none',
-              }}
-              data-2fa-index={i}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#0095F6'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0,149,246,0.14)'; }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = showCodeError ? '#f43f5e' : twoFactorCode[i] ? 'rgba(0,149,246,0.28)' : 'rgba(255,255,255,0.07)';
-                e.currentTarget.style.boxShadow = twoFactorCode[i] && !showCodeError ? '0 0 0 3px rgba(0,149,246,0.08)' : 'none';
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {!loginWithBackup && showCodeError && (
-        <p style={{ textAlign: 'center', fontSize: '17px', color: '#f43f5e', marginTop: '-12px' }}>{errors.twoFactorCode}</p>
-      )}
-
-      {loginWithBackup && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <input type="text" value={backupCode}
-            onChange={(e) => setBackupCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-            onBlur={() => handleBlur('backupCode')} placeholder="Backup code" maxLength={8}
-            style={{
-              ...inputBase,
-              borderColor: showBackupError ? '#f43f5e' : 'rgba(255,255,255,0.07)',
-              fontFamily: "'SF Mono',ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace",
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-            }}
-            onFocus={(e) => { if (!showBackupError) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
-            onBlurCapture={(e) => {
-              e.currentTarget.style.borderColor = showBackupError ? '#f43f5e' : 'rgba(255,255,255,0.07)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
-          {showBackupError && (
-            <p style={{ fontSize: '17px', color: '#f43f5e', margin: 0 }}>{errors.backupCode}</p>
-          )}
-          <p style={{ fontSize: '19px', color: '#71717A', margin: 0 }}>Enter one of your 8-character backup codes.</p>
-        </div>
-      )}
-
-      <button type="submit"
-        disabled={(!loginWithBackup && twoFactorCode.length !== 6) || (loginWithBackup && !backupCode) || isSubmitting}
-        style={{
-          ...primaryBtn,
-          background: ((loginWithBackup ? !!backupCode : twoFactorCode.length === 6) && !isSubmitting) ? '#0095F6' : 'rgba(255,255,255,0.08)',
-          color: ((loginWithBackup ? !!backupCode : twoFactorCode.length === 6) && !isSubmitting) ? '#FFFFFF' : '#71717A',
-          opacity: 1,
-          cursor: ((loginWithBackup ? !!backupCode : twoFactorCode.length === 6) && !isSubmitting) ? 'pointer' : 'not-allowed',
-          boxShadow: ((loginWithBackup ? !!backupCode : twoFactorCode.length === 6) && !isSubmitting) ? '0 4px 16px rgba(0,149,246,0.28)' : 'none',
-          border: `1px solid ${((loginWithBackup ? !!backupCode : twoFactorCode.length === 6) && !isSubmitting) ? '#0095F6' : 'rgba(255,255,255,0.06)'}`,
-        }}
-      >
-        {isSubmitting ? (
-          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: 'spin 0.8s linear infinite' }}>
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="30 70" />
-            </svg>
-            Verifying...
-          </span>
-        ) : 'Verify'}
-      </button>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-        {!loginWithBackup && (
-          <button type="button" onClick={() => setLoginWithBackup(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#71717A',
-              fontSize: '17px',
-              fontWeight: 500,
-              fontFamily: TYPOGRAPHY.fontFamily,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: '8px',
-              transition: 'color 150ms ease, background 150ms ease',
-            }}
-            onMouseOver={e => { e.currentTarget.style.color = '#A1A1AA'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.color = '#71717A'; e.currentTarget.style.background = 'transparent'; }}
-          >
-            Use recovery code instead
-          </button>
-        )}
-        <button type="button" onClick={() => window.history.back()}
-          style={{
-            width: '100%',
-            height: '53px',
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '12px',
-            color: '#A1A1AA',
-            fontSize: '17px',
-            fontWeight: 600,
-            fontFamily: TYPOGRAPHY.fontFamily,
-            cursor: 'pointer',
-            transition: 'all 150ms ease',
+      <div className="mt-7 space-y-5">
+        <Segmented
+          value={loginWithBackup ? 'backup' : 'code'}
+          onChange={(next) => {
+            if (next === 'code') {
+              setLoginWithBackup(false);
+              setTwoFactorCode('');
+            } else {
+              setLoginWithBackup(true);
+              setBackupCode('');
+            }
           }}
-          onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#FAFAFA'; }}
-          onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#A1A1AA'; }}
+          options={[
+            { value: 'code', label: 'Authenticator app' },
+            { value: 'backup', label: 'Backup code' },
+          ]}
+        />
+
+        {!loginWithBackup && (
+          <OtpBoxes
+            label="Authenticator code"
+            value={twoFactorCode}
+            onChange={setTwoFactorCode}
+            error={Boolean(showCodeError)}
+          />
+        )}
+
+        {!loginWithBackup && showCodeError && (
+          <p role="alert" className="text-center text-[14px] text-danger">
+            {errors.twoFactorCode}
+          </p>
+        )}
+
+        {loginWithBackup && (
+          <Field
+            label="Backup code"
+            type="text"
+            value={backupCode}
+            onChange={(e) => setBackupCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+            onBlur={() => handleBlur('backupCode')}
+            maxLength={8}
+            error={showBackupError ? errors.backupCode : undefined}
+            hint="Codes are 8 characters, letters and numbers."
+          />
+        )}
+
+        <PrimaryButton
+          type="submit"
+          loading={isSubmitting}
+          disabled={
+            (!loginWithBackup && twoFactorCode.length !== 6) ||
+            (loginWithBackup && !backupCode)
+          }
         >
-          Back
-        </button>
+          Verify
+        </PrimaryButton>
+
+        <div className="flex flex-col items-center gap-3">
+          {!loginWithBackup && (
+            <TextButton onClick={() => setLoginWithBackup(true)}>
+              Use backup code instead
+            </TextButton>
+          )}
+          <TextButton onClick={onBack}>Back</TextButton>
+        </div>
       </div>
     </form>
   );

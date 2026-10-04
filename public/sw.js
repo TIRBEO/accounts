@@ -7,15 +7,13 @@
 // session and the push opt-in UI). Accounts no longer registers for push; the
 // app unregisters this worker + any legacy push subscriptions on boot, so the
 // worker only exists to let those cleanup paths run and then disappear.
-const CACHE_NAME = 'tirbeo-auth-v6';
+const CACHE_NAME = 'tirbeo-auth-v8';
 
 const PRECACHE = [
   '/index.html',
-  '/background.webp',
-  '/background-tab.webp',
-  '/background-mobile.webp',
   '/logo-opt.png',
   '/favicon-48.png',
+  '/background.jpg',
 ];
 
 self.addEventListener('install', (event) => {

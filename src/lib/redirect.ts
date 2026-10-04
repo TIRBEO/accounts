@@ -3,12 +3,12 @@ import type { BlockInfo } from './api';
 // ═══ POST-AUTH REDIRECT RESOLUTION ═══
 // Decides where to send the user after a successful auth flow:
 //   1. A validated `redirect`/`redirect_to`/`next`/`return_to` query param
-//      (only tirbeo.app subdomains or localhost are accepted — no open redirects).
+//      (only tirbeo.com subdomains or localhost are accepted — no open redirects).
 //   2. The `referrer` if it points at a verified Tirbeo app.
-//   3. The default dashboard (https://dashboard.tirbeo.app in prod,
+//   3. The default dashboard (https://dashboard.tirbeo.com in prod,
 //      http://localhost:3005 in dev).
 
-const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.app';
+const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.com';
 
 /** Localhost ports used by the monorepo apps during development. */
 const DEV_PORTS: Record<string, number> = {
@@ -34,13 +34,13 @@ export const DEFAULT_DASHBOARD_URL = getDashboardUrl();
 
 /**
  * True when the URL is a verified Tirbeo destination:
- * `https://tirbeo.app`, any `https://*.tirbeo.app` subdomain, or a localhost
+ * `https://tirbeo.com`, any `https://*.tirbeo.com` subdomain, or a localhost
  * origin during development.
  */
 export function isAllowedRedirectTarget(url: string): boolean {
   try {
     const u = new URL(url);
-    // Block URLs with embedded credentials (e.g. https://evil@dashboard.tirbeo.app)
+    // Block URLs with embedded credentials (e.g. https://evil@dashboard.tirbeo.com)
     if (u.username || u.password) return false;
     // Block non-http(s) schemes (javascript:, data:, etc.)
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
@@ -54,7 +54,7 @@ export function isAllowedRedirectTarget(url: string): boolean {
 }
 
 /**
- * Build a full URL from a bare app name like `forms` → `https://forms.tirbeo.app`.
+ * Build a full URL from a bare app name like `forms` → `https://forms.tirbeo.com`.
  * Localhost names are resolved against the dev port map.
  */
 function buildFromAppName(name: string): string | null {
@@ -71,6 +71,38 @@ function buildFromAppName(name: string): string | null {
 }
 
 const REDIRECT_PARAM_KEYS = ['redirect', 'redirect_to', 'next', 'return_to'] as const;
+
+/** Routes that only hand the user off — never a real destination. */
+const HANDOFF_PATHS = ['/oauth-complete', '/callback', '/oauth-callback', '/login', '/signup', '/magic-sent', '/verify'];
+
+/**
+ * A redirect target must never be a handoff screen (login, callback,
+ * oauth-complete…) carrying tokens or its own redirect_to — feeding one back
+ * into a new flow nests redirect_to inside redirect_to until the URL explodes.
+ * Unwrap the innermost real target instead (bounded depth), and when nothing
+ * valid is inside, collapse to the bare origin: strip rather than grow.
+ */
+export function unwrapHandoffTarget(raw: string, depth = 0): string {
+  if (depth > 3 || !raw.includes('://')) return raw;
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return raw;
+  }
+  const isHandoff = HANDOFF_PATHS.some((p) => u.pathname === p || u.pathname.startsWith(`${p}/`));
+  const carriesToken = u.searchParams.has('magic_token') || u.searchParams.has('signup') || u.searchParams.has('token');
+  if (!isHandoff && !carriesToken) return raw;
+
+  for (const key of REDIRECT_PARAM_KEYS) {
+    const inner = u.searchParams.get(key);
+    if (!inner) continue;
+    const abs = inner.includes('://') ? inner : `${u.origin}${inner.startsWith('/') ? '' : '/'}${inner}`;
+    if (isAllowedRedirectTarget(abs)) return unwrapHandoffTarget(abs, depth + 1);
+  }
+  // Nothing usable inside — drop the handoff entirely, keep the origin.
+  return u.origin;
+}
 
 /**
  * Resolve the post-auth destination from the current page URL.
@@ -90,7 +122,12 @@ export function getRedirectTarget(): string {
     if (!trimmed) continue;
 
     if (trimmed.includes('://')) {
-      if (isAllowedRedirectTarget(trimmed)) return trimmed;
+      if (isAllowedRedirectTarget(trimmed)) {
+        const clean = unwrapHandoffTarget(trimmed);
+        // A target that points back at this very handoff screen would re-enter
+        // the flow instead of finishing it — drop it and keep looking.
+        if (clean !== window.location.origin + window.location.pathname && isAllowedRedirectTarget(clean)) return clean;
+      }
       continue;
     }
 

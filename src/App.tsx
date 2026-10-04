@@ -7,6 +7,7 @@ import { SessionGate } from './components/auth/SessionGate';
 import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
+import { SecurityPage } from './components/auth/SecurityPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
 import { getCurrentUser, verifyMagicLink } from './lib/api';
@@ -15,6 +16,10 @@ import { subscribeToUser, disconnectRealtime } from './lib/realtime';
 
 const isCallbackPath = () => window.location.pathname.startsWith('/callback');
 const isMagicSentPath = () => window.location.pathname.startsWith('/magic-sent');
+// The security section manages passkeys, which needs a live session — so it must
+// not be one of the pages that bounces a signed-in visitor to the dashboard.
+const isSecurityPath = () => window.location.pathname.startsWith('/security');
+let bootRan = false;
 export type ToastType = 'success' | 'error' | 'info';
 const inferToastType = (msg: string): ToastType => {
   const m = msg.toLowerCase();
@@ -25,63 +30,18 @@ const inferToastType = (msg: string): ToastType => {
 const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={18} />, error: <AlertCircle size={18} />, info: <Info size={18} /> };
 
 /**
- * Background — one responsive image per device class via <picture>.
- * The browser downloads ONLY the variant matching the viewport
- * (desktop 84KB / tablet 80KB / mobile 60KB WebP) and re-evaluates the
- * media queries on resize. Previously all three 1.6–1.8MB PNGs were
- * downloaded on every device, which was the single biggest load-time cost.
+ * Tirbeo Accounts — minimal dark shell.
+ * Branding lives in AuthShell's centered wordmark; no top bar.
  */
-function Bg() {
-  return (
-    <>
-      <picture style={{ position: 'fixed', inset: 0, zIndex: 0, display: 'block' }} aria-hidden="true">
-        <source media="(min-width: 1024px)" srcSet="/background.webp" />
-        <source media="(min-width: 641px) and (max-width: 1023px)" srcSet="/background-tab.webp" />
-        <source media="(max-width: 640px)" srcSet="/background-mobile.webp" />
-        <img
-          src="/background-mobile.webp"
-          alt=""
-          fetchPriority="high"
-          decoding="async"
-          draggable={false}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', userSelect: 'none', pointerEvents: 'none' }}
-        />
-      </picture>
-      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.52) 100%)' }} />
-      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'radial-gradient(900px 600px at 50% 0%, rgba(0,149,246,0.10), transparent 70%)' }} />
-    </>
-  );
-}
-
-// Notifications moved to the dashboard app: the bell + web-push opt-in live
-// there (persistent session, settings page). Accounts stays a lean auth
-// surface — realtime (session revoked / notification toasts) still works via
-// Pusher Channels, but there is no push-registration UI here.
-function TopBar() {
-  return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: typeof window !== 'undefined' && window.innerWidth <= 640 ? '12px 17px' : '19px 29px', background: 'transparent', border: 'none', minHeight: '67px' }}>
-      <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-        <img
-          src="/logo-opt.png"
-          alt=""
-          width={432}
-          height={288}
-          decoding="async"
-          style={{ height: typeof window !== 'undefined' && window.innerWidth <= 640 ? '34px' : '43px', width: 'auto', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
-        />
-        <span style={{ fontSize: typeof window !== 'undefined' && window.innerWidth <= 640 ? '22px' : '26px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }} aria-hidden="false">Tirbeo</span>
-      </a>
-      <span style={{ fontSize: '16px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>Accounts</span>
-    </nav>
-  );
-}
 
 /** 'checking' → auth probe in flight · 'guest' → show auth UI · 'redirecting' → signed in, navigating away */
 type AuthState = 'checking' | 'guest' | 'redirecting';
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(() =>
-    isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
+    // Routes that manage their own auth state start as 'guest' so the boot
+    // loader never sits on top of them.
+    isCallbackPath() || isMagicSentPath() || isSecurityPath() ? 'guest' : 'checking',
   );
   const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
@@ -97,21 +57,18 @@ export default function App() {
 
   const notifyTabs = useCallback((type: 'login' | 'logout') => {
     try { localStorage.setItem('tirbeo_session', JSON.stringify({ type, ts: Date.now() })); } catch {}
-    try { new BroadcastChannel('tirbeo:session')?.postMessage({ type, ts: Date.now() }); } catch {}
+    try { new BroadcastChannel('tirbeo:session').postMessage({ type, ts: Date.now() }); } catch {}
   }, []);
 
   // ── Route-change loader (split screen) ──
   const [pageChanging, setPageChanging] = useState(false);
-  const [initialSplit, setInitialSplit] = useState(() =>
-    typeof window !== 'undefined' && (isCallbackPath() || isMagicSentPath()),
-  );
+  /* No artificial delay on entry. This used to hold a 700ms split-screen on
+     /magic-sent and /callback, so the screen that exists purely to say "we sent
+     it" showed a loading animation first — on a phone, half a second of
+     nothing before any content. The callback route genuinely waits on the token
+     exchange, but that wait belongs to the page, not to a loader laid over it. */
+  const [initialSplit] = useState(false);
   const pathRef = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
-  useEffect(() => {
-    if (initialSplit) {
-      const t = setTimeout(() => setInitialSplit(false), 700);
-      return () => clearTimeout(t);
-    }
-  }, [initialSplit]);
   useEffect(() => {
     // Wrap history mutations to detect SPA navigations instantly — no polling.
     const trigger = () => {
@@ -136,17 +93,24 @@ export default function App() {
   const showLoader = authState !== 'guest' || pageChanging || initialSplit;
 
   // ── Boot: magic-link exchange + session probe (runs once) ──
+  // Module-level guard: StrictMode's second effect pass must not re-read the
+  // URL (magic_token is stripped by the first pass) nor cancel its in-flight
+  // exchange — otherwise /login?magic_token= never signs in during dev.
   useEffect(() => {
-    if (isCallbackPath() || isMagicSentPath()) return;
-    let cancelled = false;
+    if (isCallbackPath() || isMagicSentPath() || isSecurityPath()) return;
+    if (bootRan) return;
+    bootRan = true;
     const init = async () => {
       const params = new URLSearchParams(window.location.search);
       const redirectTarget = getRedirectTarget();
       const magicToken = params.get('magic_token');
-      if (magicToken) {
+      if (isSecurityPath()) {
+      setAuthState('guest');
+      return;
+    }
+    if (magicToken) {
         window.history.replaceState({}, '', window.location.pathname);
         const result = await verifyMagicLink(magicToken);
-        if (cancelled) return;
         if (result.block) { redirectBlockedToDashboard(result.block); return; }
         if (result.ok) {
           setAuthState('redirecting');
@@ -158,7 +122,6 @@ export default function App() {
         showToast(result.error || 'This magic link is invalid or has expired.');
       }
       const session = await getCurrentUser();
-      if (cancelled) return;
       if (session.block) { redirectBlockedToDashboard(session.block); return; }
       if (session.ok && session.data) {
         lastIdRef.current = session.data.id;
@@ -170,7 +133,6 @@ export default function App() {
       setAuthState('guest');
     };
     init();
-    return () => { cancelled = true; };
   }, [showToast, notifyTabs]);
 
   // ── Cross-tab / cross-app session sync ──
@@ -281,7 +243,15 @@ export default function App() {
     <div role="region" aria-label="Notifications" aria-live="polite" aria-atomic="true">
       <AnimatePresence>
         {toast && (
-          <motion.div key={toast.msg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="tb-toast" role="status">
+          <motion.div
+            key={toast.msg}
+            initial={{ opacity: 0, y: 10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className={`tb-toast tb-toast--${toast.type}`}
+            role="status"
+          >
             <span aria-hidden="true">{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span>
           </motion.div>
         )}
@@ -289,37 +259,34 @@ export default function App() {
     </div>
   );
 
-  const page = (content: ReactNode, maxWidth: string, topPad: string) => (
-    <div style={{ position: 'relative', minHeight: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <Bg /><TopBar />
+  const page = (content: ReactNode) => (
+    <div className="relative min-h-dvh bg-bg">
+      <div aria-hidden="true" className="sf-bg" />
       <RealtimeBanner />
       <SplitLoader active={showLoader} />
-      <main id="main-content" className="app-page-pad" style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: topPad, minHeight: 0, overflowY: 'hidden', overflowX: 'hidden' }}>
-        <div style={{ width: '100%', maxWidth: 'min(' + maxWidth + ', 100vw - 32px)', height: 'auto' }}>{content}</div>
+      <main id="main-content" className="relative z-10 min-h-dvh">
+        {content}
       </main>
       <TermsModal isOpen={!!modalType} type={modalType} onClose={() => setModalType(null)} />
       {toastNode}
     </div>
   );
 
-  const topPad = typeof window !== 'undefined' && window.innerWidth <= 640 ? '77px 14px 24px' : '86px 22px 29px';
-  const callbackMaxWidth = typeof window !== 'undefined' && window.innerWidth <= 640 ? '760px' : '760px';
-
   // Wrap in MotionConfig so every animation respects prefers-reduced-motion.
   return (
     <MotionConfig reducedMotion="user">
       {isCallbackPath()
-        ? page(<CallbackView onToast={showToast} />, callbackMaxWidth, topPad)
+        ? page(<CallbackView onToast={showToast} />)
         : isMagicSentPath()
-          ? page(<MagicLinkSentPage />, callbackMaxWidth, topPad)
-          : page(
-              <SessionGate>
+          ? page(<MagicLinkSentPage />)
+          : isSecurityPath()
+            ? page(<SecurityPage onShowToast={showToast} />)
+            : page(
+              <SessionGate onShowToast={showToast}>
                 <Suspense fallback={null}>
                   <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />
                 </Suspense>
               </SessionGate>,
-              '600px',
-              topPad,
             )}
     </MotionConfig>
   );
