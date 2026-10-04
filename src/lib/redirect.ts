@@ -21,7 +21,22 @@ const DEV_PORTS: Record<string, number> = {
   cdn: 4400,
 };
 
+/**
+ * The Tirbeo parent domain (tirbeo.com / tirbeo.app) the visitor is currently
+ * on, read from the live host. Null off those domains (localhost, preview
+ * URLs). Deriving from the host — rather than a build-time env var — means a
+ * *.tirbeo.app visit stays on tirbeo.app and no localhost origin can ever be
+ * baked into a production bundle by a dirty .env.local.
+ */
+function currentTirbeoParent(): string | null {
+  if (typeof window === 'undefined') return null;
+  const m = window.location.hostname.match(/(?:^|\.)(tirbeo\.(?:com|app))$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
 function getDashboardUrl(): string {
+  const parent = currentTirbeoParent();
+  if (parent) return `${window.location.protocol}//dashboard.${parent}`;
   const fromEnv =
     (import.meta.env.VITE_DASHBOARD_URL as string | undefined) ||
     (import.meta.env.NEXT_PUBLIC_DASHBOARD_URL as string | undefined);
@@ -46,7 +61,9 @@ export function isAllowedRedirectTarget(url: string): boolean {
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
     const isLocal = import.meta.env.DEV && (u.hostname === 'localhost' || u.hostname === '127.0.0.1');
     if (!isLocal && u.protocol !== 'https:') return false;
-    if (u.hostname === APP_DOMAIN || u.hostname.endsWith(`.${APP_DOMAIN}`)) return true;
+    const parent = currentTirbeoParent();
+    const onLiveParent = parent !== null && (u.hostname === parent || u.hostname.endsWith(`.${parent}`));
+    if (u.hostname === APP_DOMAIN || u.hostname.endsWith(`.${APP_DOMAIN}`) || onLiveParent) return true;
     return isLocal;
   } catch {
     return false;
@@ -59,13 +76,16 @@ export function isAllowedRedirectTarget(url: string): boolean {
  */
 function buildFromAppName(name: string): string | null {
   const host = name.startsWith('.') ? name.slice(1) : name;
-  if (host === APP_DOMAIN || host.endsWith(`.${APP_DOMAIN}`)) {
-    return import.meta.env.DEV && DEV_PORTS[host.split('.')[0]]
-      ? `http://localhost:${DEV_PORTS[host.split('.')[0]]}`
-      : `https://${host}`;
+  const parent = currentTirbeoParent();
+  const matches = (d: string | null) => d !== null && (host === d || host.endsWith(`.${d}`));
+  if (matches(APP_DOMAIN) || matches(parent)) {
+    const devPort = import.meta.env.DEV ? DEV_PORTS[host.split('.')[0]] : undefined;
+    return devPort ? `http://localhost:${devPort}` : `https://${host}`;
   }
   if (host === 'localhost' || host === '127.0.0.1') {
-    return `http://localhost:${DEV_PORTS.dashboard}`;
+    // Localhost names only resolve in development; a production request for a
+    // localhost target is dropped (null) rather than answered with a loopback URL.
+    return import.meta.env.DEV ? `http://localhost:${DEV_PORTS.dashboard}` : null;
   }
   return null;
 }
