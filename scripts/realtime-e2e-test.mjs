@@ -6,18 +6,14 @@
 import crypto from 'node:crypto';
 import Pusher from 'pusher-js';
 
+import { pusherApps } from './load-env.mjs';
+
 // Node needs WebSocket + xhr polyfills for pusher-js
 import WebSocket from 'ws';
 global.WebSocket = WebSocket;
 global.XMLHttpRequest = undefined; // force ws runtime
 
-const APPS = [
-  ['primary',   '2194260', '95ec31012edaf673af92', '711d557d78dfd4a1c683', 'mt1'],
-  ['secondary', '2194261', 'c6716f35ee695ef14918', '49c69b21e974b6516523', 'mt1'],
-  ['tertiary',  '2194265', '439f77585f04cd6a3025', '192bd0ea5cd8bd3c1021', 'mt1'],
-  ['ap2',       '2194266', '0dc7b602fa2883797f86', '5d9f7eab35e7ce039e14', 'ap2'],
-  ['ap4',       '2194271', '30d7c6e7fe9433069371', 'b3f18e23761cf00bc0df', 'ap4'],
-];
+const APPS = pusherApps();
 
 function signedUrl(appId, cluster, key, secret, body) {
   const md5 = crypto.createHash('md5').update(body).digest('hex');

@@ -14,8 +14,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import crypto from 'node:crypto';
 
-const INSTANCE_ID = '869b3b95-386f-4984-ae8c-9b9735966bc8';
-const PRIMARY_KEY = '85F7D0792E5011EF4D66BB85BC1C7B152DADEE7D7DBDAC3CB4AEEEA8361CC4E0';
+import { beams } from './load-env.mjs';
+
+const { instanceId: INSTANCE_ID, primaryKey: PRIMARY_KEY } = beams();
 const BASE = 'http://127.0.0.1:4176';
 const PROFILE = mkdtempSync(join(tmpdir(), 'tirbeo-e2e-profile-'));
 const MARK = `E2E-${crypto.randomBytes(4).toString('hex')}`;
