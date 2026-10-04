@@ -4,7 +4,7 @@
   "env": {
     "VITE_API_URL": "https://api.tirbeo.com",
     "NEXT_PUBLIC_API_URL": "https://api.tirbeo.com",
-    "VITE_DASHBOARD_URL": "https://dashboard.tirbeo.com",
+    "VITE_DASHBOARD_URL": "https://myprofile.tirbeo.com",
     "VITE_PUSHER_KEY_PRIMARY": "95ec31012edaf673af92",
     "VITE_PUSHER_CLUSTER_PRIMARY": "mt1",
     "VITE_PUSHER_KEY_SECONDARY": "c6716f35ee695ef14918",

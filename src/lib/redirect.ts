@@ -5,7 +5,7 @@ import type { BlockInfo } from './api';
 //   1. A validated `redirect`/`redirect_to`/`next`/`return_to` query param
 //      (only tirbeo.com subdomains or localhost are accepted — no open redirects).
 //   2. The `referrer` if it points at a verified Tirbeo app.
-//   3. The default dashboard (https://dashboard.tirbeo.com in prod,
+//   3. The default dashboard (https://myprofile.tirbeo.com in prod,
 //      http://localhost:3005 in dev).
 
 const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.com';
@@ -36,12 +36,12 @@ function currentTirbeoParent(): string | null {
 
 function getDashboardUrl(): string {
   const parent = currentTirbeoParent();
-  if (parent) return `${window.location.protocol}//dashboard.${parent}`;
+  if (parent) return `${window.location.protocol}//myprofile.${parent}`;
   const fromEnv =
     (import.meta.env.VITE_DASHBOARD_URL as string | undefined) ||
     (import.meta.env.NEXT_PUBLIC_DASHBOARD_URL as string | undefined);
   if (fromEnv) return fromEnv.replace(/\/$/, '');
-  return import.meta.env.DEV ? 'http://localhost:3005' : `https://dashboard.${APP_DOMAIN}`;
+  return import.meta.env.DEV ? 'http://localhost:3005' : `https://myprofile.${APP_DOMAIN}`;
 }
 
 /** Default destination after auth. */
@@ -55,7 +55,7 @@ export const DEFAULT_DASHBOARD_URL = getDashboardUrl();
 export function isAllowedRedirectTarget(url: string): boolean {
   try {
     const u = new URL(url);
-    // Block URLs with embedded credentials (e.g. https://evil@dashboard.tirbeo.com)
+    // Block URLs with embedded credentials (e.g. https://evil@myprofile.tirbeo.com)
     if (u.username || u.password) return false;
     // Block non-http(s) schemes (javascript:, data:, etc.)
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
