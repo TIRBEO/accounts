@@ -103,3 +103,31 @@ not an app defect.
 `pusher-js` (62KB) is a lazy chunk loaded on first realtime use only; the
 eager bundle grew ~5KB (banner + subscription wiring). Beams and the push UI
 were removed entirely — no `@pusher/push-notifications-web` dependency.
+
+## Credentials
+
+Every live coordinate for these two services is an environment variable, and
+nothing but the app ids, keys, clusters and the Beams instance id belongs in a
+tracked file. `scripts/load-env.mjs` reads `.env.local` and hands each one back
+or stops the run naming it; the full list with no values is `.env.example`.
+
+The api service reads the same six secrets at runtime — the five
+`PUSHER_SECRET_*` and `BEAMS_PRIMARY_KEY` — from its own `.env.example` and from
+the Vercel project's environment variables. **They must be set there.** They are
+deliberately absent from `vercel.json`: a value like `@some_secret` there is a
+reference to Vercel's secret store, not a value, and a reference to a secret the
+project does not have stops the build outright.
+
+### Rotation
+
+Rotate a Pusher channel secret from the app's dashboard (Settings → keys) and
+the Beams primary key from the Beams dashboard, then write the new value in
+every place it is read: this app's `.env.local`, the api service's `.env.local`,
+and the environment variables on each Vercel project. `vercel.json` is not one
+of those places.
+
+Until this is done, treat all five channel secrets and the Beams key as
+compromised: they were committed in plaintext in `scripts/pusher-smoke-test.mjs`,
+`scripts/realtime-e2e-test.mjs` and `scripts/browser-push-test.mjs` before
+`e0152d8` moved them to the environment, and git history still holds them.
+Removing them from HEAD stops the next commit; only rotation ends the exposure.
