@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { checkEmailExists, checkUsernameExists, requestSignupOtp } from '../../lib/api';
+import { checkEmailExists, checkUsernameExists, requestSignupOtp, API_BASE_URL } from '../../lib/api';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
 import { workFieldMeta } from '../../lib/profile-fields';
@@ -110,7 +110,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   const fetchLimits = useCallback(async (forceInit = false) => {
     try {
-      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
+      const base = API_BASE_URL;
       if (forceInit) {
         await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, {
           method: 'POST',
@@ -148,7 +148,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const syncFromDb = useCallback(async () => {
     if (!email || !email.includes('@')) return;
     try {
-      const base = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
+      const base = API_BASE_URL;
       const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/remaining?email=${encodeURIComponent(email)}`, { credentials: 'include' });
       if (!res.ok) return;
       const data: any = await res.json();

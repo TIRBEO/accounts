@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCurrentUser, refreshSession, type CurrentUserData } from '../lib/api';
-
-const configuredApiUrl =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined);
-
-const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
+import { getCurrentUser, refreshSession, API_BASE_URL, type CurrentUserData } from '../lib/api';
 
 const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates the session before the 15-min access token expires
 const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange often fire together; coalesce them

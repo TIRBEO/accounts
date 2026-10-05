@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Mail, ArrowLeft } from 'lucide-react';
-import { requestMagicLink } from '../../lib/api';
+import { requestMagicLink, API_BASE_URL } from '../../lib/api';
 import { AuthShell, Field, PrimaryButton, TextButton } from '../ui/ig-ui';
 import { validateEmail } from '../../lib/validations';
 
@@ -32,7 +32,7 @@ export const MagicLinkSentPage: React.FC = () => {
   const fetchRemaining = useCallback(async () => {
     if (!email) return;
     try {
-      const base = (import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com')).replace(/\/$/, '');
+      const base = API_BASE_URL;
       const res = await fetch(`${base}/api/auth/remaining?email=${encodeURIComponent(email)}&method=magic-link`, { credentials: 'include' });
       if (res.ok) {
         const d: any = await res.json();

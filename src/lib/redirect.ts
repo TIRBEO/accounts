@@ -8,7 +8,12 @@ import type { BlockInfo } from './api';
 //   3. The default dashboard (https://myprofile.tirbeo.com in prod,
 //      http://localhost:3005 in dev).
 
-const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.com';
+const APP_DOMAIN = (() => {
+  const raw = (import.meta.env.VITE_APP_DOMAIN as string | undefined) || 'tirbeo.com';
+  // A dirty .env.local baked into a prod build must not retarget the whole
+  // redirect allow-list (and default dashboard) at loopback.
+  return !import.meta.env.DEV && /localhost|127\.0\.0\.1/.test(raw) ? 'tirbeo.com' : raw;
+})();
 
 /** Localhost ports used by the monorepo apps during development. */
 const DEV_PORTS: Record<string, number> = {
@@ -40,7 +45,7 @@ function getDashboardUrl(): string {
   const fromEnv =
     (import.meta.env.VITE_DASHBOARD_URL as string | undefined) ||
     (import.meta.env.NEXT_PUBLIC_DASHBOARD_URL as string | undefined);
-  if (fromEnv) return fromEnv.replace(/\/$/, '');
+  if (fromEnv && (import.meta.env.DEV || !/localhost|127\.0\.0\.1/.test(fromEnv))) return fromEnv.replace(/\/$/, '');
   return import.meta.env.DEV ? 'http://localhost:3005' : `https://myprofile.${APP_DOMAIN}`;
 }
 

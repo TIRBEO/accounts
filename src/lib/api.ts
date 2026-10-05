@@ -9,9 +9,14 @@
 
 // Vite exposes VITE_* vars; NEXT_PUBLIC_* is read too so the existing
 // .env.local keys work without changes.
+// A prod build (vite build) with a dirty .env.local would otherwise bake
+// http://localhost:... into the bundle and every redirect would follow it.
+const dropLoopbackInProd = (v?: string) =>
+  v && !import.meta.env.DEV && /localhost|127\.0\.0\.1/.test(v) ? undefined : v;
+
 const configuredApiUrl =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined);
+  dropLoopbackInProd(import.meta.env.VITE_API_URL as string | undefined) ||
+  dropLoopbackInProd(import.meta.env.NEXT_PUBLIC_API_URL as string | undefined);
 
 // Exported for realtime.ts (Pusher channel auth endpoint on the same origin)
 export const API_BASE_URL = configuredApiUrl?.replace(/\/$/, '') ||

@@ -1,11 +1,9 @@
 import { getRedirectTarget } from './redirect';
+import { API_BASE_URL } from './api';
 
 export type OAuthProvider = 'github' | 'google' | 'discord';
 
-const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  (import.meta.env.NEXT_PUBLIC_API_URL as string | undefined) ||
-  (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.tirbeo.com');
+const API_URL = API_BASE_URL;
 
 export function startOAuth(provider: OAuthProvider): void {
   const url = new URL(`${API_URL}/auth/${provider}`);
