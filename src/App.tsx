@@ -10,12 +10,49 @@ import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SecurityPage } from './components/auth/SecurityPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
-import { getCurrentUser, verifyMagicLink } from './lib/api';
+import { getCurrentUser, verifyMagicLink, apiPost } from './lib/api';
 import { getRedirectTarget, redirectBlockedToDashboard } from './lib/redirect';
 import { subscribeToUser, disconnectRealtime } from './lib/realtime';
 
 const isCallbackPath = () => window.location.pathname.startsWith('/callback');
 const isMagicSentPath = () => window.location.pathname.startsWith('/magic-sent');
+
+/* ── "Already have an account? sign in and link" handoff ──
+   The dashboard's OAuth create-screen sends people here with link_token when
+   the provider email/identity already belongs to an account. Whatever login
+   path finishes (password, OTP, magic link, passkey, or an already-live
+   session), the token gets attached exactly once before navigating away. */
+let linkTokenAtBoot: string | null | undefined;
+function takeLinkToken(): string | null {
+  if (linkTokenAtBoot !== undefined) return linkTokenAtBoot;
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('link_token');
+  linkTokenAtBoot = token || null;
+  if (token) {
+    params.delete('link_token');
+    const q = params.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${q ? `?${q}` : ''}${window.location.hash}`);
+  }
+  return linkTokenAtBoot;
+}
+let linkAttachInFlight: Promise<string | null> | null = null;
+async function attachLinkToken(showToast: (msg: string, type?: 'success' | 'error' | 'info') => void): Promise<string | null> {
+  const token = takeLinkToken();
+  if (!token) return null;
+  if (!linkAttachInFlight) {
+    linkAttachInFlight = apiPost<{ ok?: boolean; redirect_to?: string }>('/api/auth/oauth/attach', { token })
+      .then((res) => {
+        if (!res.ok) {
+          showToast(res.error || 'Could not link that sign-in. You can connect it later from Connected apps.', 'error');
+          return null;
+        }
+        showToast('Provider connected to your account', 'success');
+        return res.data?.redirect_to || null;
+      })
+      .finally(() => { linkTokenAtBoot = null; });
+  }
+  return linkAttachInFlight;
+}
 // The security section manages passkeys, which needs a live session — so it must
 // not be one of the pages that bounces a signed-in visitor to the dashboard.
 const isSecurityPath = () => window.location.pathname.startsWith('/security');
@@ -116,7 +153,8 @@ export default function App() {
           setAuthState('redirecting');
           showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`);
           notifyTabs('login');
-          setTimeout(() => { window.location.href = redirectTarget; }, 800);
+          const linked = await attachLinkToken(showToast);
+          setTimeout(() => { window.location.href = linked || redirectTarget; }, 800);
           return;
         }
         showToast(result.error || 'This magic link is invalid or has expired.');
@@ -127,7 +165,8 @@ export default function App() {
         lastIdRef.current = session.data.id;
         setUserId(session.data.id);
         setAuthState('redirecting');
-        window.location.href = redirectTarget;
+        const linked = await attachLinkToken(showToast);
+        window.location.href = linked || redirectTarget;
         return;
       }
       setAuthState('guest');
@@ -155,7 +194,7 @@ export default function App() {
           lastIdRef.current = newId;
           if (authStateRef.current !== 'redirecting') {
             setAuthState('redirecting');
-            window.location.href = getRedirectTarget();
+            attachLinkToken(showToast).then((linked) => { window.location.href = linked || getRedirectTarget(); });
           }
         } else if (!authed && lastIdRef.current) {
           // Signed out elsewhere — drop back to the auth form without a reload.
@@ -200,7 +239,10 @@ export default function App() {
     showToast(provider === 'Email Registration' ? 'Account created — welcome to Tirbeo' : `Signed in as ${email}`);
     notifyTabs('login');
     setAuthState('redirecting');
-    setTimeout(() => { window.location.href = getRedirectTarget(); }, 600);
+    setTimeout(async () => {
+      const linked = await attachLinkToken(showToast);
+      window.location.href = linked || getRedirectTarget();
+    }, 600);
   }, [showToast, notifyTabs]);
 
   // ── Realtime (Pusher Channels) ──
