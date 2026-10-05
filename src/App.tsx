@@ -7,7 +7,6 @@ import { SessionGate } from './components/auth/SessionGate';
 import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
-import { SecurityPage } from './components/auth/SecurityPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
 import { getCurrentUser, verifyMagicLink, apiPost } from './lib/api';
@@ -53,9 +52,6 @@ async function attachLinkToken(showToast: (msg: string, type?: 'success' | 'erro
   }
   return linkAttachInFlight;
 }
-// The security section manages passkeys, which needs a live session — so it must
-// not be one of the pages that bounces a signed-in visitor to the dashboard.
-const isSecurityPath = () => window.location.pathname.startsWith('/security');
 let bootRan = false;
 export type ToastType = 'success' | 'error' | 'info';
 const inferToastType = (msg: string): ToastType => {
@@ -78,7 +74,7 @@ export default function App() {
   const [authState, setAuthState] = useState<AuthState>(() =>
     // Routes that manage their own auth state start as 'guest' so the boot
     // loader never sits on top of them.
-    isCallbackPath() || isMagicSentPath() || isSecurityPath() ? 'guest' : 'checking',
+    isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
   );
   const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
@@ -134,18 +130,14 @@ export default function App() {
   // URL (magic_token is stripped by the first pass) nor cancel its in-flight
   // exchange — otherwise /login?magic_token= never signs in during dev.
   useEffect(() => {
-    if (isCallbackPath() || isMagicSentPath() || isSecurityPath()) return;
+    if (isCallbackPath() || isMagicSentPath()) return;
     if (bootRan) return;
     bootRan = true;
     const init = async () => {
       const params = new URLSearchParams(window.location.search);
       const redirectTarget = getRedirectTarget();
       const magicToken = params.get('magic_token');
-      if (isSecurityPath()) {
-      setAuthState('guest');
-      return;
-    }
-    if (magicToken) {
+      if (magicToken) {
         window.history.replaceState({}, '', window.location.pathname);
         const result = await verifyMagicLink(magicToken);
         if (result.block) { redirectBlockedToDashboard(result.block); return; }
@@ -321,9 +313,7 @@ export default function App() {
         ? page(<CallbackView onToast={showToast} />)
         : isMagicSentPath()
           ? page(<MagicLinkSentPage />)
-          : isSecurityPath()
-            ? page(<SecurityPage onShowToast={showToast} />)
-            : page(
+          : page(
               <SessionGate onShowToast={showToast}>
                 <Suspense fallback={null}>
                   <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />

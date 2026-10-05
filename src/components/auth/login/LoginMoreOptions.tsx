@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HelpCircle, KeyRound, Link2, LifeBuoy, Mail } from 'lucide-react';
+import { HelpCircle, Link2, LifeBuoy, Mail } from 'lucide-react';
 import { IdentityCard, Group, Row, TextButton } from '../../ui/ig-ui';
 
 interface LoginMoreOptionsProps {
@@ -138,15 +138,6 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
             <OptionRow key={opt.id} option={opt} />
           ))}
         </Group>
-
-        <a
-          href="/security"
-          className="flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.03] px-3.5 py-3 text-[14px] font-semibold text-white/70 transition-colors hover:border-white/25 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:border-white"
-        >
-          <KeyRound size={17} className="shrink-0 text-white/40" aria-hidden />
-          Security &amp; passkeys
-          <span className="ml-auto text-[13px] font-medium text-white/35">Manage</span>
-        </a>
 
         <div className="text-center">
           <TextButton onClick={onBack}>Back to sign in</TextButton>
