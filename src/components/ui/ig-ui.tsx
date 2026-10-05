@@ -79,7 +79,7 @@ const BUTTON_SIZE: Record<ButtonSize, string> = {
   lg: 'h-[52px] px-6 text-[15px]',
 };
 
-/** Primary — the one place a filled plate is used: the gray ramp, never colour. */
+/** Primary — the one place the brand blue is allowed to be a fill. */
 export function PrimaryButton({
   children,
   loading = false,
@@ -470,7 +470,7 @@ export function OtpBoxes({
 /**
  * Signup step rail.
  *
- * Four soft pills: done and current are bright white, future ones are a faint outline.
+ * Four soft pills: done and current are blue, future ones are a faint outline.
  * The current pill also carries a glow, so "where am I" is answered by the
  * shape of the bar itself rather than by reading the caption. Finished steps
  * are buttons — going back one or two steps should not cost four taps.
@@ -921,7 +921,7 @@ export function BrandMark({
 
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <img src="/logo-opt.png" alt="" decoding="async" className={cn('w-auto object-contain grayscale brightness-125', glyph)} />
+      <img src="/logo-opt.png" alt="" decoding="async" className={cn('w-auto object-contain', glyph)} />
       <span
         className={cn(
           'font-semibold tracking-[-0.035em] text-white',
@@ -959,7 +959,7 @@ export function AuthShell({
     <div className="relative flex min-h-dvh w-full flex-col items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
       <div
         className={cn(
-          'animate-fade-in relative w-full rounded-3xl border border-white/[0.12] bg-[var(--card)] p-6 sm:p-8',
+          'animate-fade-in relative w-full rounded-3xl border border-white/[0.09] bg-black/75 p-6 sm:p-8',
           // Blurred glass: the photograph behind tints the plate but never
           // washes it out, and the faint top highlight is the only lit edge.
           // On phones the photograph is switched off, so the 40px backdrop blur

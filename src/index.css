@@ -3,22 +3,23 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Tirbeo Accounts — design system
 
-   The direction is gray. A near-black canvas washed with silver nebula
-   streaks, one dark rounded plate holding the form, hairline controls, and
-   type small enough that the viewport feels much larger than the form
-   sitting in it. No colour is allowed to compete with the gray.
+   The direction is quiet. Nothing is a card, nothing is a pill, nothing
+   shouts. An almost-black canvas, one barely-there circular glow behind the
+   work, hairline inputs, and type small enough that the viewport feels much
+   larger than the form sitting in it.
 
    Three rules hold it together:
-   1. Everything is gray. Fills, lines, and the primary action share one
-      silver-on-charcoal ramp; state colours exist only for state.
-   2. One accent, used only for focus. Colour never becomes a fill.
+   1. No chrome. Fields are a line and a value. Panels are a hairline.
+   2. One accent, used only for focus. Brand blue never becomes a fill.
    3. The form is narrow — 300px — so the space around it does the talking.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Canvas ── */
-  --bg: #08080b;
-  --card: rgba(14, 14, 17, 0.82);
+  /* ── Canvas ──
+     The page is the photograph, not a black plate — --bg only paints the
+     one frame before the backdrop image decodes. */
+  --bg: #101014;
+  --card: rgba(18, 18, 21, 0.72);
 
   /* ── Text ──
      The brief asks for very low alphas. These are held just above the floor
@@ -62,21 +63,21 @@
   --track: rgba(255, 255, 255, 0.14);
 
   /* ── Accent ──
-     Focus only. Nothing is filled with colour — it draws the ring and the
-     caret's halo. */
+     Focus only. The brief is explicit that blue must not dominate, so nothing
+     is filled with it — it draws the ring and the caret's halo. */
   --accent: #ffffff;
-  /* Action gray. The primary button in the gray UI is a dark silver plate,
-   * not a coloured one: charcoal slightly lifted off the card, a hairline,
-   * and white type. Hover/press step lighter rather than darker so the
-   * button only ever gains presence under the pointer. */
-  --ig: #232329;
-  --ig-hover: #2c2c34;
-  --ig-press: #34343d;
-  --accent-2: #232329;
-  --accent-2-hover: #2c2c34;
-  --accent-2-press: #34343d;
+  /* Action blue. Instagram's #0095f6 fails AA behind 13px white labels
+     (3.17:1); one step down the same ramp clears it at 5.74:1 while still
+     reading as the brand blue. Hover/press step darker rather than lighter so
+     contrast only ever improves under the pointer. */
+  --ig: #0064c8;
+  --ig-hover: #0058b3;
+  --ig-press: #004f9e;
+  --accent-2: #0064c8;
+  --accent-2-hover: #0058b3;
+  --accent-2-press: #004f9e;
   --accent-soft: rgba(255, 255, 255, 0.14);
-  --accent-fg: #f2f2f5;
+  --accent-fg: #ffffff;
 
   /* ── State ── */
   --danger: #ff7a7a;
@@ -405,9 +406,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Backdrop — near-black, washed with silver nebula streaks
-   Pure gradients, no image: the mist costs nothing to decode and can stay
-   switched on at every width.
+   Backdrop — near-black, with one enormous, barely-there glow
    ═══════════════════════════════════════════════════════════════════════ */
 .sf-bg {
   position: fixed;
@@ -416,44 +415,53 @@ input[type='number']::-webkit-inner-spin-button {
   pointer-events: none;
   background: var(--bg);
 }
-/* The nebula: broad soft sweeps of silver dragged diagonally across the
-   black, brightest in a band behind the card and thinning toward the edges. */
+/* The photograph is the aesthetic. Dimmed enough that 16px white text on top
+   still clears contrast, saturated enough to still read as a photo. */
 .sf-bg::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(70% 42% at 50% 38%, rgba(214, 218, 228, 0.16) 0%, rgba(214, 218, 228, 0) 70%),
-    radial-gradient(55% 34% at 21% 24%, rgba(188, 194, 206, 0.13) 0%, rgba(188, 194, 206, 0) 72%),
-    radial-gradient(60% 36% at 80% 62%, rgba(176, 182, 195, 0.11) 0%, rgba(176, 182, 195, 0) 70%),
-    radial-gradient(90% 30% at 50% 82%, rgba(160, 166, 180, 0.09) 0%, rgba(160, 166, 180, 0) 75%),
-    linear-gradient(155deg, rgba(222, 226, 235, 0.10) 0%, rgba(222, 226, 235, 0) 34%),
-    linear-gradient(335deg, rgba(200, 205, 216, 0.08) 8%, rgba(200, 205, 216, 0) 42%);
+  background: url('/background.jpg') center / cover no-repeat;
+  opacity: 1;
+  filter: saturate(1.12) brightness(0.94);
 }
-/* A whisper of vignette so the streaks sink at the corners and the plate in
-   the middle stays the brightest thing on screen. */
+/* A whisper of vignette and a faint top-light. The photo keeps its own colour
+   — the glass plate, not a black scrim, is what makes the type legible. */
 .sf-bg::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
     radial-gradient(
-      circle 820px at 50% 42%,
-      rgba(255, 255, 255, 0.04) 0%,
+      circle 760px at 50% 40%,
+      rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.42) 100%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.32) 100%);
+}
+/* Phones get the form and nothing else. A cover-fit photograph behind a
+   full-bleed card on a 390px screen contributes no atmosphere — it is a
+   compressed sliver at the edges that also costs a full-viewport image
+   download before anything is readable. Drop it and let the flat base colour
+   carry the surface; the card keeps its border and shadow so it still reads as
+   a raised object rather than text on a void. */
+@media (max-width: 640px) {
+  .sf-bg::before,
+  .sf-bg::after {
+    display: none;
+  }
+  .grain {
+    display: none;
+  }
 }
 
-/* Film grain — heavier here than a photo backdrop would allow: the grain is
-   what makes the gradient mist read as silver haze rather than as flat
-   gradients. */
+/* Film grain — 3%, above the backdrop, below the UI, never interactive. */
 .grain {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
   background-size: 160px 160px;
 }
@@ -519,8 +527,8 @@ input[type='number']::-webkit-inner-spin-button {
   border: 1px solid var(--border);
   border-radius: 9999px;
   /* The toast floats over the photograph, so it needs its own plate. Without
-     one the label sat directly on the backdrop and bottomed out wherever the
-     mist happened to be bright. */
+     one the label sat directly on the backdrop and bottomed out at 3.78:1
+     wherever the photo happened to be bright. */
   background: rgba(0, 0, 0, 0.78);
   box-shadow: var(--shadow-pop);
   backdrop-filter: blur(18px) saturate(140%);

@@ -26,7 +26,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Theme Color -->
-    <meta name="theme-color" content="#08080b" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#0f0f11" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f0f0f2" media="(prefers-color-scheme: light)">
 
     <!-- API preconnect: session check fires on load — warm the connection -->
@@ -41,6 +41,9 @@
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     </noscript>
+
+    <!-- Full-bleed auth backdrop — start the fetch before React mounts -->
+    <link rel="preload" as="image" href="/background.jpg" fetchpriority="high" />
 
     <script type="module" src="/src/main.tsx"></script>
   </head>
