@@ -26,6 +26,10 @@ interface SignupStep4Props {
   step4Complete: boolean;
   onOpenLegalModal: (type: 'terms' | 'privacy') => void;
   onSubmit: (e: React.FormEvent) => void;
+  /** Cloudflare Turnstile widget, or null when no challenge is pending. */
+  captcha?: React.ReactNode;
+  /** A challenge is pending and hasn't been solved yet — block submit. */
+  captchaPending?: boolean;
 }
 
 function getPasswordStrength(password: string): number {
@@ -63,7 +67,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
   email, password, setPassword, confirmPassword, setConfirmPassword,
   showPassword, setShowPassword, showConfirm, setShowConfirm, consentTerms, setConsentTerms,
   consentPrivacy, setConsentPrivacy, errors, touched, handleBlur,
-  setErrors, isSubmitting, step4Complete, onOpenLegalModal, onSubmit,
+  setErrors, isSubmitting, step4Complete, onOpenLegalModal, onSubmit, captcha, captchaPending,
 }) => {
   const showPasswordError = touched.password && errors.password;
   const showConfirmError = touched.confirmPassword && errors.confirmPassword;
@@ -152,7 +156,13 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
         )}
       </div>
 
-      <PrimaryButton type="submit" disabled={!step4Complete} loading={isSubmitting}>
+      {captcha}
+
+      <PrimaryButton
+        type="submit"
+        disabled={!step4Complete || captchaPending}
+        loading={isSubmitting}
+      >
         {isSubmitting ? 'Creating account...' : 'Sign up'}
       </PrimaryButton>
     </form>

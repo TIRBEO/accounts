@@ -19,12 +19,16 @@ interface LoginPasswordProps {
   onSwitchAccount: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onMoreOptions: () => void;
+  /** Cloudflare Turnstile widget, or null when no challenge is pending. */
+  captcha?: React.ReactNode;
+  /** A challenge is pending and hasn't been solved yet — block submit. */
+  captchaPending?: boolean;
 }
 
 export const LoginPassword: React.FC<LoginPasswordProps> = ({
   email, password, setPassword, showPassword, setShowPassword,
   errors, touched, handleBlur, loginProfile, isSubmitting,
-  onSwitchAccount, onSubmit, onMoreOptions,
+  onSwitchAccount, onSubmit, onMoreOptions, captcha, captchaPending,
 }) => {
   const showPasswordError = touched.password && errors.password;
   const photoUrl = loginProfile?.photoUrl;
@@ -53,7 +57,13 @@ export const LoginPassword: React.FC<LoginPasswordProps> = ({
           error={showPasswordError ? errors.password : undefined}
         />
 
-        <PrimaryButton type="submit" loading={isSubmitting} disabled={!password}>
+        {captcha}
+
+        <PrimaryButton
+          type="submit"
+          loading={isSubmitting}
+          disabled={!password || captchaPending}
+        >
           Log in
         </PrimaryButton>
 

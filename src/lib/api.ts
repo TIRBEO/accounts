@@ -29,6 +29,14 @@ export interface ApiResult<T = unknown> {
   /** Human-readable error extracted from the response (when available). */
   error?: string;
   /**
+   * Set when the API answered 403 `Captcha verification required` — the
+   * request must carry a Cloudflare Turnstile token. `siteKey` is the public
+   * key the API expects, so the widget can be mounted at REQUEST time even
+   * when this app's own build-time env var is missing.
+   */
+  captchaRequired?: boolean;
+  captchaSiteKey?: string | null;
+  /**
    * Structured account-restriction info returned by the API as 401/403 when a
    * login attempt hits a banned / suspended / deleted / deletion-pending
    * account. When present the UI should show the dedicated interruption page
@@ -51,18 +59,27 @@ function getCsrfToken(): string {
   return match?.[1] || '';
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<{ status: number; data: T | null }> {
+async function postJson<T>(
+  path: string,
+  body: unknown,
+  opts?: { turnstileToken?: string | null },
+): Promise<{ status: number; data: T | null }> {
   const csrf = getCsrfToken();
+  // Sent both ways on purpose: apps/api/proxy.ts gates suspicious auth traffic
+  // on the `x-turnstile-token` HEADER, while the handlers read
+  // `turnstileToken` from the JSON body.
+  const turnstileToken = opts?.turnstileToken?.trim() || '';
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+      ...(turnstileToken ? { 'x-turnstile-token': turnstileToken } : {}),
     },
     // Send/receive cookies so the __session cookie set by the API is stored
     // for the API domain (shared with the dashboard on .tirbeo.com).
     credentials: 'include',
-    body: JSON.stringify(body),
+    body: JSON.stringify(turnstileToken ? { ...(body as object), turnstileToken } : body),
   });
 
   let data: T | null = null;
@@ -147,12 +164,30 @@ function extractBlock(
   return null;
 }
 
-export async function apiPost<T = Record<string, unknown>>(path: string, body: unknown): Promise<ApiResult<T>> {
+export async function apiPost<T = Record<string, unknown>>(
+  path: string,
+  body: unknown,
+  opts?: { turnstileToken?: string | null },
+): Promise<ApiResult<T>> {
   try {
-    const { status, data } = await postJson<T>(path, body);
-    const raw = data as (Record<string, unknown> & { error?: string }) | null;
+    const { status, data } = await postJson<T>(path, body, opts);
+    const raw = data as (Record<string, unknown> & {
+      error?: string;
+      turnstileRequired?: boolean;
+      siteKey?: string;
+    }) | null;
     const error = sanitizeApiError(status, raw?.error);
-    return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      data,
+      error,
+      // 403 + turnstileRequired is a distinct, recoverable state: the UI must
+      // mount a widget and retry, not show a dead-end error.
+      captchaRequired: raw?.turnstileRequired === true,
+      captchaSiteKey: raw?.siteKey ?? null,
+      block: extractBlock(status, raw),
+    };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
   }
@@ -308,6 +343,8 @@ export interface SignupPayload {
   policyAccepted: boolean;
   adminDataAccess?: boolean;
   otpCode?: string;
+  /** Cloudflare Turnstile token — required when the API answers 403 `turnstileRequired`. */
+  turnstileToken?: string | null;
 }
 
 export interface SignupData {
@@ -325,7 +362,8 @@ export async function verifySignupOtp(email: string, code: string): Promise<ApiR
 }
 
 export async function signup(payload: SignupPayload): Promise<ApiResult<SignupData>> {
-  return apiPost<SignupData>('/api/auth/signup', payload);
+  const { turnstileToken, ...rest } = payload;
+  return apiPost<SignupData>('/api/auth/signup', rest, { turnstileToken });
 }
 
 // ═══ LOGIN ═══
@@ -341,8 +379,20 @@ export interface LoginData {
   needsOtp?: boolean;
 }
 
-export async function login(email: string, password: string): Promise<ApiResult<LoginData>> {
-  return apiPost<LoginData>('/api/auth/login', { email, password });
+/**
+ * Sign in with a password.
+ *
+ * The API demands a Turnstile token on suspicious IPs and after repeated
+ * failures, answering 403 `{ turnstileRequired: true, siteKey }`. The UI reads
+ * `captchaRequired` off the result, mounts the widget with the returned
+ * `captchaSiteKey`, and retries with `turnstileToken`.
+ */
+export async function login(
+  email: string,
+  password: string,
+  turnstileToken?: string | null,
+): Promise<ApiResult<LoginData>> {
+  return apiPost<LoginData>('/api/auth/login', { email, password }, { turnstileToken });
 }
 
 export async function verify2FA(tempToken: string, code: string): Promise<ApiResult<LoginData>> {

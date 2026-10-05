@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { redirectBlockedToDashboard } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
 import { AuthShell, StepProgress } from '../ui/ig-ui';
+import { TurnstileCaptcha } from './TurnstileCaptcha';
+import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
 
 /**
  * Switching between sign in and sign up is navigation, not a task. It gets
@@ -64,6 +66,34 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   onShowToast,
 }) => {
   const form = useAuthForm(onShowToast);
+
+  /* ── Cloudflare Turnstile ──
+     The API gates login/signup behind a Turnstile token once an IP looks
+     suspicious or a few attempts fail (403 `{ turnstileRequired: true }`).
+     `captchaSiteKey` prefers the key the API returns over the build-time env
+     var, so the widget still renders if the key was added after this bundle
+     was built. */
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaSiteKey, setCaptchaSiteKey] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [captchaBroken, setCaptchaBroken] = useState(false);
+
+  /** Called on every failed auth submit: burn the single-use token, re-arm. */
+  const invalidateCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaReset((n) => n + 1);
+  };
+
+  /** Record a 403 `{ turnstileRequired }` so the retry can satisfy it. */
+  const noteCaptchaChallenge = (result: {
+    captchaRequired?: boolean;
+    captchaSiteKey?: string | null;
+  }) => {
+    if (!result.captchaRequired) return false;
+    setCaptchaSiteKey(result.captchaSiteKey || TURNSTILE_SITE_KEY || null);
+    invalidateCaptcha();
+    return true;
+  };
 
     const {
       mode, switchMode,
@@ -163,13 +193,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           jobPlace: jobPlace || undefined,
           jobStarted: jobStartedOn || undefined,
           policyAccepted: consentTerms && consentPrivacy,
+          turnstileToken: captchaToken,
           otpCode: verificationCode,
         });
 
         if (!result.ok) {
+          if (noteCaptchaChallenge(result)) {
+            setIsSubmitting(false);
+            onShowToast('Please complete the security check, then try again.');
+            return;
+          }
           onShowToast(result.error || 'Error creating account');
           haptic('error');
           captureException(new Error(result.error || 'Signup failed'));
+          invalidateCaptcha();
           setIsSubmitting(false);
           return;
         }
@@ -353,10 +390,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         setLoginStep('password');
         setIsSubmitting(false);
       } else if (loginStep === 'password') {
-        const result = await login(email, password);
+        const result = await login(email, password, captchaToken);
 
         if (!result.ok) {
+          if (noteCaptchaChallenge(result)) {
+            setIsSubmitting(false);
+            onShowToast('Please complete the security check, then try again.');
+            return;
+          }
           if (lockAccount(result)) return;
+          // The token is single-use, so it is spent either way.
+          invalidateCaptcha();
           onShowToast(result.error || 'Invalid email or password');
           haptic('error');
           captureException(new Error(result.error || 'Login failed'));
@@ -1006,6 +1050,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             step4Complete={step4Complete}
             onOpenLegalModal={onOpenLegalModal}
             onSubmit={handleSignupSubmit}
+            captcha={
+              captchaSiteKey ? (
+                <TurnstileCaptcha
+                  siteKey={captchaSiteKey}
+                  onToken={setCaptchaToken}
+                  onError={() => setCaptchaBroken(true)}
+                  resetSignal={captchaReset}
+                />
+              ) : null
+            }
+            captchaPending={!!captchaSiteKey && !captchaToken && !captchaBroken}
           />
         )}
 
@@ -1057,6 +1112,19 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             onSwitchAccount={() => { resetLoginPassword(); setLoginStep('email'); }}
             onSubmit={handleLoginSubmit}
             onMoreOptions={() => setLoginStep('more-options')}
+            /* Only mounted once the API has actually demanded a challenge, so
+               the common case stays a plain password form. */
+            captcha={
+              captchaSiteKey ? (
+                <TurnstileCaptcha
+                  siteKey={captchaSiteKey}
+                  onToken={setCaptchaToken}
+                  onError={() => setCaptchaBroken(true)}
+                  resetSignal={captchaReset}
+                />
+              ) : null
+            }
+            captchaPending={!!captchaSiteKey && !captchaToken && !captchaBroken}
           />
         )}
 
