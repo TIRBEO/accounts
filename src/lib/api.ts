@@ -415,9 +415,13 @@ export interface LoginOtpVerifyData {
 export interface LoginOtpRequestData {
   message?: string;
   retryAfterMs?: number;
+  /** Device-bound proof key for the next resend (server-issued). */
+  ptr?: string;
 }
 export async function requestLoginOtp(email: string): Promise<ApiResult<LoginOtpRequestData>> {
-  return apiPost<LoginOtpRequestData>('/api/auth/login-otp/request', { email });
+  const result = await apiPost<LoginOtpRequestData>('/api/auth/login-otp/request', { email, ptr: ptrFor('login-otp', email) });
+  rememberPtr('login-otp', email, result.data?.ptr, result.status);
+  return result;
 }
 
 export async function verifyLoginOtp(email: string, code: string): Promise<ApiResult<LoginOtpVerifyData>> {
@@ -429,6 +433,54 @@ export async function verifyLoginOtp(email: string, code: string): Promise<ApiRe
 export interface PasswordResetData {
   message?: string;
   retryAfterMs?: number;
+  /** Device-bound proof key for the next resend (server-issued). */
+  ptr?: string;
+}
+
+/* ptr — the server issues a device-bound proof key with the first send of a
+   flow; every resend must carry it.
+
+   Kept in sessionStorage, not in a module Map. The proof is per *device*, not
+   per page load, so the key has to survive the reloads and navigations a reset
+   actually takes (request a code → the page remounts → resend). Held in memory
+   it was gone on the next document, every resend arrived without it, and the
+   server answered 403 "This action needs the key from the page you were sent
+   to" — which is the error that made the reset flow unusable. sessionStorage is
+   still tab-scoped, so another device or another tab cannot replay it, and it
+   dies with the tab. */
+const PTR_PREFIX = 'tirbeo.ptr.';
+const ptrMemory = new Map<string, string>();
+
+function ptrStoreKey(method: string, email: string): string {
+  return `${PTR_PREFIX}${method}:${email.toLowerCase()}`;
+}
+
+function ptrFor(method: string, email: string): string | undefined {
+  const key = ptrStoreKey(method, email);
+  try {
+    const v = sessionStorage.getItem(key);
+    if (v) return v;
+  } catch {
+    /* private mode / disabled storage — fall through to the in-memory copy */
+  }
+  return ptrMemory.get(key);
+}
+
+/** Drop a key the server just refused, so the next attempt is a fresh start. */
+function forgetPtr(method: string, email: string) {
+  const key = ptrStoreKey(method, email);
+  ptrMemory.delete(key);
+  try { sessionStorage.removeItem(key); } catch { /* nothing to clean up */ }
+}
+
+function rememberPtr(method: string, email: string, ptr: string | undefined, status?: number) {
+  const key = ptrStoreKey(method, email);
+  if (ptr) {
+    ptrMemory.set(key, ptr);
+    try { sessionStorage.setItem(key, ptr); } catch { /* memory copy still works */ }
+  } else if (status === 403) {
+    forgetPtr(method, email);
+  }
 }
 
 /**
@@ -437,7 +489,10 @@ export interface PasswordResetData {
  * Returns success even for unknown emails (anti-enumeration).
  */
 export async function requestPasswordReset(email: string, method: 'otp' | 'magic_link' | 'recovery' = 'otp'): Promise<ApiResult<PasswordResetData>> {
-  return apiPost<PasswordResetData>('/api/auth/password-reset/request', { email, method });
+  const key = `pw-reset-${method}`;
+  const result = await apiPost<PasswordResetData>('/api/auth/password-reset/request', { email, method, ptr: ptrFor(key, email) });
+  rememberPtr(key, email, result.data?.ptr, result.status);
+  return result;
 }
 
 export interface PasswordResetVerifyData {
@@ -455,11 +510,6 @@ export async function confirmPasswordReset(resetToken: string, newPassword: stri
   return apiPost<{ message?: string }>('/api/auth/password-reset/confirm', { resetToken, newPassword });
 }
 
-/** Quick login via OTP — verify code and get session directly (no password change). */
-export async function quickLoginWithOtp(email: string, code: string): Promise<ApiResult<{ userId?: string }>> {
-  return apiPost<{ userId?: string }>('/api/auth/password-reset/quick-login', { email, code });
-}
-
 // ═══ MAGIC LINK ═══
 
 export interface MagicLinkRequestResult {
@@ -472,6 +522,8 @@ export interface MagicLinkRequestResult {
   exceeded?: string;
   /** Epoch ms when the exhausted window resets (server clock). */
   resetsAt?: number;
+  /** Device-bound proof key for resends (server-issued, only on success). */
+  ptr?: string;
 }
 
 /** Per-method limit status returned by /api/auth/remaining and send 429s. */
@@ -490,14 +542,28 @@ export interface RateLimitPayload {
   remaining?: Record<string, RemainingInfo>;
 }
 
+/** Live per-method rate-limit status — used by the magic-link resend page and the auth form. */
+export async function getRemainingLimits(email: string, method?: string): Promise<ApiResult<{ remaining?: Record<string, RemainingInfo> }>> {
+  const q = new URLSearchParams({ email });
+  if (method) q.set('method', method);
+  return apiGet<{ remaining?: Record<string, RemainingInfo> }>(`/api/auth/remaining?${q}`);
+}
+
 /**
  * Ask the backend to email a one-time magic link to the given address.
  * The API intentionally returns success even when the account doesn't exist
  * (prevents account enumeration), so the UI should show a generic message.
  */
-export async function requestMagicLink(email: string): Promise<MagicLinkRequestResult> {
-  const result = await apiPost<{ message?: string; retryAfterMs?: number; exceeded?: string } & RateLimitPayload>('/api/auth/magic-link/request', { email });
+export async function requestMagicLink(email: string, opts?: { ptr?: string }): Promise<MagicLinkRequestResult> {
+  // Forward any ?redirect_to= the visitor arrived with so the link returns
+  // them where they were headed; the API allowlist validates it server-side.
+  let redirectTo: string | null = null;
+  try { redirectTo = new URLSearchParams(window.location.search).get('redirect_to'); } catch { /* non-browser caller */ }
+  const body: Record<string, unknown> = { email, ptr: opts?.ptr || ptrFor('magic-link', email) };
+  if (redirectTo) body.redirect_to = redirectTo;
+  const result = await apiPost<{ message?: string; retryAfterMs?: number; exceeded?: string; ptr?: string } & RateLimitPayload>('/api/auth/magic-link/request', body);
   if (!result.ok) {
+    if (result.status === 403) forgetPtr('magic-link', email);
     // Cooldown 429s carry the human copy in `message` (not `error`) — surface it.
     // resetsAt: prefer the tripped limit's own resetAt, else now + retryAfterMs.
     const tripped = result.data?.exceeded ? result.data?.remaining?.[result.data.exceeded] : undefined;
@@ -511,7 +577,8 @@ export async function requestMagicLink(email: string): Promise<MagicLinkRequestR
       resetsAt: tripped?.resetAt ?? (retryAfterMs ? Date.now() + retryAfterMs : undefined),
     };
   }
-  return { ok: true, message: result.data?.message };
+  rememberPtr('magic-link', email, result.data?.ptr, result.status);
+  return { ok: true, message: result.data?.message, ptr: result.data?.ptr };
 }
 
 export interface MagicLinkVerifyResult {
@@ -680,23 +747,6 @@ export async function updateProfile(patch: Record<string, unknown>): Promise<Api
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server.' };
   }
-}
-
-// ═══ OAUTH CONSENT ═══
-// Record policy consent for an OAuth-created account. The API marks the
-// account as emailVerified and stores the consent record.
-
-export interface OAuthConsentData {
-  ok: boolean;
-  message?: string;
-}
-
-export async function oauthConsent(payload: {
-  policyAccepted: boolean;
-  adminDataAccess?: boolean;
-  signatureName?: string;
-}): Promise<ApiResult<OAuthConsentData>> {
-  return apiPost<OAuthConsentData>('/api/auth/oauth/consent', payload);
 }
 
 // ═══ LOGOUT ═══

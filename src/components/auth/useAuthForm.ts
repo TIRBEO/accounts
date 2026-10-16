@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { checkEmailExists, checkUsernameExists, requestSignupOtp, API_BASE_URL } from '../../lib/api';
+import { checkEmailExists, checkUsernameExists, requestSignupOtp, getRemainingLimits, API_BASE_URL } from '../../lib/api';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
 import { workFieldMeta } from '../../lib/profile-fields';
@@ -39,6 +39,10 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
      yanking someone out of the flow they were in is how you get a typo'd email
      turned into a half-registered account. */
   const [noAccountEmail, setNoAccountEmail] = useState<string | null>(null);
+
+  /* Inline feedback line on the login screens — errors and confirmations show
+     as text on the screen itself instead of toasts. */
+  const [loginNotice, setLoginNotice] = useState<{ msg: string; tone: 'error' | 'success' } | null>(null);
 
   const switchMode = useCallback((next: 'login' | 'signup') => {
     setMode(next);
@@ -146,13 +150,11 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   // Sync from DB — so frontend shows real remaining, not just in-memory numbers
   const syncFromDb = useCallback(async () => {
-    if (!email || !email.includes('@')) return;
+    if (validateEmail(email)) return;
     try {
-      const base = API_BASE_URL;
-      const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/remaining?email=${encodeURIComponent(email)}`, { credentials: 'include' });
-      if (!res.ok) return;
-      const data: any = await res.json();
-      const rem = data.remaining || {};
+      const res = await getRemainingLimits(email);
+      if (!res.ok || !res.data?.remaining) return;
+      const rem = res.data.remaining;
       const now = Date.now();
       const next: Record<string, { count: number; windowStart: number }> = {};
       const nextResets: Record<string, number> = {};
@@ -317,7 +319,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
   // ─── PRE-FETCH LOGIN PROFILE ───
   useEffect(() => {
-    if (mode !== 'login' || loginStep !== 'email' || !email || !email.includes('@')) return;
+    if (mode !== 'login' || loginStep !== 'email' || validateEmail(email)) return;
     if (loginProfile?.email === email) return;
 
     const timer = setTimeout(() => {
@@ -404,6 +406,17 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   ): Promise<{
     emailAvailable: boolean;
     usernameAvailable: boolean;
+    /** Confirmed duplicate, as reported by the API. */
+    emailTaken: boolean;
+    usernameTaken: boolean;
+    /**
+     * A reason to stop at step 1 — and only a confirmed duplicate belongs
+     * here. `*Available: false` also covers "the check could not run", and
+     * treating that as a refusal would let a flaky availability endpoint lock a
+     * brand-new person out of joining. Nothing is lost by letting them through:
+     * users.email and users.username are UNIQUE, so /api/auth/signup answers
+     * 409 for a real duplicate whatever the pre-check managed to say.
+     */
     emailError?: string;
     usernameError?: string;
   }> => {
@@ -415,7 +428,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       setEmailCheckStatus('idle');
       setUsernameStatus(usernameError ? 'error' : 'idle');
       setUsernameMessage(usernameError || '');
-      return { emailAvailable: false, usernameAvailable: false, emailError, usernameError };
+      return { emailAvailable: false, usernameAvailable: false, emailTaken: false, usernameTaken: false, emailError, usernameError };
     }
 
     setEmailCheckStatus('checking');
@@ -429,7 +442,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       ]);
 
       if (requestId !== signupAvailabilityRequestRef.current) {
-        return { emailAvailable: false, usernameAvailable: false };
+        return { emailAvailable: false, usernameAvailable: false, emailTaken: false, usernameTaken: false };
       }
 
       const emailTaken = Boolean(emailResult.data?.exists);
@@ -459,12 +472,22 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       return {
         emailAvailable,
         usernameAvailable,
-        emailError: emailAvailable ? undefined : (emailTaken ? 'An account with this email already exists' : 'Unable to check email availability'),
-        usernameError: usernameAvailable ? undefined : (usernameResult.data?.reserved ? 'This username is reserved' : usernameTaken ? 'This username is already taken' : 'Unable to check username availability'),
+        emailTaken: emailResult.ok && emailTaken,
+        usernameTaken: usernameResult.ok && usernameTaken,
+        emailError: emailResult.ok && emailTaken ? 'An account with this email already exists' : undefined,
+        usernameError: !usernameResult.ok
+          ? undefined
+          : usernameResult.data?.reserved
+            ? 'This username is reserved'
+            : usernameTaken
+              ? 'This username is already taken'
+              : !usernameResult.data?.valid
+                ? "That username isn't allowed here. Try letters, numbers, - or _."
+                : undefined,
       };
     } catch {
       if (requestId !== signupAvailabilityRequestRef.current) {
-        return { emailAvailable: false, usernameAvailable: false };
+        return { emailAvailable: false, usernameAvailable: false, emailTaken: false, usernameTaken: false };
       }
       setEmailCheckStatus('error');
       setUsernameStatus('error');
@@ -472,8 +495,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       setUsernameSuggestions([]);
       return {
         emailAvailable: false, usernameAvailable: false,
-        emailError: 'Unable to check email availability',
-        usernameError: 'Unable to check username availability',
+        emailTaken: false, usernameTaken: false,
       };
     }
   }, [email, username, generateSuggestions]);
@@ -647,11 +669,15 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       if (usernameError) { newErrors.username = usernameError; isValid = false; }
       if (isValid) {
         const availability = await checkSignupAvailability(email, username);
-        if (!availability.emailAvailable) {
+        // Only a confirmed duplicate stops the person here; a check that could
+        // not run is not a refusal. The email-code step stays silent about a
+        // taken address on purpose (no account enumeration), so the real answer
+        // comes from signup — which the UNIQUE columns back up.
+        if (availability.emailTaken || availability.emailError) {
           newErrors.email = availability.emailError || 'An account with this email already exists';
           isValid = false;
         }
-        if (!availability.usernameAvailable) {
+        if (availability.usernameTaken || availability.usernameError) {
           newErrors.username = availability.usernameError || 'This username is already taken';
           isValid = false;
         }
@@ -689,13 +715,6 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   }, []);
 
   const clearValidation = useCallback(() => {
-    setErrors({});
-    setTouched({});
-  }, []);
-
-  const resetLoginPassword = useCallback(() => {
-    setPassword('');
-    setLoginProfile(null);
     setErrors({});
     setTouched({});
   }, []);
@@ -761,6 +780,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     mode, setMode, switchMode,
     signupStep, setSignupStep,
     loginStep, setLoginStep, noAccountEmail, setNoAccountEmail,
+    loginNotice, setLoginNotice,
     firstName, setFirstName,
     lastName, setLastName,
     email, setEmail: (v: string) => {
@@ -837,7 +857,6 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     // Reset
     resetToHome,
     clearValidation,
-    resetLoginPassword,
     resetRecovery,
   };
 }

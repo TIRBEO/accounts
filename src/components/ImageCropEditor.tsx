@@ -165,7 +165,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
 
   return (
     <div
-      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
@@ -178,10 +178,10 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-divider px-6 py-4">
           <div>
-            <h3 className="text-[20px] text-white/90">
+            <h3 className="text-[20px] text-fg">
               Edit photo
             </h3>
-            <p className="mt-1 text-[15px] text-white/45">
+            <p className="mt-1 text-[15px] text-text-4">
               Crop and save your profile photo.
             </p>
           </div>
@@ -198,12 +198,12 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Cropper */}
         <div className="image-crop-editor-stage relative h-[360px] w-full overflow-hidden bg-black/70">
           {mediaLoading && !mediaError && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-bg/85 text-white/55">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/85 text-white/70">
               <span className="text-[16px]">Loading…</span>
             </div>
           )}
           {mediaError ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg p-8 text-center text-white/90">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/85 p-8 text-center text-white/90">
               <ImageIcon size={28} className="text-muted" />
               <span className="text-[17px]">{mediaError}</span>
               <button
@@ -246,7 +246,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-white/[0.14] px-3.5 py-2.5 text-[16px] text-white/80 transition-colors hover:bg-white/[0.07]"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-[rgba(255,255,255,0.14)] px-3.5 py-2.5 text-[16px] text-text-2 transition-colors hover:bg-hover"
             >
               <RotateCw size={13} />
               Rotate
@@ -254,7 +254,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
           </div>
 
           {mediaError && (
-            <div className="flex items-center gap-2 text-[15px] text-danger">
+            <div className="flex items-center gap-2 text-[15px] text-danger-text">
               <AlertCircle size={13} className="shrink-0" />
               {mediaError}
             </div>
@@ -264,7 +264,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="cursor-pointer border-none bg-transparent px-4 py-2.5 text-[17px] text-white/60 transition-colors hover:text-white"
+              className="cursor-pointer border-none bg-transparent px-4 py-2.5 text-[17px] text-text-3 transition-colors hover:text-fg"
             >
               Cancel
             </button>
@@ -272,7 +272,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.1] px-5 py-2.5 text-[17px] text-white/90 transition-colors hover:bg-white/[0.16] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-transparent bg-ig px-5 py-2.5 text-[17px] text-white transition-colors hover:bg-ig-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}

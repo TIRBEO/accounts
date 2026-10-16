@@ -50,10 +50,3 @@ export function captureException(err: unknown): void {
   if (ready) send();
   else buffer.push(send);
 }
-
-export function captureMessage(msg: string): void {
-  if (!import.meta.env.PROD) return;
-  const send = () => mod?.captureMessage(msg);
-  if (ready) send();
-  else buffer.push(send);
-}

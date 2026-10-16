@@ -7,18 +7,14 @@ import {
 } from 'lucide-react';
 import { startOAuth, type OAuthProvider } from '../../lib/oauth';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from '../SocialIcons';
-import { RandomAvatar } from './random-avatar';
 
 /* ═══════════════════════════════════════════════════════════════════════
    Tirbeo Accounts — primitives
 
-   Everything here is deliberately quiet. There is no card, no pill, no filled
-   brand button. A field is a label, a value, and a hairline. An action is a
-   flat wash of white at 7%. The accent colour only ever draws a focus ring.
-
-   The one rule that overrides tidiness: anything carrying information must
-   stay readable. Purely decorative marks (rules, the wordmark, the OR label)
-   are free to sit at 7–28% white.
+   Photograph-and-glass theme: a glass plate over the cover-fit backdrop,
+   low-alpha white fields, and one brand-blue action colour (#0064c8) used as a
+   fill for primary actions. Type inside the card is em-based off the card's
+   --u scale so proportions hold at any viewport.
    ═══════════════════════════════════════════════════════════════════════ */
 
 /** Class joiner — keeps the conditional class lists readable. */
@@ -54,32 +50,28 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
   );
 }
 
-export function Skeleton({ className = '' }: { className?: string }) {
-  return <span aria-hidden className={cn('tb-shimmer block rounded', className)} />;
-}
-
 /* ── Buttons ──────────────────────────────────────────────────────────── */
 
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * One shape for every action, Instagram's: sentence case, semibold, no
- * letter-spacing, generous radius, and a 3% press. Uppercase-and-tracked
- * labels read as software; these read as a product.
+ * One shape for every action: pill, sentence case, semibold. The primary
+ * button is the social login CTA recipe — sky-blue fill, blue glow, hover
+ * lift, darker on press.
  */
 const BUTTON_BASE =
   'relative inline-flex w-full select-none items-center justify-center gap-2 overflow-hidden ' +
-  'rounded-xl font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
-  'transition-[background-color,color,border-color,opacity,transform] duration-150 ' +
-  'active:scale-[0.97] disabled:pointer-events-none disabled:active:scale-100';
+  'rounded-[18px] font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
+  'transition-[background-color,color,border-color,opacity,transform,box-shadow] duration-150 ' +
+  'disabled:pointer-events-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
   sm: 'h-12 px-4 text-[14px]',
   md: 'h-12 px-5 text-[15px]',
-  lg: 'h-[52px] px-6 text-[15px]',
+  lg: 'h-[56px] px-6 text-[15px]',
 };
 
-/** Primary — the one place the brand blue is allowed to be a fill. */
+/** Primary — the social `.login-cta`: white fill + soft white glow. */
 export function PrimaryButton({
   children,
   loading = false,
@@ -99,10 +91,10 @@ export function PrimaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'bg-ig text-white hover:bg-ig-hover active:bg-ig-press',
-        // A blocked action dims rather than disappearing — the user still has
-        // to be able to see what they need to complete.
-        'disabled:bg-white/[0.12] disabled:text-white/40',
+        'bg-[#0064c8] text-white',
+        'hover:bg-[#0058b3]',
+        'active:bg-[#004f9e] active:scale-[0.995]',
+        'disabled:bg-[rgba(255,255,255,0.10)] disabled:text-[rgba(255,255,255,0.45)] disabled:opacity-100 disabled:shadow-none',
         className,
       )}
     >
@@ -114,8 +106,7 @@ export function PrimaryButton({
   );
 }
 
-/** Secondary — Instagram's outlined button: no fill, a hairline, then a
- *  quiet wash on hover. */
+/** Secondary — the light outlined pill: hairline, quiet wash on hover. */
 export function SecondaryButton({
   children,
   className = '',
@@ -128,54 +119,9 @@ export function SecondaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'border border-white/[0.18] bg-transparent text-white/85',
-        'hover:border-white/35 hover:bg-white/[0.04] hover:text-white',
-        'disabled:pointer-events-none disabled:opacity-40',
-        className,
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** Ghost — no fill until hover. For back, cancel, switch-account. */
-export function GhostButton({
-  children,
-  className = '',
-  size = 'lg',
-  ...btnProps
-}: { children: ReactNode; size?: ButtonSize } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...btnProps}
-      className={cn(
-        BUTTON_BASE,
-        BUTTON_SIZE[size],
-        'text-white/70 hover:bg-white/[0.07] hover:text-white',
-        'disabled:pointer-events-none disabled:opacity-40',
-        className,
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-export function DangerButton({
-  children,
-  className = '',
-  size = 'lg',
-  ...btnProps
-}: { children: ReactNode; size?: ButtonSize } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...btnProps}
-      className={cn(
-        BUTTON_BASE,
-        BUTTON_SIZE[size],
-        'bg-danger/90 text-white hover:bg-danger',
-        'disabled:pointer-events-none disabled:opacity-40',
+        'border border-[rgba(255,255,255,0.14)] bg-transparent text-text-2',
+        'hover:border-[rgba(255,255,255,0.26)] hover:bg-hover hover:text-fg',
+        'disabled:text-text-4 disabled:opacity-100',
         className,
       )}
     >
@@ -196,12 +142,11 @@ export function TextButton({
       {...btnProps}
       className={cn(
         // A text button is still a button: give it a 40px hit area so it is
-        // tappable on a phone, and let colour carry the affordance instead of
-        // an underline that fights the rest of the type.
-        'inline-flex min-h-10 items-center gap-1.5 rounded-xl px-1 text-[15px] font-semibold text-white/75',
-        'transition-colors hover:text-white active:text-white/70',
-        'focus-visible:outline-none focus-visible:text-white',
-        'disabled:pointer-events-none disabled:opacity-40',
+        // tappable on a phone, and let colour carry the affordance.
+        'inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 text-[15px] font-semibold text-text-3',
+        'transition-colors hover:text-fg active:text-text-2',
+        'focus-visible:outline-none focus-visible:text-fg',
+        'disabled:text-text-4 disabled:opacity-100',
         className,
       )}
     >
@@ -212,16 +157,29 @@ export function TextButton({
 
 /* ── Fields ───────────────────────────────────────────────────────────── */
 
+/** Inline error/success line on the login screens — replaces toasts. */
+export function FormNotice({ notice }: { notice?: { msg: string; tone: 'error' | 'success' } | null }) {
+  if (!notice) return null;
+  return (
+    <p
+      role={notice.tone === 'error' ? 'alert' : 'status'}
+      className={'form-notice form-notice-' + notice.tone}
+    >
+      {notice.msg}
+    </p>
+  );
+}
+
 /**
- * A filled field, Instagram's: a low-opacity white plate, a hairline, and a
- * soft ring on focus. 48px tall so the value sits at a comfortable reading
- * size and the tap target clears the 44px minimum without looking like a bar.
+ * A filled field: gray plate, no border until focus, Instagram-blue ring
+ * and ring on focus. 48px tall so the value sits at a comfortable reading
+ * size and the tap target clears the 44px minimum.
  */
 const FIELD_LINE =
-  'w-full rounded-xl border border-white/[0.16] bg-white/[0.07] px-4 text-[16px] text-white ' +
+  'w-full rounded-2xl border border-transparent bg-field px-4 text-[16px] text-fg ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ' +
-  'placeholder:text-white/40 hover:border-white/25 ' +
-  'focus:border-white/70 focus:bg-white/[0.1] focus:shadow-[0_0_0_3px_var(--accent-soft)]';
+  'placeholder:text-placeholder hover:bg-field-hover ' +
+  'focus:border-[#0058b3] focus:bg-field-focus focus:shadow-[0_0_0_3px_rgba(0,100,200,0.22)]';
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
@@ -253,7 +211,7 @@ export const Field = React.forwardRef<HTMLInputElement, {
           {...inputProps}
         />
         {trailing ? (
-          <span className="absolute bottom-0 right-0 flex h-12 items-center">{trailing}</span>
+          <span className="absolute inset-y-0 right-0 flex items-center">{trailing}</span>
         ) : null}
       </div>
       {error ? (
@@ -269,6 +227,52 @@ export const Field = React.forwardRef<HTMLInputElement, {
   );
 });
 
+/** Comment-box style field — same skin as Field, roomier body. */
+export function TextAreaField({
+  label,
+  error,
+  hint,
+  containerClassName,
+  id,
+  className,
+  rows = 2,
+  ...textProps
+}: {
+  label?: string;
+  error?: string;
+  hint?: ReactNode;
+  containerClassName?: string;
+  rows?: number;
+} & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const autoId = React.useId();
+  const fieldId = id || autoId;
+  return (
+    <div className={containerClassName}>
+      {label ? (
+        <label htmlFor={fieldId} className="tb-label">
+          {label}
+        </label>
+      ) : null}
+      <textarea
+        id={fieldId}
+        rows={rows}
+        aria-invalid={error ? true : undefined}
+        className={cn(FIELD_LINE, 'resize-none py-3 leading-snug', error && '!border-danger', className)}
+        {...textProps}
+      />
+      {error ? (
+        <p id={`${fieldId}-error`} role="alert" className="tb-hint tb-error">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${fieldId}-hint`} className="tb-hint">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /** The reveal toggle that sits on the baseline. */
 export function PasswordToggle({ shown, onToggle }: { shown: boolean; onToggle: () => void }) {
   return (
@@ -277,7 +281,7 @@ export function PasswordToggle({ shown, onToggle }: { shown: boolean; onToggle: 
       onClick={onToggle}
       aria-label={shown ? 'Hide password' : 'Show password'}
       aria-pressed={shown}
-      className="grid size-10 place-items-center rounded-xl text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
+      className="grid size-10 place-items-center rounded-full text-text-4 transition-colors hover:bg-hover hover:text-fg"
     >
       {shown ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
     </button>
@@ -336,7 +340,7 @@ export function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-white/50" />
+        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-[#8b909a]" />
       </div>
     </div>
   );
@@ -356,16 +360,24 @@ export function ConsentCheck({
   className?: string;
   id?: string;
 }) {
+  // A span, not a button: labels carry Terms/Privacy buttons and a <button>
+  // may not contain another one (invalid HTML, hydration error).
   return (
-    <button
-      type="button"
+    <span
       id={id}
       role="checkbox"
       aria-checked={checked}
+      tabIndex={0}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          onChange(!checked);
+        }
+      }}
       className={cn(
-        'group flex w-full items-start gap-3 rounded-xl text-left transition-colors',
-        'disabled:pointer-events-none disabled:opacity-40',
+        'group flex w-full cursor-pointer items-start gap-3 rounded-xl text-left transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,255,255,0.45)]',
         className,
       )}
     >
@@ -373,17 +385,17 @@ export function ConsentCheck({
         aria-hidden
         className={cn(
           'mt-[1px] grid size-5 shrink-0 place-items-center rounded-[6px] border-2 transition-colors duration-150',
-          checked ? 'border-white bg-white' : 'border-white/30 group-hover:border-white/60',
+          checked ? 'border-ig bg-ig' : 'border-track group-hover:border-border-strong',
         )}
       >
         {checked ? (
-          <svg viewBox="0 0 24 24" className="size-3.5 text-black" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" className="size-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 6 9 17l-5-5" />
           </svg>
         ) : null}
       </span>
-      <span className="min-w-0 flex-1 text-[14px] leading-relaxed text-white/80">{label}</span>
-    </button>
+      <span className="min-w-0 flex-1 text-[14px] leading-relaxed text-text-2">{label}</span>
+    </span>
   );
 }
 
@@ -451,13 +463,13 @@ export function OtpBoxes({
             refs.current[Math.min(text.length, length - 1)]?.focus();
           }}
           className={cn(
-            'h-14 min-w-0 flex-1 rounded-xl border bg-transparent text-center text-[21px] font-normal text-white',
+            'h-14 min-w-0 flex-1 rounded-2xl border border-transparent bg-field text-center text-[21px] font-semibold text-fg',
             'transition-[border-color,background-color,box-shadow] duration-150',
             error
-              ? 'border-danger'
+              ? 'border-danger bg-hover'
               : focused === i
-                ? 'border-white/80 shadow-[0_0_0_3px_var(--accent-soft)]'
-                : 'border-white/[0.18] hover:border-white/35',
+                ? 'border-[#0058b3] bg-field-focus shadow-[0_0_0_3px_rgba(0,100,200,0.22)]'
+                : 'hover:bg-field-hover',
           )}
         />
       ))}
@@ -466,82 +478,6 @@ export function OtpBoxes({
 }
 
 /* ── Steppers ─────────────────────────────────────────────────────────── */
-
-/**
- * Signup step rail.
- *
- * Four soft pills: done and current are blue, future ones are a faint outline.
- * The current pill also carries a glow, so "where am I" is answered by the
- * shape of the bar itself rather than by reading the caption. Finished steps
- * are buttons — going back one or two steps should not cost four taps.
- */
-export function StepProgress({
-  current,
-  total,
-  labels,
-  onSelect,
-  className = '',
-}: {
-  current: number;
-  total: number;
-  labels?: string[];
-  onSelect?: (step: number) => void;
-  className?: string;
-}) {
-  const safeCurrent = Math.min(Math.max(current, 1), Math.max(total, 1));
-  const label = labels?.[safeCurrent - 1];
-
-  return (
-    <div className={cn('w-full', className)}>
-      <div
-        className="flex items-center gap-2"
-        role="group"
-        aria-label={`Step ${safeCurrent} of ${total}`}
-      >
-        {Array.from({ length: total }).map((_, i) => {
-          const step = i + 1;
-          const done = step < safeCurrent;
-          const active = step === safeCurrent;
-          const reachable = done && !!onSelect;
-          const pill = cn(
-            'h-[7px] min-w-0 flex-1 rounded-full transition-all duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]',
-            active
-              ? 'bg-white shadow-[0_0_16px_rgba(255,255,255,0.35)]'
-              : done
-                ? 'bg-white/45'
-                : 'bg-white/[0.07] ring-1 ring-inset ring-white/[0.05]',
-            reachable && 'cursor-pointer hover:bg-white/70',
-          );
-          return reachable ? (
-            <button
-              key={step}
-              type="button"
-              onClick={() => onSelect?.(step)}
-              aria-label={`Back to step ${step}`}
-              className={pill}
-            />
-          ) : (
-            <span
-              key={step}
-              aria-hidden={!active}
-              aria-current={active ? 'step' : undefined}
-              className={pill}
-            />
-          );
-        })}
-      </div>
-
-      {label ? (
-        <div className="mt-3 flex items-baseline justify-between gap-3">
-          <span className="text-[15px] font-medium text-white/85">{label}</span>
-          <span className="text-[14px] tabular-nums text-white/45">
-            Step {safeCurrent} of {total}
-          </span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 /** Range slider with its label and live value. */
 export function RangeSlider({
@@ -575,15 +511,15 @@ export function RangeSlider({
             {label}
           </label>
           {format ? (
-            <span className="text-[14px] tabular-nums text-white/70">{format(value)}</span>
+            <span className="text-[14px] tabular-nums text-text-3">{format(value)}</span>
           ) : null}
         </div>
       ) : null}
       <div className="relative flex h-6 items-center">
-        <span aria-hidden className="absolute inset-x-0 h-1 rounded-full bg-white/15" />
+        <span aria-hidden className="absolute inset-x-0 h-1 rounded-full bg-track" />
         <span
           aria-hidden
-          className="absolute left-0 h-1 rounded-full bg-white/90"
+          className="absolute left-0 h-1 rounded-full bg-ig"
           style={{ width: `${pct}%` }}
         />
         <input
@@ -617,7 +553,7 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn('flex gap-1.5 rounded-2xl border border-white/[0.08] bg-black/40 p-1.5', className)}>
+    <div role="radiogroup" aria-label={label} className={cn('flex gap-1.5 rounded-2xl border border-border bg-field p-1.5', className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -629,7 +565,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             className={cn(
               'flex-1 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors duration-150',
-              active ? 'bg-white text-black' : 'text-white/65 hover:bg-white/[0.06] hover:text-white',
+              active ? 'bg-border-strong text-fg shadow-[0_1px_3px_rgba(0,0,0,0.4)]' : 'text-text-3 hover:bg-white/5 hover:text-fg',
             )}
           >
             {o.label}
@@ -647,15 +583,15 @@ export function Block({
   children,
   hint,
 }: {
-  title: string;
+  title: React.ReactNode;
   children: ReactNode;
   hint?: ReactNode;
 }) {
   return (
     <div className="mb-8">
-      <h3 className="mb-4 text-[19px] font-semibold text-white/95">{title}</h3>
+      <h3 className="mb-4 text-[19px] font-semibold text-fg">{title}</h3>
       {children}
-      {hint ? <p className="mt-3 text-[10px] leading-relaxed text-white/40">{hint}</p> : null}
+      {hint ? <p className="mt-3 text-[10px] leading-relaxed text-text-4">{hint}</p> : null}
     </div>
   );
 }
@@ -663,14 +599,10 @@ export function Block({
 /** Grouped list — a hairline box, rows split by a fainter one. */
 export function Group({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('divide-y divide-white/[0.1] overflow-hidden rounded-2xl border border-white/[0.14] bg-white/[0.04]', className)}>
+    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card', className)}>
       {children}
     </div>
   );
-}
-
-export function GroupDivider() {
-  return <div className="h-px bg-white/[0.1]" />;
 }
 
 export function Row({
@@ -692,18 +624,18 @@ export function Row({
 }) {
   const inner = (
     <>
-      {icon ? <span className="shrink-0 text-white/35">{icon}</span> : null}
+      {icon ? <span className="shrink-0 text-text-4">{icon}</span> : null}
       <span className="min-w-0 flex-1">
-        <span className={cn('block text-[16px] leading-snug', danger ? 'text-danger' : 'text-white/90')}>
+        <span className={cn('block text-[16px] leading-snug', danger ? 'text-danger-text' : 'text-fg')}>
           {label}
         </span>
-        {sub ? <span className="mt-1 block text-[14px] leading-snug text-white/55">{sub}</span> : null}
+        {sub ? <span className="mt-1 block text-[14px] leading-snug text-text-3">{sub}</span> : null}
       </span>
-      {right ? <span className="shrink-0 text-[15px] tabular-nums text-white/55">{right}</span> : null}
-      {chevron !== false && onClick ? <ChevronRight className="size-[22px] shrink-0 text-white/45" /> : null}
+      {right ? <span className="shrink-0 text-[15px] tabular-nums text-text-3">{right}</span> : null}
+      {chevron !== false && onClick ? <ChevronRight className="size-[22px] shrink-0 text-text-4" /> : null}
     </>
   );
-  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.07]';
+  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-hover';
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>
@@ -728,8 +660,8 @@ export function CardToggle({
   return (
     <div className="flex items-center gap-3.5 px-4 py-3.5">
       <span className="min-w-0 flex-1">
-        <span className="block text-[16px] leading-snug text-white/90">{label}</span>
-        {sub ? <span className="mt-1 block text-[14px] leading-snug text-white/55">{sub}</span> : null}
+        <span className="block text-[16px] leading-snug text-fg">{label}</span>
+        {sub ? <span className="mt-1 block text-[14px] leading-snug text-text-3">{sub}</span> : null}
       </span>
       <button
         type="button"
@@ -739,13 +671,14 @@ export function CardToggle({
         onClick={() => onChange(!checked)}
         className={cn(
           'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200',
-          checked ? 'bg-white' : 'bg-white/20',
+          checked ? 'bg-ig' : 'bg-track',
         )}
       >
         <span
           className={cn(
-            'block size-6 rounded-full transition-transform duration-200',
-            checked ? 'translate-x-6 bg-white' : 'translate-x-1 bg-white/70',
+            'block size-6 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-transform duration-200',
+            'bg-white',
+            checked ? 'translate-x-6' : 'translate-x-1',
           )}
         />
       </button>
@@ -753,135 +686,35 @@ export function CardToggle({
   );
 }
 
-/* ── Identity ─────────────────────────────────────────────────────────── */
-
-/**
- * Who you are right now.
- *
- * Once an email is known the screens stop talking about "your account" and
- * show the account: avatar, name, address. A switch link is part of the card
- * because the second most likely thing to want on these screens is *not* this
- * account — it shouldn't cost a trip back through the form.
- */
-export function IdentityCard({
-  name,
-  email,
-  photoUrl,
-  switchLabel = 'Switch',
-  onSwitch,
-  className = '',
-}: {
-  name?: string | null;
-  email?: string | null;
-  photoUrl?: string | null;
-  switchLabel?: string;
-  onSwitch?: () => void;
-  className?: string;
-}) {
-  const handle = (name || email?.split('@')[0] || '').trim();
-  const displayName = name?.trim() || handle || 'Account';
-  const initial = displayName.charAt(0).toUpperCase();
-  /* Provider photos (lh3.googleusercontent.com and friends) get blocked by
-     the browser before they paint — a dead <img> is a black circle. On error
-     the seeded generated face takes over. */
-  const [photoBroken, setPhotoBroken] = useState(false);
-
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3.5',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
-        className,
-      )}
-    >
-      <span className="relative shrink-0">
-        {photoUrl && !photoBroken ? (
-          <img
-            src={photoUrl}
-            alt=""
-            referrerPolicy="no-referrer"
-            className="size-[60px] rounded-full object-cover ring-1 ring-white/15"
-            onError={() => setPhotoBroken(true)}
-          />
-        ) : photoBroken ? (
-          <span
-            aria-hidden="true"
-            className="grid size-[60px] place-items-center overflow-hidden rounded-full ring-1 ring-inset ring-white/12"
-          >
-            <RandomAvatar seed={email || displayName} className="size-full" />
-          </span>
-        ) : (
-          <span
-            aria-hidden="true"
-            className="grid size-[60px] place-items-center rounded-full bg-white/[0.08] text-[24px] font-semibold text-white/85 ring-1 ring-inset ring-white/12"
-          >
-            {initial}
-          </span>
-        )}
-      </span>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[18px] font-semibold leading-tight text-white">{displayName}</p>
-        {email ? (
-          <p className="mt-0.5 truncate text-[14px] text-white/50">{email}</p>
-        ) : null}
-      </div>
-
-      {onSwitch ? (
-        <button
-          type="button"
-          onClick={onSwitch}
-          className="h-10 shrink-0 rounded-xl border border-white/[0.16] bg-white/[0.04] px-3.5 text-[14px] font-semibold text-white/80 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white transition-colors hover:bg-white/[0.08] hover:text-white"
-        >
-          {switchLabel}
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
 /* ── OAuth ────────────────────────────────────────────────────────────── */
 
-const OAUTH: { id: OAuthProvider; name: string; icon: ReactNode }[] = [
-  { id: 'google', name: 'Google', icon: <GoogleIcon className="size-[22px] w-[22px]" /> },
-  { id: 'github', name: 'GitHub', icon: <GitHubIcon className="size-[22px] w-[22px]" /> },
-  { id: 'discord', name: 'Discord', icon: <DiscordIcon className="size-[22px] w-[22px] text-[#8b95ff]" /> },
+export const OAUTH: { id: OAuthProvider; name: string; fill: string; hover: string; icon: ReactNode }[] = [
+  { id: 'google', name: 'Google', fill: '#4285F6', hover: '#3179E3', icon: <GoogleIcon className="size-[32px] w-[32px]" /> },
+  { id: 'github', name: 'GitHub', fill: '#24292F', hover: '#15191D', icon: <GitHubIcon className="size-[32px] w-[32px] text-white" /> },
+  { id: 'discord', name: 'Discord', fill: '#5865F2', hover: '#4752C4', icon: <DiscordIcon className="size-[32px] w-[32px] text-[#5865F2]" /> },
 ];
 
 /**
- * Icon-only tiles. The marks are already distinct at 22px, so a label on every
- * tile is noise — three words reading "Google GitHub Discord" tells the user
- * nothing they can't get from the glyph. The name stays on `aria-label` and
- * `title` so it is still announced and still shows on hover.
+ * Bare brand icons in a row, separated by thin vertical dividers — no tiles, no
+ * fills. Subtle hover plate only.
  */
 export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
   return (
-    <div className="flex flex-col gap-2">
-      {OAUTH.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          disabled={disabled}
-          onClick={() => startOAuth(p.id)}
-          aria-label={`Continue with ${p.name}`}
-          className={cn(
-            // Boxed type: the label sits inside a hairline box, the same
-            // recipe as every other control here. The box is what makes a line
-            // of 16px medium-weight copy read as something you can press.
-            'group flex h-[52px] w-full items-center justify-center gap-3 rounded-xl',
-            'border border-white/[0.16] bg-white/[0.04] text-[15px] font-semibold text-white/90',
-            'transition-all duration-150 hover:border-white/35 hover:bg-white/[0.08] hover:text-white',
-            'active:scale-[0.98]',
-            'focus-visible:outline-none focus-visible:border-white/70 focus-visible:bg-white/[0.08]',
-            'focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.45)]',
-            'disabled:pointer-events-none disabled:opacity-40',
-          )}
-        >
-          <span className="grid size-[22px] shrink-0 place-items-center transition-transform duration-150 group-hover:scale-110">
+    <div className="oauth-row">
+      {OAUTH.map((p, i) => (
+        <React.Fragment key={p.id}>
+          {i > 0 && <span aria-hidden className="oauth-sep" />}
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => startOAuth(p.id)}
+            aria-label={`Continue with ${p.name}`}
+            title={`Continue with ${p.name}`}
+            className="oauth-btn"
+          >
             {p.icon}
-          </span>
-          <span className="truncate tracking-[-0.01em]">Continue with {p.name}</span>
-        </button>
+          </button>
+        </React.Fragment>
       ))}
     </div>
   );
@@ -890,25 +723,19 @@ export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
 /** Divider with a centred label. */
 export function OrDivider({ label = 'or' }: { label?: string }) {
   return (
-    <div className="flex items-center gap-2.5" role="separator">
-      <span className="h-px flex-1 bg-white/[0.16]" />
-      <span className="text-[14px] font-medium text-white/50">{label}</span>
-      <span className="h-px flex-1 bg-white/[0.16]" />
+    <div className="flex items-center gap-3" role="separator">
+      <span className="h-px flex-1 bg-divider" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-4">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-divider" />
     </div>
   );
 }
 
 /* ── Brand + shell ────────────────────────────────────────────────────── */
 
-/**
- * The lockup: mark and word, nothing between them.
- *
- * No plate, no fill, no rule. What makes a wordmark look expensive is
- * typographic, not decorative — even colour, a touch more weight than the
- * surrounding UI, and negative tracking that pulls the letters into a single
- * shape instead of a row. The mark carries no background either; it sits on the
- * card and that is all it needs.
- */
+/** The Tirbeo wordmark, exactly as the social login renders it. */
 export function BrandMark({
   size = 'md',
   className = '',
@@ -916,77 +743,85 @@ export function BrandMark({
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }) {
-  const glyph = { sm: 'h-[22px]', md: 'h-[30px]', lg: 'h-[38px]' }[size];
-  const type = { sm: 'text-[18px]', md: 'text-[24px]', lg: 'text-[30px]' }[size];
-
+  const glyph = { sm: 'h-[1.4em]', md: 'h-[1.8em]', lg: 'h-[2.2em]' }[size];
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <img src="/logo-opt.png" alt="" decoding="async" className={cn('w-auto object-contain', glyph)} />
-      <span
-        className={cn(
-          'font-semibold tracking-[-0.035em] text-white',
-          type,
-        )}
-      >
-        Tirbeo
-      </span>
-    </span>
+    <img
+      src="/logo-white.webp"
+      alt="Tirbeo"
+      width={600}
+      height={200}
+      decoding="async"
+      className={cn('w-auto object-contain', glyph, className)}
+    />
   );
 }
 
 /**
- * Auth frame. No card, no border, no shadow — just the wordmark and the form,
- * centred, inside the glow. The column is capped at 300px so the viewport stays
- * far larger than the work, which is where the sense of space comes from.
- *
- * min-h-dvh (not h-dvh) means a short screen grows the page and scrolls
- * instead of clipping the footer.
+ * Auth frame — the login card: a bare em-scaled column on the
+ * black-charcoal canvas. The outer .login-page container (App.tsx) owns
+ * centring; on portrait phones the card pins near the top edge.
  */
 export function AuthShell({
   title,
   subtitle,
+  kicker,
   children,
   footer,
   wide = false,
+  step,
+  onBack,
+  className = '',
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
+  kicker?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   wide?: boolean;
+  step?: { index: number; total: number; label?: string };
+  onBack?: () => void;
+  className?: string;
 }) {
   return (
-    <div className="relative flex min-h-dvh w-full flex-col items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
-      <div
-        className={cn(
-          'animate-fade-in relative w-full rounded-3xl border border-white/[0.09] bg-black/75 p-6 sm:p-8',
-          // Blurred glass: the photograph behind tints the plate but never
-          // washes it out, and the faint top highlight is the only lit edge.
-          // On phones the photograph is switched off, so the 40px backdrop blur
-          // has nothing to sample — it still costs a full-screen blur pass on
-          // every scroll frame, which is the expensive part on a mid-range
-          // Android. The plate reads the same either way.
-          'shadow-[0_32px_100px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.07),inset_0_0_80px_rgba(0,0,0,0.55)]',
-          'max-sm:backdrop-blur-none max-sm:backdrop-saturate-100',
-          'backdrop-blur-[40px] backdrop-saturate-150',
-          wide ? 'max-w-[660px]' : 'max-w-[560px]',
-        )}
-      >
-        <a
-          href="/"
-          aria-label="Tirbeo home"
-          className="-mx-2 mb-8 flex justify-center py-1 transition-opacity duration-200 hover:opacity-80"
-        >
-          <BrandMark />
-        </a>
-
-        {title ? <h1 className="tb-heading">{title}</h1> : null}
-        {subtitle ? <p className="tb-sub mt-1.5">{subtitle}</p> : null}
-        <div className={cn(title || subtitle ? 'mt-6' : '')}>{children}</div>
-
-        {footer ? (
-          <p className="mt-7 text-center text-[14px] text-white/55">{footer}</p>
-        ) : null}
+    <div className={cn('login-card animate-fade-in', className)} data-wide={wide || undefined}>
+      {(step || onBack) ? (
+        <div className="wizard-rail">
+          <div className="wizard-row">
+            {onBack ? (
+              <button type="button" onClick={onBack} className="wizard-back">
+                <svg viewBox="0 0 16 16" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 3.5 5.5 8 10 12.5" />
+                </svg>
+                Back
+              </button>
+            ) : null}
+            {step ? (
+              <div
+                className="wizard-track"
+                role="progressbar"
+                aria-valuenow={step.index}
+                aria-valuemin={1}
+                aria-valuemax={step.total}
+              >
+                <i style={{ width: `${(step.index / step.total) * 100}%` }} />
+              </div>
+            ) : null}
+          </div>
+          {step ? (
+            <p className="wizard-caption">
+              {step.label ? `${step.label} · ` : ''}{step.index} of {step.total}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      <header className="login-head">
+        {kicker ? <p className="login-kicker mt-0">{kicker}</p> : null}
+        {title ? <h1 className={cn('tb-heading', kicker ? 'mt-[0.42em]' : 'mt-0')}>{title}</h1> : null}
+        {subtitle ? <p className="tb-sub mt-[0.7em]">{subtitle}</p> : null}
+      </header>
+      <div className="login-form">
+        {children}
+        {footer ? <p className="login-terms">{footer}</p> : null}
       </div>
     </div>
   );

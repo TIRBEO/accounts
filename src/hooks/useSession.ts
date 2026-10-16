@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCurrentUser, refreshSession, API_BASE_URL, type CurrentUserData } from '../lib/api';
+import { getCurrentUser, logout, refreshSession, type CurrentUserData } from '../lib/api';
+import { broadcastSession, clearSessionTrace } from '../lib/sessionSync';
 
 const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates the session before the 15-min access token expires
 const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange often fire together; coalesce them
@@ -17,11 +18,6 @@ function getSyncChannel(): BroadcastChannel | null {
     if (typeof BroadcastChannel !== 'undefined') return new BroadcastChannel(SYNC_CHANNEL);
   } catch {}
   return null;
-}
-
-function notifyTabs(type: 'login' | 'logout' | 'update', payload?: unknown) {
-  try { localStorage.setItem('tirbeo_session', JSON.stringify({ type, ts: Date.now(), payload })); } catch {}
-  try { getSyncChannel()?.postMessage({ type, ts: Date.now(), payload }); } catch {}
 }
 
 export function useSession() {
@@ -66,13 +62,13 @@ export function useSession() {
       try { localStorage.setItem('tirbeo:token-user', result.data.id); } catch {}
       // Only broadcast when the signed-in user actually changed — previously
       // every tab broadcast a 'login' on page load, waking every other tab.
-      if (prev !== null && prev !== result.data.id) notifyTabs('login', { userId: result.data.id });
+      if (prev !== null && prev !== result.data.id) broadcastSession('login');
     } else {
       const wasAuth = lastUserIdRef.current !== null;
       lastUserIdRef.current = null;
       setState({ user: null, loading: false, isAuthenticated: false });
       clearKeepalive();
-      if (wasAuth) notifyTabs('logout');
+      if (wasAuth) broadcastSession('logout');
     }
   }, [startKeepalive, clearKeepalive]);
 
@@ -142,10 +138,7 @@ export function useSession() {
   const signOut = useCallback(async () => {
     clearKeepalive();
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      }).catch(() => {});
+      await logout();
     } finally {
       // Drop every browser-side trace of the session, not just React state.
       try {
@@ -153,9 +146,10 @@ export function useSession() {
         localStorage.removeItem('tirbeo:security');
         localStorage.removeItem('tirbeo:last-active');
       } catch {}
+      clearSessionTrace();
       lastUserIdRef.current = null;
       setState({ user: null, loading: false, isAuthenticated: false });
-      notifyTabs('logout');
+      broadcastSession('logout');
       window.location.assign('/login');
     }
   }, [clearKeepalive]);

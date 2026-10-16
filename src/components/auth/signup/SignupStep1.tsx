@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Field, PrimaryButton, OAuthRow, OrDivider } from '../../ui/ig-ui';
+import { validateEmail } from '../../../lib/validations';
 
 export const SignupStep1: React.FC<{
   firstName: string;
@@ -42,12 +43,14 @@ export const SignupStep1: React.FC<{
   let emailHint: React.ReactNode = undefined;
   if (!showEmailError) {
     if (emailCheckStatus === 'taken') {
-      emailHint = <span className="text-danger">An account with this email already exists</span>;
+      emailHint = <span className="text-danger-text">An account with this email already exists</span>;
     } else if (emailCheckStatus === 'checking') {
-      emailHint = <span className="text-white/50">Checking availability...</span>;
+      emailHint = <span className="text-text-4">Checking availability...</span>;
     } else if (emailCheckStatus === 'error') {
-      emailHint = <span className="text-danger">Unable to check email availability</span>;
-    } else if (emailCheckStatus === 'available' && email.includes('@')) {
+      // Not a refusal: the account may well be free, we just could not ask.
+      // Signing up still goes through, and the server is what decides.
+      emailHint = <span className="text-text-4">Couldn't check right now — you can continue</span>;
+    } else if (emailCheckStatus === 'available' && !validateEmail(email)) {
       emailHint = <span className="text-[var(--tb-success)]">Email is available</span>;
     }
   }
@@ -55,46 +58,55 @@ export const SignupStep1: React.FC<{
   let usernameHint: React.ReactNode = undefined;
   if (!showUsernameError) {
     if (usernameStatus === 'checking') {
-      usernameHint = <span className="text-white/50">{usernameMessage || 'Checking availability...'}</span>;
+      usernameHint = <span className="text-text-4">{usernameMessage || 'Checking availability...'}</span>;
     } else if (usernameStatus === 'available') {
       usernameHint = <span className="text-[var(--tb-success)]">{usernameMessage}</span>;
     } else if (usernameStatus === 'taken') {
-      usernameHint = <span className="text-danger">{usernameMessage}</span>;
+      usernameHint = <span className="text-danger-text">{usernameMessage}</span>;
+    } else if (usernameStatus === 'error') {
+      usernameHint = <span className="text-text-4">{usernameMessage || "Couldn't check right now — you can continue"}</span>;
     }
   }
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
+    <form className="space-y-3 text-left" onSubmit={onSubmit}>
       <OAuthRow disabled={isSubmitting} />
 
+      <div className="signup-fields">
       <OrDivider label="or" />
 
-      {/* Name fields */}
-      <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
+      {/* Placeholder-only plates — same recipe as the login form. */}
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="First name"
           type="text"
+          placeholder="First name"
+          aria-label="First name"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           onBlur={() => handleBlur('firstName')}
           onKeyDown={preventEnter}
+          autoComplete="given-name"
           error={showFirstNameError ? errors.firstName : undefined}
         />
         <Field
-          label="Last name"
           type="text"
+          placeholder="Last name"
+          aria-label="Last name"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           onBlur={() => handleBlur('lastName')}
           onKeyDown={preventEnter}
+          autoComplete="family-name"
           error={showLastNameError ? errors.lastName : undefined}
         />
       </div>
 
       {/* Email */}
       <Field
-        label="Email"
         type="email"
+       
+        placeholder="Email"
+        aria-label="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         onBlur={() => handleBlur('email')}
@@ -106,8 +118,10 @@ export const SignupStep1: React.FC<{
 
       {/* Username */}
       <Field
-        label="Username"
         type="text"
+       
+        placeholder="Username"
+        aria-label="Username"
         value={username}
         onChange={(e) => {
           const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -122,13 +136,13 @@ export const SignupStep1: React.FC<{
       />
 
       {usernameSuggestions.length > 0 && !showUsernameError && (
-        <div className="-mt-3 grid grid-cols-2 gap-2.5">
+        <div className="-mt-1 grid grid-cols-2 gap-2">
           {usernameSuggestions.slice(0, 4).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setUsername(s)}
-              className="truncate rounded-xl border border-white/15 px-3 py-2.5 text-left text-[15px] text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="truncate rounded-lg border border-border-strong bg-field px-3 py-2 text-left text-[14px] text-text-2 transition-colors hover:border-border-hover hover:bg-hover hover:text-fg"
             >
               @{s}
             </button>
@@ -136,9 +150,10 @@ export const SignupStep1: React.FC<{
         </div>
       )}
 
-      <PrimaryButton type="submit" disabled={!step1Complete} loading={isSubmitting}>
-        Continue
+      <PrimaryButton type="submit" disabled={!step1Complete} loading={isSubmitting} className="mt-4">
+        Next
       </PrimaryButton>
+      </div>
     </form>
   );
 };

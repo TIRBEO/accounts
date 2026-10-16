@@ -1,18 +1,31 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Mail, ArrowLeft } from 'lucide-react';
-import { requestMagicLink, API_BASE_URL } from '../../lib/api';
+import { ArrowLeft } from 'lucide-react';
+import { requestMagicLink, getRemainingLimits } from '../../lib/api';
 import { AuthShell, Field, PrimaryButton, TextButton } from '../ui/ig-ui';
 import { validateEmail } from '../../lib/validations';
 
-/* The one hard fact about a magic link: it is short-lived and single-use. It
-   is said once, in the subtitle — the page is wordmark, heading, one line, the
-   address, and a resend. Nothing else. */
+/* The one hard fact about a magic link: it is short-lived and single-use.
+   The page is a charcoal plate naming the inbox, one resend action, and a
+   way back. The resend carries the server-issued `ptr` — a device-bound
+   proof key from the URL — so this page cannot be replayed from another
+   device or hammered by a script. */
 const LINK_LIFETIME = '15 minutes';
 
-export const MagicLinkSentPage: React.FC = () => {
-  const email = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('email') || '' : '';
+interface MagicLinkSentPageProps {
+  /* Rendered inline in the login flow these come from the parent; opened as a
+     standalone /magic-sent URL (deep link, refresh) they come from the query
+     string instead. */
+  email?: string;
+  ptr?: string;
+  onClose?: () => void;
+}
+
+export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: emailProp, ptr: ptrProp, onClose }) => {
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const email = emailProp || params?.get('email') || '';
+  const [ptr, setPtr] = useState(() => ptrProp || params?.get('ptr') || '');
   const [cooldown, setCooldown] = useState(0);
   const [sending, setSending] = useState(false);
   /* -1 until the server answers, so nothing renders a number we are not sure
@@ -32,15 +45,11 @@ export const MagicLinkSentPage: React.FC = () => {
   const fetchRemaining = useCallback(async () => {
     if (!email) return;
     try {
-      const base = API_BASE_URL;
-      const res = await fetch(`${base}/api/auth/remaining?email=${encodeURIComponent(email)}&method=magic-link`, { credentials: 'include' });
-      if (res.ok) {
-        const d: any = await res.json();
-        const rem = d?.remaining?.['magic-link'];
-        if (rem) {
-          setRemaining(rem.remaining);
-          setLimitResetAt(rem.remaining <= 0 && rem.resetAt ? rem.resetAt : 0);
-        }
+      const res = await getRemainingLimits(email, 'magic-link');
+      const rem = res.ok ? res.data?.remaining?.['magic-link'] : undefined;
+      if (rem) {
+        setRemaining(rem.remaining);
+        setLimitResetAt(rem.remaining <= 0 && rem.resetAt ? rem.resetAt : 0);
       }
     } catch {
       /* Rate-limit info is a nicety. If it cannot be read, the page still works
@@ -50,8 +59,7 @@ export const MagicLinkSentPage: React.FC = () => {
 
   /* Once on arrival, again whenever the tab comes back (a phone spends most of
      its time in another app while someone opens their mail), and after every
-     resend. The old 8s poll fired forever on a page that has nothing to update,
-     which is how a confirmation screen ends up generating traffic on its own. */
+     resend. */
   useEffect(() => {
     void fetchRemaining();
     const refresh = () => { if (document.visibilityState === 'visible') void fetchRemaining(); };
@@ -77,6 +85,9 @@ export const MagicLinkSentPage: React.FC = () => {
     return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
   }, [cooldown]);
 
+  /* A missing ptr is not fatal: the server only demands one while a send flow
+     is live for this address. Resend anyway — the reply (or a 403 notice)
+     tells the truth. */
   const resendLocked = cooldown > 0 || retryAfter > 0 || (limitResetAt > 0 && Date.now() < limitResetAt) || remaining === 0;
   const resendLabel = sending
     ? 'Sending…'
@@ -86,15 +97,27 @@ export const MagicLinkSentPage: React.FC = () => {
         ? `Resend in ${cooldown}s`
         : remaining === 0
           ? 'No sends left'
-          : 'Resend';
+          : 'Resend sign-in link';
 
   const handleResend = async () => {
     if (!email || resendLocked) return;
     setSending(true);
     setSendError('');
     try {
-      const res = await requestMagicLink(email);
+      const res = await requestMagicLink(email, { ptr });
       if (res.ok) {
+        // The server rotates the key every send — keep the URL honest so a
+        // refresh still works from this device.
+        if (res.ptr) {
+          setPtr(res.ptr);
+          try {
+            if (window.location.pathname === '/magic-sent') {
+              const q = new URLSearchParams(window.location.search);
+              q.set('ptr', res.ptr);
+              window.history.replaceState(null, '', `${window.location.pathname}?${q.toString()}`);
+            }
+          } catch {}
+        }
         setRemaining(v => (v > 0 ? v - 1 : v));
         setCooldown(30);
         setTimeout(() => { void fetchRemaining(); }, 600);
@@ -111,7 +134,8 @@ export const MagicLinkSentPage: React.FC = () => {
         );
         setTimeout(() => { void fetchRemaining(); }, 600);
       } else {
-        // Never swallow failures — show them inline.
+        // Never swallow failures — show them inline. A 403 here means the
+        // key is stale or this is not the device that started the flow.
         setSendError(res.error || 'Could not resend the link. Please try again.');
       }
     } catch {
@@ -120,8 +144,16 @@ export const MagicLinkSentPage: React.FC = () => {
     setSending(false);
   };
 
-  /* "/" is the app root — there is no /login route to go back to. */
-  const handleBack = () => { window.location.href = '/'; };
+  /* SPA push — a full reload here repaints the whole shell for no reason. */
+  const handleBack = () => {
+    if (onClose) { onClose(); return; }
+    try {
+      window.history.pushState(null, '', '/login');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch {
+      window.location.href = '/login';
+    }
+  };
 
   /* Opened without an address — a shared link, a stripped query string, a
      refresh after the browser cleaned the URL. A blank page reads as a broken
@@ -139,9 +171,11 @@ export const MagicLinkSentPage: React.FC = () => {
     try {
       const res = await requestMagicLink(addr);
       if (res.ok) {
-        // Hand off to the same screen a normal request lands on, now that the
-        // address is known and the resend controls have something to work with.
-        window.location.href = `/magic-sent?email=${encodeURIComponent(addr)}`;
+        // Hand off to the same screen a normal request lands on, carrying the
+        // fresh key so resend works here too.
+        const q = new URLSearchParams({ email: addr });
+        if (res.ptr) q.set('ptr', res.ptr);
+        window.location.href = `/magic-sent?${q.toString()}`;
         return;
       }
       setManualError(res.error || 'Could not send the link. Please try again.');
@@ -153,17 +187,15 @@ export const MagicLinkSentPage: React.FC = () => {
 
   if (!email) {
     return (
-      <AuthShell title="Check your email" subtitle={`Your one-time sign-in link expires in ${LINK_LIFETIME}.`}>
-        <div className="w-full">
-          <p className="flex items-start gap-2.5 text-left text-[16px] leading-relaxed text-white/70">
-            <Mail size={18} className="mt-[3px] shrink-0 text-white/50" aria-hidden="true" />
-            <span>
-              This link arrived without the address it was sent to — usually
-              because it was shortened, forwarded, or the browser dropped the
-              query string. Enter your email and we&apos;ll send a fresh one.
-            </span>
-          </p>
-
+      <AuthShell>
+        <div>
+          <div className="otp-head">
+            <h1 className="tb-heading tb-heading-white">Check your email</h1>
+            <p className="tb-sub mt-1.5">
+              This page lost the address the link was sent to. Enter it below
+              and we&apos;ll send a fresh link — they expire in {LINK_LIFETIME}.
+            </p>
+          </div>
           <form
             className="mt-6"
             noValidate
@@ -186,68 +218,71 @@ export const MagicLinkSentPage: React.FC = () => {
                 if (manualError) setManualError('');
               }}
             />
-
             <div className="mt-5">
               <PrimaryButton type="submit" loading={manualSending} disabled={manualSending}>
-                {manualSending ? 'Sending…' : 'Send a new link'}
+                Send a new link
               </PrimaryButton>
             </div>
           </form>
-
           <div className="mt-2 text-center">
             <TextButton type="button" onClick={handleBack} className="inline-flex items-center gap-1.5">
               <ArrowLeft size={13} /> Back to sign in
             </TextButton>
           </div>
-
-          <p className="mt-4 text-center text-[16px] text-muted">
-            Protected by Tirbeo ·{' '}
-            <a href="/privacy" className="text-link hover:underline">Privacy</a> ·{' '}
-            <a href="/terms" className="text-link hover:underline">Terms</a>
-          </p>
         </div>
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell
-      title="Check your email"
-      subtitle={`Your one-time sign-in link expires in ${LINK_LIFETIME}. Check your spam folder if it hasn't arrived.`}
-      footer={
-        <>
-          Protected by Tirbeo ·{' '}
-          <a href="/privacy" className="text-link hover:underline">Privacy</a> ·{' '}
-          <a href="/terms" className="text-link hover:underline">Terms</a>
-        </>
-      }
-    >
-      <div className="w-full">
-        {/* Where it went — a plain muted line. This is the only thing the
-            visitor needs to read; everything else supports it. */}
-        <p className="truncate rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-center text-[16px] text-muted">
-          {email}
-        </p>
-
-        {/* Resend is a recovery action, not the point of the page — a text
-            line, not a button competing with the confirmation above. */}
-        <div className="mt-2 text-center">
-          <TextButton
-            type="button"
-            onClick={handleResend}
-            disabled={resendLocked || sending}
-            aria-busy={sending || undefined}
-          >
-            {resendLabel}
-          </TextButton>
+    <AuthShell>
+      <div>
+        <div className="otp-head">
+          <h1 className="tb-heading tb-heading-white">Check your email</h1>
+          <p className="tb-sub mt-1.5">
+            Your one-time sign-in link expires in {LINK_LIFETIME}. Check your
+            spam folder if it hasn&apos;t arrived.
+          </p>
         </div>
 
-        {/* Limits stay invisible until actually hit — then they are named. */}
-        {sendError && (
-          <p role="alert" className="mt-4 rounded-xl border border-danger/30 p-2.5 text-center text-[15px] leading-snug text-danger">
-            {sendError}
-          </p>
-        )}
+        <div className="signup-fields">
+          <div className="space-y-5 text-left">
+            <Field
+              label="Sent to"
+              type="email"
+              value={email}
+              readOnly
+              hint="Resends are locked to the device that started sign-in."
+              trailing={
+                <span className="ms-chip" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2.5" y="4.5" width="19" height="15" rx="3" />
+                    <path d="m3.5 7 7.4 5.4a2 2 0 0 0 2.2 0L20.5 7" />
+                  </svg>
+                </span>
+              }
+            />
+
+            <PrimaryButton
+              type="button"
+              onClick={() => void handleResend()}
+              loading={sending}
+              disabled={resendLocked}
+            >
+              {resendLabel}
+            </PrimaryButton>
+
+            {sendError && (
+              <p role="alert" className="form-notice form-notice-error">{sendError}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="more-ways">
+          <button type="button" className="more-ways-btn" onClick={handleBack}>
+            Back to sign in
+          </button>
+        </div>
       </div>
     </AuthShell>
   );

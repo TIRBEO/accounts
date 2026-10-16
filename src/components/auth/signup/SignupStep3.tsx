@@ -29,7 +29,7 @@ export const SignupStep3: React.FC<SignupStep3Props> = ({
   const sendsBadge = (
     <span
       className={`rounded-xl px-1.5 py-1 text-[15px] ${
-        limitReached ? 'text-danger' : 'text-white/45'
+        limitReached ? 'text-danger-text' : 'text-text-4'
       }`}
     >
       {limitReached ? 'limit reached' : `${remainingSends('signup-otp')} left`}
@@ -37,29 +37,32 @@ export const SignupStep3: React.FC<SignupStep3Props> = ({
   );
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
+    <form className="signup-fields" onSubmit={onSubmit}>
+      <div className="space-y-5 text-left">
       <div>
-        <p className="text-center text-[16px] leading-relaxed text-white/50">
-          We sent a code to <span className="text-white/75">{email}</span>.
+        <p className="text-center text-[16px] leading-relaxed text-text-4">
+          We sent a code to <span className="text-text-3">{email}</span>.
         </p>
       </div>
 
-      <OtpBoxes
-        label="Verification code"
-        value={verificationCode}
-        onChange={setVerificationCode}
-        error={Boolean(showCodeError)}
-      />
+      <div>
+        <OtpBoxes
+          label="Verification code"
+          value={verificationCode}
+          onChange={setVerificationCode}
+          error={Boolean(showCodeError)}
+        />
+      </div>
 
       {showCodeError && (
-        <p role="alert" className="text-center text-[16px] leading-snug text-danger">
+        <p role="alert" className="text-center text-[16px] leading-snug text-danger-text">
           {errors.verificationCode}
         </p>
       )}
 
       <div className="text-center">
         {isInCooldown('signup-otp') ? (
-          <span className="inline-flex items-center justify-center gap-2 text-[16px] text-white/50">
+          <span className="inline-flex items-center justify-center gap-2 text-[16px] text-text-4">
             Resend in {getCooldownRemaining('signup-otp')}s
             {sendsBadge}
           </span>
@@ -76,6 +79,7 @@ export const SignupStep3: React.FC<SignupStep3Props> = ({
       <PrimaryButton type="submit" disabled={!codeComplete} loading={isSubmitting}>
         {isSubmitting ? 'Verifying...' : 'Verify & Continue'}
       </PrimaryButton>
+      </div>
     </form>
   );
 };

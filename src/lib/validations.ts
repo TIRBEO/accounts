@@ -98,4 +98,4 @@ export const validateDob = (dob: string): string | undefined => {
 };
 
 export type SignupStep = 1 | 2 | 3 | 4;
-export type LoginStep = 'email' | 'password' | 'otp' | '2fa' | 'recovery' | 'more-options';
+export type LoginStep = 'email' | 'otp' | '2fa' | 'recovery' | 'more-options' | 'forgot' | 'magic-sent';

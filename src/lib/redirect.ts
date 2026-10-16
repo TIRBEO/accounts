@@ -166,13 +166,6 @@ export function getRedirectTarget(): string {
   return DEFAULT_DASHBOARD_URL;
 }
 
-/** Accounts /login URL preserving no redirect — used after signup */
-export function getAccountsLoginUrl(): string {
-  const base = typeof window !== 'undefined' ? window.location.origin : '';
-  if (base && isAllowedRedirectTarget(base)) return `${base.replace(/\/$/, '')}/login`;
-  return '/login';
-}
-
 /**
  * Banned / suspended / deleted accounts are all surfaced on the DASHBOARD
  * (single place), never on the accounts app. Jump straight there carrying the

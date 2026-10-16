@@ -49,7 +49,7 @@ export const RealtimeBanner: React.FC = () => {
   return (
     <div
       role="status"
-      className="fixed left-1/2 top-16 z-40 flex max-w-[min(560px,calc(100vw-32px))] -translate-x-1/2 items-center gap-2 glass rounded-full px-4 py-2 text-[13px] font-medium text-white shadow-pop"
+      className="fixed left-1/2 top-16 z-40 flex max-w-[min(560px,calc(100vw-32px))] -translate-x-1/2 items-center gap-2 glass rounded-full px-4 py-2 text-[13px] font-medium text-fg shadow-pop"
     >
       <Megaphone size={15} className="shrink-0 text-accent" />
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{message}</span>
@@ -57,4 +57,3 @@ export const RealtimeBanner: React.FC = () => {
   );
 };
 
-export default RealtimeBanner;

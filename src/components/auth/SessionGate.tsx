@@ -43,25 +43,25 @@ export function SessionGate({ children, onShowToast }: SessionGateProps) {
               onError={() => setPhotoBroken(true)}
             />
           ) : photoBroken ? (
-            <span className="mx-auto mb-6 grid size-16 place-items-center overflow-hidden rounded-3xl border border-white/12">
+            <span className="mx-auto mb-6 grid size-16 place-items-center overflow-hidden rounded-3xl bg-field">
               <RandomAvatar seed={user.email || user.name || 'tirbeo'} className="size-full" />
             </span>
           ) : (
-            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-3xl border border-white/12 text-[22px] text-white/85">
+            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-3xl bg-field text-[22px] text-text-2">
               {initials}
             </div>
           )}
 
-          <p className="mb-2 text-[14px] font-medium text-white/45">
+          <p className="mb-2 text-[14px] font-medium text-text-4">
             Signed in as
           </p>
-          <p className="truncate text-[20px] font-medium text-white/90">{user.email}</p>
-          {user.name && <p className="mt-1.5 text-[15px] text-white/55">{user.name}</p>}
+          <p className="truncate text-[20px] font-medium text-fg">{user.email}</p>
+          {user.name && <p className="mt-1.5 text-[15px] text-text-3">{user.name}</p>}
 
           <div className="mt-9 flex flex-col gap-2.5">
             <a
               href={dashboardUrl}
-              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-white/[0.12] disabled:text-white/40 text-[15px]"
+              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4 text-[15px]"
             >
               Continue to dashboard
               <ArrowRight size={13} className="text-white/50" />

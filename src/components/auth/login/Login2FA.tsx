@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { LoginStep } from '../../../lib/validations';
-import { Field, OtpBoxes, PrimaryButton, Segmented, TextButton } from '../../ui/ig-ui';
+import { Field, FormNotice, OtpBoxes, PrimaryButton, Segmented, TextButton } from '../../ui/ig-ui';
 
 interface Login2FAProps {
   twoFactorCode: string;
@@ -19,26 +19,30 @@ interface Login2FAProps {
   setLoginStep: (step: LoginStep) => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
+  loginNotice?: { msg: string; tone: 'error' | 'success' } | null;
 }
 
 export const Login2FA: React.FC<Login2FAProps> = ({
   twoFactorCode, setTwoFactorCode, backupCode, setBackupCode,
   loginWithBackup, setLoginWithBackup, errors, touched, handleBlur,
-  isSubmitting, onSubmit, onBack,
+  isSubmitting, onSubmit, onBack, loginNotice,
 }) => {
   const showCodeError = touched.twoFactorCode && errors.twoFactorCode;
   const showBackupError = touched.backupCode && errors.backupCode;
 
   return (
     <form onSubmit={onSubmit}>
-      <h2 className="tb-heading">Two-factor authentication</h2>
-      <p className="tb-sub mt-1.5">
-        {loginWithBackup
-          ? 'Enter one of your 8-character backup codes.'
-          : 'Enter the 6-digit code from your authenticator app.'}
-      </p>
+      <div className="otp-head">
+        <h2 className="tb-heading">Two-factor authentication</h2>
+        <p className="tb-sub mt-1.5">
+          {loginWithBackup
+            ? 'Enter one of your 8-character backup codes.'
+            : 'Enter the 6-digit code from your authenticator app.'}
+        </p>
+      </div>
 
-      <div className="mt-7 space-y-5">
+      <div className="signup-fields">
+        <div className="space-y-5 text-left">
         <Segmented
           value={loginWithBackup ? 'backup' : 'code'}
           onChange={(next) => {
@@ -66,14 +70,14 @@ export const Login2FA: React.FC<Login2FAProps> = ({
         )}
 
         {!loginWithBackup && showCodeError && (
-          <p role="alert" className="text-center text-[14px] text-danger">
+          <p role="alert" className="text-center text-[14px] text-danger-text">
             {errors.twoFactorCode}
           </p>
         )}
 
         {loginWithBackup && (
           <Field
-            label="Backup code"
+            placeholder="Backup code" aria-label="Backup code"
             type="text"
             value={backupCode}
             onChange={(e) => setBackupCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
@@ -83,6 +87,8 @@ export const Login2FA: React.FC<Login2FAProps> = ({
             hint="Codes are 8 characters, letters and numbers."
           />
         )}
+
+        <FormNotice notice={loginNotice} />
 
         <PrimaryButton
           type="submit"
@@ -95,14 +101,20 @@ export const Login2FA: React.FC<Login2FAProps> = ({
           Verify
         </PrimaryButton>
 
-        <div className="flex flex-col items-center gap-3">
-          {!loginWithBackup && (
+        {!loginWithBackup && (
+          <div className="text-center">
             <TextButton onClick={() => setLoginWithBackup(true)}>
               Use backup code instead
             </TextButton>
-          )}
-          <TextButton onClick={onBack}>Back</TextButton>
+          </div>
+        )}
         </div>
+      </div>
+
+      <div className="more-ways">
+        <button type="button" className="more-ways-btn" onClick={onBack}>
+          Back
+        </button>
       </div>
     </form>
   );

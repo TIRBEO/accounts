@@ -16,7 +16,7 @@
  *   DELETE /api/auth/passkey/:id                                          (session)
  */
 
-import { API_BASE_URL, apiGet, apiPost, apiDelete } from './api';
+import { apiGet, apiPost, apiDelete } from './api';
 
 // ── Base64url ⇄ ArrayBuffer ────────────────────────────────────────────────
 
@@ -257,6 +257,3 @@ export async function deletePasskey(id: string): Promise<{ ok: boolean }> {
   if (!res.ok) throw new PasskeyError(res.error || 'Could not remove that passkey.');
   return { ok: true };
 }
-
-/** Absolute base URL, for the rare case a caller needs to build a link itself. */
-export const PASSKEY_API_BASE = `${API_BASE_URL}/api/auth/passkey`;

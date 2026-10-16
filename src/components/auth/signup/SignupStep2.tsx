@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Camera, ChevronDown, ChevronLeft, ChevronRight, Trash2, UserRound } from 'lucide-react';
-import { Field, PrimaryButton, SelectField } from '../../ui/ig-ui';
+import { Field, PrimaryButton, SelectField, TextAreaField } from '../../ui/ig-ui';
 import { GENDERS, WORK_FIELDS, WORK_KEYS, type WorkKey } from '../../../lib/profile-fields';
 
 interface SignupStep2Props {
@@ -47,16 +47,16 @@ function formatDate(y:number,m:number,d:number){ if(y<=0||m<0||m>11||d<=0) retur
 function daysInMonth(y:number,m:number){ return new Date(y,m+1,0).getDate(); }
 
 const calNavCls =
-  'flex size-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.16] bg-white/[0.04] text-white/75 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-40';
+  'flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-field text-text-2 transition-colors hover:border-[rgba(255,255,255,0.24)] hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-40';
 const footBtnCls =
-  'h-12 rounded-xl border border-white/[0.16] bg-white/[0.04] px-4 text-[15px] font-semibold text-white/85 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white';
+  'h-12 rounded-xl border border-border bg-field px-4 text-[15px] font-semibold text-text-2 transition-colors hover:border-[rgba(255,255,255,0.24)] hover:bg-hover hover:text-fg';
 const gridBtnCls = (sel: boolean, dis = false) =>
   `rounded-xl text-[16px] transition-colors ${
     dis
-      ? 'cursor-not-allowed text-white/25'
+      ? 'cursor-not-allowed text-text-4'
       : sel
-        ? 'bg-white text-black'
-        : 'text-white/75 hover:bg-white/[0.08]'
+        ? 'bg-ig text-white'
+        : 'text-text-3 hover:bg-hover'
   }`;
 
 export const SignupStep2: React.FC<SignupStep2Props> = ({
@@ -95,32 +95,30 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
   const dobDisplay = dob ? new Date(dob).toLocaleDateString('en-US',{year:'numeric', month:'long', day:'numeric'}) : '';
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div>
-        <p className="text-center text-[16px] leading-relaxed text-white/50">
-          Complete your profile in seconds — square photo, gender and birthday are required. Work details are optional and can be updated later.
-        </p>
-      </div>
+    <form onSubmit={onSubmit} className="signup-fields" noValidate>
+      <p className="step2-lede">
+        Square photo, gender and birthday to finish your profile. Work details are optional.
+      </p>
 
-      {/* Avatar picker */}
-      <div className="flex flex-col items-center gap-3 pb-2">
-        <div className="relative size-36 overflow-hidden rounded-full border-2 border-dashed border-white/20">
+      {/* Avatar picker — the plate shows the photo, the overlay carries the
+          camera action and a trash badge removes it. */}
+      <div className="avatar-pick">
+        <div className="avatar-plate">
           {profilePic ? (
             <img src={profilePic} alt="Profile" className="size-full object-cover" />
           ) : (
-            <div className="flex size-full items-center justify-center">
-              <UserRound className="size-12 text-white/35" strokeWidth={1.4} />
-            </div>
+            <UserRound className="avatar-ph" strokeWidth={1.4} />
           )}
           <button
             type="button"
-            onClick={()=>fileInputRef.current?.click()}
-            aria-label={profilePic?'Change profile photo':'Upload profile photo'}
-            className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 via-transparent to-transparent pb-3"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSubmitting}
+            aria-label={profilePic ? 'Change profile photo' : 'Upload profile photo'}
+            className="avatar-cta"
           >
-            <span className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/55 px-4 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-black/75">
+            <span>
               <Camera className="size-5" />
-              {profilePic?'Change':'Upload'}
+              {profilePic ? 'Change' : 'Upload'}
             </span>
           </button>
           <input
@@ -135,17 +133,18 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
             <button
               type="button"
               onClick={onRemoveProfilePic}
+              disabled={isSubmitting}
               aria-label="Remove profile photo"
-              className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl border border-white/15 bg-black/65 text-white/80 transition-colors hover:bg-black/85"
+              className="avatar-x"
             >
               <Trash2 className="size-5" />
             </button>
           )}
         </div>
-        <div className="text-center">
-          <p className="text-[16px] text-white/80">Profile photo</p>
-          <p className="mt-0.5 text-[15px] text-white/45">Square • JPG PNG WebP • 5 MB — optional</p>
-        </div>
+        <p className="avatar-cap">
+          Profile photo
+          <span>Square • JPG PNG WebP • 5 MB — optional</span>
+        </p>
       </div>
 
       {/* Gender + DOB */}
@@ -170,10 +169,10 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
             aria-haspopup="dialog"
             aria-expanded={dobOpen}
             aria-label="Select date of birth"
-            className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-left text-[16px] outline-none transition-[border-color,background-color,box-shadow] ${dobError?'border-danger':'border-white/[0.16] bg-white/[0.07] hover:border-white/25'}`}
+            className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-left text-[16px] outline-none transition-[border-color,background-color,box-shadow] ${dobError?'border-danger':'border-[rgba(255,255,255,0.14)] bg-field hover:border-[rgba(255,255,255,0.24)]'}`}
           >
-            <span className={`truncate ${dob?'text-white/90':'text-white/40'}`}>{dobDisplay || 'Pick a date'}</span>
-            <ChevronDown className="size-5 shrink-0 text-white/45" />
+            <span className={`truncate ${dob?'text-fg':'text-text-4'}`}>{dobDisplay || 'Pick a date'}</span>
+            <ChevronDown className="size-5 shrink-0 text-text-4" />
           </button>
           {dobError && (
             <p role="alert" className="tb-hint tb-error">{dobError}</p>
@@ -190,14 +189,14 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
                 className="w-full max-w-sm overflow-hidden rounded-2xl glass"
                 onClick={e=>e.stopPropagation()}
               >
-                <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-border p-3">
                   <button type="button" className={calNavCls} onClick={goPrev} disabled={!canPrev()} aria-label="Previous month">
                     <ChevronLeft className="size-6" />
                   </button>
                   <button
                     type="button"
                     onClick={()=>setPickerMode(pickerMode==='days'?'months': pickerMode==='months'?'years':'days')}
-                    className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[16px] text-white/70 transition-colors hover:bg-hover"
+                    className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[16px] text-text-3 transition-colors hover:bg-hover"
                   >
                     {pickerMode==='days' && <>{MONTHS[viewMonth]} {viewYear}</>}
                     {pickerMode==='months' && <>{viewYear}</>}
@@ -227,7 +226,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
                   <>
                     <div className="grid grid-cols-7 gap-1 p-3">
                       {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=> (
-                        <div key={d} className="py-2 text-center text-[14px] font-semibold uppercase tracking-wide text-white/45">{d}</div>
+                        <div key={d} className="py-2 text-center text-[14px] font-semibold uppercase tracking-wide text-text-4">{d}</div>
                       ))}
                       {Array.from({length: new Date(viewYear,viewMonth,1).getDay()}).map((_,i)=><div key={'e'+i}/>)}
                       {Array.from({length: daysInMonth(viewYear,viewMonth)},(_,i)=>{
@@ -252,7 +251,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
                         <button
                           type="button"
                           onClick={()=>{handleBlur('dob'); setDobOpen(false);}}
-                          className="h-12 rounded-xl px-5 text-[15px] font-semibold bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-white/[0.12] disabled:text-white/40"
+                          className="h-12 rounded-xl px-5 text-[15px] font-semibold bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4"
                         >
                           Done
                         </button>
@@ -266,32 +265,48 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
         </div>
       </div>
 
-      {/* Work — the same four questions, in the same words, as the settings
-          app's "Personal details → Work" sheet, and stored in the same four
-          columns. Optional; updateable later. */}
-      <div className="border-b border-white/[0.07] pb-4">
-        <h3 className="tb-label mb-0">
-          Work <span className="normal-case tracking-normal">— optional</span>
-        </h3>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-3">
-          {WORK_KEYS.map((key) => (
-            <Field
-              key={key}
-              label={WORK_FIELDS[key].label}
-              placeholder={WORK_FIELDS[key].placeholder}
-              value={workValue[key]}
-              onChange={(e) => workSetter[key](e.target.value)}
-              onBlur={() => handleBlur(key)}
-              maxLength={WORK_FIELDS[key].maxLength}
-              disabled={isSubmitting}
-              error={touched[key] ? errors[key] : undefined}
-            />
-          ))}
+      {/* Work — collapsed by default; same four questions as the settings
+          app's "Personal details → Work" sheet. Optional; updateable later. */}
+      <details className="work-box">
+        <summary>
+          <span>
+            Work details <em>Optional — add later any time</em>
+          </span>
+          <ChevronDown aria-hidden />
+        </summary>
+        <div className="work-body">
+          {WORK_KEYS.map((key) =>
+            key === 'jobStartedOn' ? (
+              <Field
+                key={key}
+                label={WORK_FIELDS[key].label}
+                placeholder={WORK_FIELDS[key].placeholder}
+                value={workValue[key]}
+                onChange={(e) => workSetter[key](e.target.value)}
+                onBlur={() => handleBlur(key)}
+                maxLength={WORK_FIELDS[key].maxLength}
+                disabled={isSubmitting}
+                error={touched[key] ? errors[key] : undefined}
+              />
+            ) : (
+              <TextAreaField
+                key={key}
+                label={WORK_FIELDS[key].label}
+                placeholder={WORK_FIELDS[key].placeholder}
+                value={workValue[key]}
+                onChange={(e) => workSetter[key](e.target.value)}
+                onBlur={() => handleBlur(key)}
+                maxLength={WORK_FIELDS[key].maxLength}
+                disabled={isSubmitting}
+                error={touched[key] ? errors[key] : undefined}
+              />
+            ),
+          )}
         </div>
-      </div>
+      </details>
 
       <PrimaryButton type="submit" disabled={!step2Complete} loading={isSubmitting}>
-        {isSubmitting?'Please wait…':'Continue'}
+        {isSubmitting ? 'Please wait…' : 'Next'}
       </PrimaryButton>
     </form>
   );

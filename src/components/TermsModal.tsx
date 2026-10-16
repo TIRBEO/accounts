@@ -54,7 +54,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             type="button"
             aria-label="Close dialog"
             onClick={onClose}
-            className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 cursor-default bg-black/45 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -71,7 +71,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             {/* Header */}
             <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4 sm:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl border border-white/12 text-white/70">
+                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-field text-text-3">
                   {isTerms ? (
                     <FileText className="size-[18px]" />
                   ) : (
@@ -82,11 +82,11 @@ export const TermsModal: React.FC<TermsModalProps> = ({
                 <div className="min-w-0">
                   <h2
                     id="legal-modal-title"
-                    className="truncate text-[22px] text-white/90"
+                    className="truncate text-[22px] text-fg"
                   >
                     {isTerms ? "Terms of Service" : "Privacy Policy"}
                   </h2>
-                  <p className="text-[15px] text-white/45">Tirbeo</p>
+                  <p className="text-[15px] text-text-4">Tirbeo</p>
                 </div>
               </div>
 
@@ -102,7 +102,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
 
             {/* Content */}
             <main className="min-h-0 max-h-[60vh] flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-              <div className="space-y-4 text-[18px] leading-relaxed text-white/70">
+              <div className="space-y-4 text-[18px] leading-relaxed text-text-2">
                 {isTerms ? (
                   <>
                     <p>
@@ -183,12 +183,11 @@ const LegalSection: React.FC<LegalSectionProps> = ({
   children,
 }) => {
   return (
-    <section className="border-b border-white/[0.07] pb-4">
-      <h3 className="mb-2 text-[19px] text-white/90">{title}</h3>
+    <section className="border-b border-divider pb-4">
+      <h3 className="mb-2 text-[19px] text-fg">{title}</h3>
 
       <p>{children}</p>
     </section>
   );
 };
 
-export default TermsModal;

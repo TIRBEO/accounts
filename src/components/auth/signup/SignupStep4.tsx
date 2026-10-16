@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Check } from 'lucide-react';
 import { ConsentCheck, PasswordField, PrimaryButton } from '../../ui/ig-ui';
+import { validatePassword } from '../../../lib/validations';
 
 interface SignupStep4Props {
   email: string;
@@ -32,23 +32,13 @@ interface SignupStep4Props {
   captchaPending?: boolean;
 }
 
-function getPasswordStrength(password: string): number {
-  let strength = 0;
-  if (password.length >= 8) strength++;
-  if (/[A-Z]/.test(password)) strength++;
-  if (/[a-z]/.test(password)) strength++;
-  if (/[0-9]/.test(password)) strength++;
-  if (/[^A-Za-z0-9]/.test(password)) strength++;
-  return Math.min(strength, 4);
-}
-
 function getStrengthBarClass(level: number): string {
   switch (level) {
     case 1: return 'bg-danger';
     case 2: return 'bg-[var(--warn)]';
     case 3: return 'bg-[var(--success)]';
     case 4: return 'bg-success';
-    default: return 'bg-white/[0.12]';
+    default: return 'bg-hover';
   }
 }
 
@@ -71,11 +61,12 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
 }) => {
   const showPasswordError = touched.password && errors.password;
   const showConfirmError = touched.confirmPassword && errors.confirmPassword;
-  const strength = getPasswordStrength(password);
+  const strength = validatePassword(password).strength;
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
-      <p className="text-center text-[16px] leading-relaxed text-white/50">
+    <form className="signup-fields" onSubmit={onSubmit}>
+      <div className="space-y-5 text-left">
+      <p className="text-center text-[16px] leading-relaxed text-text-4">
         Choose a strong password with at least 8 characters. Use a mix of letters, numbers, and symbols for best security.
       </p>
 
@@ -84,7 +75,8 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           grows. */}
       <div>
         <PasswordField
-          label="Password *"
+          aria-label="Password"
+         
           shown={showPassword}
           onToggleShown={() => setShowPassword(!showPassword)}
           value={password}
@@ -101,10 +93,10 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
             {[1, 2, 3, 4].map((level) => (
               <div
                 key={level}
-                className={`h-1.5 rounded-full flex-1 transition-colors ${level <= strength ? getStrengthBarClass(level) : 'bg-white/[0.12]'}`}
+                className={`h-1.5 rounded-full flex-1 transition-colors ${level <= strength ? getStrengthBarClass(level) : 'bg-hover'}`}
               />
             ))}
-            <span className="ml-1 text-[15px] text-white/55">
+            <span className="ml-1 text-[15px] text-text-3">
               {getStrengthLabel(strength)}
             </span>
           </div>
@@ -112,7 +104,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
       </div>
 
       <PasswordField
-        label="Confirm password *"
+        aria-label="Confirm password"
         shown={showConfirm}
         onToggleShown={() => setShowConfirm(!showConfirm)}
         value={confirmPassword}
@@ -133,16 +125,16 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
               I agree to the{' '}
               <button
                 type="button"
-                onClick={() => onOpenLegalModal('terms')}
-                className="text-white/90 underline decoration-white/25 underline-offset-2 hover:text-white"
+                onClick={(e) => { e.stopPropagation(); onOpenLegalModal('terms'); }}
+                className="text-text-2 underline decoration-text-4 underline-offset-2 hover:text-fg"
               >
                 Terms of Service
               </button>{' '}
               and{' '}
               <button
                 type="button"
-                onClick={() => onOpenLegalModal('privacy')}
-                className="text-white/90 underline decoration-white/25 underline-offset-2 hover:text-white"
+                onClick={(e) => { e.stopPropagation(); onOpenLegalModal('privacy'); }}
+                className="text-text-2 underline decoration-text-4 underline-offset-2 hover:text-fg"
               >
                 Privacy Policy
               </button>
@@ -150,7 +142,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           }
         />
         {touched.consentTerms && !consentTerms && (
-          <p role="alert" className="text-[16px] leading-snug text-danger">
+          <p role="alert" className="text-[16px] leading-snug text-danger-text">
             You must accept the Terms of Service and Privacy Policy
           </p>
         )}
@@ -160,11 +152,13 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
 
       <PrimaryButton
         type="submit"
+       
         disabled={!step4Complete || captchaPending}
         loading={isSubmitting}
       >
         {isSubmitting ? 'Creating account...' : 'Sign up'}
       </PrimaryButton>
+      </div>
     </form>
   );
 };

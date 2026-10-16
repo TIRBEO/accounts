@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Mail, XCircle } from 'lucide-react';
-import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { getCurrentUser, apiPost, verifyMagicLink } from '../lib/api';
 import { isAllowedRedirectTarget, unwrapHandoffTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
 import { haptic } from '../lib/haptics';
+import { broadcastSession } from '../lib/sessionSync';
+import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { AuthShell, PrimaryButton, SecondaryButton, Spinner } from './ui/ig-ui';
 
 const PROVIDER_LABELS: Record<string, string> = { github: 'GitHub', google: 'Google', discord: 'Discord' };
@@ -47,8 +48,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
         if (res.ok) {
           setMagicStatus('success'); haptic('success');
           onToast?.(`Magic link verified${res.email ? ' for ' + res.email : ''} — redirecting...`, 'success');
-          try { localStorage.setItem('tirbeo_session', JSON.stringify({ type: 'login', ts: Date.now() })); } catch {}
-          try { new BroadcastChannel('tirbeo:session').postMessage({ type: 'login', ts: Date.now() }); } catch {}
+          broadcastSession('login');
           setTimeout(() => { window.location.href = redirectTo; }, 900);
         } else {
           if (res.error && res.error.includes('already been used') && verifiedMagicTokens.size === 1) {
@@ -116,7 +116,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                 <h1 className="tb-heading">Verifying magic link</h1>
                 <p className="tb-sub mt-1.5">One-time link — please wait</p>
               </div>
-              <span className="inline-flex items-center gap-2 text-[16px] text-white/55">
+              <span className="inline-flex items-center gap-2 text-[16px] text-text-3">
                 <Spinner /> Verifying…
               </span>
             </div>
@@ -129,10 +129,10 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                 <h1 className="tb-heading">You&apos;re signed in</h1>
                 <p className="tb-sub mt-1.5">Magic link verified — opening your workspace.</p>
               </div>
-              <div className="mt-2 h-px w-full overflow-hidden rounded-full bg-white/[0.12]">
-                <div className="h-full w-full rounded-full bg-white/[0.12]" />
+              <div className="mt-2 h-px w-full overflow-hidden rounded-full bg-divider">
+                <div className="h-full w-full rounded-full bg-ig" />
               </div>
-              <p className="text-[16px] text-white/50">Redirecting to {redirectTo.replace(/^https?:\/\//,'').slice(0,32)}…</p>
+              <p className="text-[16px] text-text-4">Redirecting to {redirectTo.replace(/^https?:\/\//,'').slice(0,32)}…</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 py-3 text-center">
@@ -172,23 +172,23 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                 {PROVIDER_ICONS[provider] || <CheckCircle2 size={24} className="text-white/80" />}
               </div>
               <h1 className="tb-heading">{mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}</h1>
-              <p className="mt-2 max-w-[320px] text-[16px] leading-relaxed text-white/55">
+              <p className="mt-2 max-w-[320px] text-[16px] leading-relaxed text-text-3">
                 {mergeMode === 'transfer' ? `This ${providerLabel} account is linked to another account. Transfer moves sign-in to your current account.` : `An existing account shares this email. Merging links ${providerLabel} sign-in to it.`}
               </p>
             </div>
-            {error && <p role="alert" className="mb-3 text-center text-[16px] text-danger">{error}</p>}
+            {error && <p role="alert" className="mb-3 text-center text-[16px] text-danger-text">{error}</p>}
             <PrimaryButton type="button" onClick={handleMergeConfirm} disabled={merging} loading={merging}>
               {mergeMode === 'transfer' ? 'Transfer here' : 'Merge & continue'}
             </PrimaryButton>
             <div className="mt-3">
               <SecondaryButton type="button" onClick={handleMergeCancel} disabled={merging}>Cancel</SecondaryButton>
             </div>
-            <p className="mt-3 text-center text-[16px] leading-relaxed text-white/50">Accounts are only merged when emails match exactly.</p>
+            <p className="mt-3 text-center text-[16px] leading-relaxed text-text-4">Accounts are only merged when emails match exactly.</p>
           </>
         ) : (
           <div role="status" aria-live="polite" className="flex flex-col items-center gap-3 py-7 text-center">
             <Spinner size={20} />
-            <p className="text-[16px] text-white/55">Signing in…</p>
+            <p className="text-[16px] text-text-3">Signing in…</p>
           </div>
         )}
       </div>

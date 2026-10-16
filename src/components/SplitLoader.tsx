@@ -37,11 +37,11 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
         {/* Indeterminate rail — a travelling azure segment, the standard
             "working, duration unknown" signal. */}
         <div
-          className="relative h-px w-[168px] overflow-hidden rounded-full bg-white/[0.12]"
+          className="relative h-px w-[168px] overflow-hidden rounded-full bg-divider"
           role="presentation"
         >
           <motion.div
-            className="absolute inset-y-0 w-[54px] rounded-full bg-white/80"
+            className="absolute inset-y-0 w-[54px] rounded-full bg-ig"
             animate={reduceMotion ? undefined : { x: ['-54px', '168px'] }}
             transition={
               reduceMotion

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import gsap from 'gsap';
 import { redirectBlockedToDashboard } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
-import { AuthShell, StepProgress } from '../ui/ig-ui';
+import { clearSessionTrace } from '../../lib/sessionSync';
+import { AuthShell } from '../ui/ig-ui';
 import { TurnstileCaptcha } from './TurnstileCaptcha';
 import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
 
@@ -13,11 +15,11 @@ import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
  * competes with the one action the screen is actually asking for.
  */
 const FOOTER_ACTION =
-  'inline-flex min-h-11 items-center rounded-xl px-1 text-[17px] font-bold tracking-[-0.01em] ' +
-  'text-white underline decoration-white/40 decoration-2 underline-offset-[6px] ' +
-  'transition-colors duration-150 hover:decoration-white ' +
-  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-white ' +
-  'focus-visible:shadow-[0_0_0_2px_rgba(255,255,255,0.45)]';
+  'inline-flex min-h-11 items-center rounded-full px-1 text-[17px] font-bold tracking-[-0.01em] ' +
+  'text-fg underline decoration-[rgba(255,255,255,0.3)] decoration-2 underline-offset-[6px] ' +
+  'transition-colors duration-150 hover:decoration-[#f2f3f5] ' +
+  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-[#f2f3f5] ' +
+  'focus-visible:shadow-[0_0_0_2px_rgba(0,100,200,0.45)]';
 import {
   login,
   verify2FA,
@@ -46,10 +48,11 @@ import { SignupStep2 } from './signup/SignupStep2';
 import { SignupStep3 } from './signup/SignupStep3';
 import { SignupStep4 } from './signup/SignupStep4';
 import { LoginEmail } from './login/LoginEmail';
-import { LoginPassword } from './login/LoginPassword';
 import { LoginOtp } from './login/LoginOtp';
 import { Login2FA } from './login/Login2FA';
 import { LoginMoreOptions } from './login/LoginMoreOptions';
+import { MagicLinkSentPage } from './MagicLinkSentPage';
+import { LoginForgot } from './login/LoginForgot';
 import { LoginRecovery } from './login/LoginRecovery';
 
 interface AuthCardProps {
@@ -99,6 +102,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       mode, switchMode,
       signupStep, setSignupStep,
       loginStep, setLoginStep, noAccountEmail, setNoAccountEmail,
+      loginNotice, setLoginNotice,
       firstName, setFirstName,
       lastName, setLastName,
       email, setEmail,
@@ -142,8 +146,53 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       usernameStatus, usernameMessage, usernameSuggestions,
       emailCheckStatus,
       checkUsername,
-      resetLoginPassword,
     } = form;
+
+  /* Inline error/success line for the login screens — replaces toasts. */
+  const notice = (msg: string, tone: 'error' | 'success' = 'error') =>
+    setLoginNotice({ msg, tone });
+
+  /* A rejected guess leaves its error line up. Once the reader starts typing a
+     different code, that message describes nothing on the screen — and it
+     survives into the password step, where it reads as though the code they
+     just entered was rejected. */
+  const changeRecoveryCode = (value: string) => {
+    setRecoveryCode(value);
+    if (loginNotice?.tone === 'error') setLoginNotice(null);
+  };
+
+  /* ── Deep links from auth emails ──
+     Password-reset links land as ?token=…, magic-link failures as
+     ?error=magic_link_invalid, and "request a new link" returns with a
+     pre-fill ?email=. Consumed once on mount, then the query is stripped so
+     a refresh doesn't re-fire it. */
+  const deepLinked = React.useRef(false);
+  React.useEffect(() => {
+    if (deepLinked.current) return;
+    deepLinked.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const error = params.get('error');
+    const seededEmail = params.get('email');
+    if (!token && !error && !seededEmail) return;
+    if (error === 'magic_link_invalid') {
+      notice('That sign-in link is invalid or has expired — request a new one.');
+    } else if (error) {
+      notice('Something went wrong with that link. Please try again.');
+    }
+    if (seededEmail && /^[^<>"'\s]+@[^<>"'\s]+\.[^<>"'\s]+$/.test(seededEmail)) {
+      setEmail(seededEmail);
+    }
+    if (token) {
+      switchMode('login');
+      setLoginStep('recovery');
+      setRecoveryMethod('code');
+      setRecoveryStage('password');
+      setResetToken(token);
+    }
+    window.history.replaceState(null, '', window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const lockAccount = (result: { block?: BlockInfo | null }): boolean => {
     if (!result.block) return false;
@@ -203,6 +252,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             onShowToast('Please complete the security check, then try again.');
             return;
           }
+          const flags = result.data as { usernameTaken?: boolean } | null;
+          // A signup can pass every client-side check and still lose the race
+          // against a concurrent create of the same email or username. When the
+          // server wins, put the person back on the field that is wrong rather
+          // than leaving a toast as the only trace of why nothing happened.
+          if (flags?.usernameTaken) {
+            setSignupStep(1 as SignupStep);
+            setErrors({ username: 'This username is already taken. Pick another one.' });
+            setTouched({ username: true });
+          }
           onShowToast(result.error || 'Error creating account');
           haptic('error');
           captureException(new Error(result.error || 'Signup failed'));
@@ -248,7 +307,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         try {
           await logout();
         } catch {}
-        try { localStorage.removeItem('tirbeo_session'); } catch {}
+        clearSessionTrace();
         // Preserve the email so the login form can pre-fill it.
         // Switch to /login route so refresh stays on login and the
         // getCurrentUser auto-redirect in App.tsx is bypassed (no cookie now).
@@ -272,13 +331,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
    * failure here is "no session" — we say exactly that rather than pretending
    * the passkey was rejected, and we never leave the form in a half state.
    */
-  const handlePasskeySignIn = async () => {
+  const handlePasskeySignIn = async (opts?: { auto?: boolean }) => {
     if (isPasskeyLoading) return;
     setIsPasskeyLoading(true);
     try {
       const account = await authenticatePasskey();
       haptic('success');
-      onShowToast(`Signed in as ${account.email || 'your account'}`);
       if (account.id) {
         try {
           localStorage.setItem('tirbeo_session_user_id', account.id);
@@ -287,38 +345,89 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       onSuccessAuth(account.email || email, 'Passkey');
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : new PasskeyError('Passkey sign-in failed.');
-      if (!failure.cancelled) {
+      if (!failure.cancelled && !opts?.auto) {
         haptic('error');
-        onShowToast(failure.message);
+        notice(failure.message);
       }
     } finally {
       setIsPasskeyLoading(false);
     }
   };
 
+  /* Passkey autofill: no button anymore — on first paint we silently ask the
+     browser for a passkey (conditional mediation). Users with one registered
+     get the native prompt on load/reload and can sign in straight away;
+     everyone else sees nothing. */
+  const autoPasskeyFired = React.useRef(false);
+  React.useEffect(() => {
+    if (autoPasskeyFired.current) return;
+    autoPasskeyFired.current = true;
+    const t = setTimeout(() => {
+      void handlePasskeySignIn({ auto: true });
+    }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Email+password credential exchange, shared by the single-page entry
+   *  form and the standalone password step. */
+  const attemptPasswordLogin = async () => {
+    const result = await login(email, password, captchaToken);
+
+    if (!result.ok) {
+      if (noteCaptchaChallenge(result)) {
+        /* The Turnstile widget renders right on the single-page login form —
+           stay put, the visitor solves it and hits Log in again. */
+        notice('Please complete the security check, then try again.');
+        return;
+      }
+      if (lockAccount(result)) return;
+      // The token is single-use, so it is spent either way.
+      invalidateCaptcha();
+      notice(result.error || 'Invalid email or password');
+      haptic('error');
+      captureException(new Error(result.error || 'Login failed'));
+      return;
+    }
+
+    if (result.data?.needsOtp) {
+      const otpRes = await requestLoginOtp(email);
+      if (otpRes.ok) {
+        setLoginOtpCode('');
+        setLoginStep('otp');
+        setLoginPending2fa(!!result.data?.needs2FA);
+      } else {
+        if (lockAccount(otpRes)) return;
+        notice(otpRes.error || 'Failed to send verification code');
+      }
+      return;
+    }
+
+    if (result.data?.needs2FA && result.data?.tempToken) {
+      setLoginTempToken(result.data.tempToken);
+      setLoginStep('2fa');
+      return;
+    }
+
+    onSuccessAuth(email, 'Email & Password');
+    haptic('success');
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginNotice(null);
 
     if (loginStep === 'email') {
       const emailError = validateField('email', email);
       if (emailError) {
         setErrors({ email: emailError });
         setTouched({ email: true });
-        onShowToast('Please enter a valid email');
-        return;
-      }
-    } else if (loginStep === 'password') {
-      if (!password.trim()) {
-        setErrors({ password: 'Password is required' });
-        setTouched({ password: true });
-        onShowToast('Please enter your password');
         return;
       }
     } else if (loginStep === 'otp') {
       if (loginOtpCode.length !== 6 || !/^\d{6}$/.test(loginOtpCode)) {
         setErrors({ loginOtpCode: 'Code must be 6 digits' });
         setTouched({ loginOtpCode: true });
-        onShowToast('Please enter the 6-digit code from your email');
         return;
       }
     } else if (loginStep === '2fa') {
@@ -326,14 +435,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         if (!backupCode.trim()) {
           setErrors({ twoFactorCode: 'Backup code is required' });
           setTouched({ twoFactorCode: true });
-          onShowToast('Please enter your backup code');
           return;
         }
       } else {
         if (twoFactorCode.length !== 6 || !/^\d{6}$/.test(twoFactorCode)) {
           setErrors({ twoFactorCode: 'Code must be 6 digits' });
           setTouched({ twoFactorCode: true });
-          onShowToast('Please enter a valid 6-digit code');
           return;
         }
       }
@@ -355,7 +462,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             const message = 'Could not check that email. Please try again.';
             setErrors({ email: message });
             setTouched({ email: true });
-            onShowToast(message);
             setIsSubmitting(false);
             return;
           }
@@ -387,60 +493,21 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           return;
         }
         setNoAccountEmail(null);
-        setLoginStep('password');
-        setIsSubmitting(false);
-      } else if (loginStep === 'password') {
-        const result = await login(email, password, captchaToken);
-
-        if (!result.ok) {
-          if (noteCaptchaChallenge(result)) {
-            setIsSubmitting(false);
-            onShowToast('Please complete the security check, then try again.');
-            return;
-          }
-          if (lockAccount(result)) return;
-          // The token is single-use, so it is spent either way.
-          invalidateCaptcha();
-          onShowToast(result.error || 'Invalid email or password');
-          haptic('error');
-          captureException(new Error(result.error || 'Login failed'));
+        if (!password.trim()) {
+          setErrors({ password: 'Password is required' });
+          setTouched({ password: true });
           setIsSubmitting(false);
           return;
         }
-
-        if (result.data?.needsOtp) {
-          const otpRes = await requestLoginOtp(email);
-          if (otpRes.ok) {
-            setLoginOtpCode('');
-            setLoginStep('otp');
-            setLoginPending2fa(!!result.data?.needs2FA);
-            setIsSubmitting(false);
-            onShowToast('A verification code has been sent to your email');
-          } else {
-            if (lockAccount(otpRes)) return;
-            setIsSubmitting(false);
-            onShowToast(otpRes.error || 'Failed to send verification code');
-          }
-          return;
-        }
-
-        if (result.data?.needs2FA && result.data?.tempToken) {
-          setLoginTempToken(result.data.tempToken);
-          setLoginStep('2fa');
-          setIsSubmitting(false);
-          onShowToast('Please enter your 2FA code');
-          return;
-        }
-
-        onSuccessAuth(email, 'Email & Password');
-        haptic('success');
+        /* Single-page login: credentials go straight to the API. */
+        await attemptPasswordLogin();
         setIsSubmitting(false);
       } else if (loginStep === 'otp') {
         const result = await verifyLoginOtp(email, loginOtpCode);
 
         if (!result.ok) {
           if (lockAccount(result)) return;
-          onShowToast(result.error || 'Invalid or expired code');
+          notice(result.error || 'Invalid or expired code');
           haptic('error');
           setIsSubmitting(false);
           return;
@@ -451,7 +518,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           setLoginStep('2fa');
           setLoginPending2fa(false);
           setIsSubmitting(false);
-          onShowToast('Please enter your 2FA code');
           return;
         }
 
@@ -461,7 +527,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         setIsSubmitting(false);
       } else if (loginStep === '2fa') {
         if (!loginTempToken) {
-          onShowToast('Session error. Please try again.');
+          notice('Session error. Please try again.');
           setLoginStep('email');
           setIsSubmitting(false);
           return;
@@ -476,7 +542,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
         if (!result.ok) {
           if (lockAccount(result)) return;
-          onShowToast(result.error || (loginWithBackup ? 'Invalid backup code' : 'Invalid 2FA code'));
+          notice(result.error || (loginWithBackup ? 'Invalid backup code' : 'Invalid 2FA code'));
           haptic('error');
           captureException(new Error(result.error || '2FA verification failed'));
           setIsSubmitting(false);
@@ -488,7 +554,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         setIsSubmitting(false);
       }
     } catch (err) {
-      onShowToast('An unexpected error occurred');
+      notice('An unexpected error occurred');
       captureException(err);
       haptic('error');
       setIsSubmitting(false);
@@ -502,12 +568,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   };
 
   const handleLoginOtpResend = async () => {
+    setLoginNotice(null);
     const result = await sendWithRateLimit('login-otp', () => requestLoginOtp(email), { cooldownKey: 'login-otp' });
     if (result.ok) {
       setLoginOtpCode('');
       setLoginPending2fa(false);
       setLoginStep('otp');
-      onShowToast('Verification code resent to ' + email);
+      notice('Code resent to ' + email, 'success');
     } else if (result.status === 429) {
       const payload: any = (result as any).data || {};
       const exceeded = payload.exceeded as string | undefined;
@@ -521,10 +588,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const limitMsg = resetsAt
         ? `Limit reached for code sends${resetCopy(resetsAt)}`
         : (result.error || 'Please wait before resending');
-      onShowToast(limitMsg);
+      notice(limitMsg);
     } else {
       if (lockAccount(result as any)) return;
-      onShowToast(result.error || 'Failed to resend code');
+      notice(result.error || 'Failed to resend code');
     }
   };
 
@@ -611,53 +678,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setShowImageEditor(false);
   };
 
+  const [magicSentPtr, setMagicSentPtr] = useState('');
+
   const handleDirectLoginRequest = async (method: 'code' | 'magic-link') => {
+    setLoginNotice(null);
     const key = method === 'code' ? 'login-otp' : 'magic-link';
     const sendFn = method === 'code'
       ? () => requestLoginOtp(email)
       : () => requestMagicLink(email);
-    // magic-link: optimistic navigation within 1s so page shows fast even if API 5s
-    let navigated = false;
-    const doNav = () => {
-      if (navigated) return;
-      navigated = true;
-      try {
-        window.history.pushState(null, '', `/magic-sent?email=${encodeURIComponent(email)}`);
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      } catch {}
-    };
-    let navTimer: ReturnType<typeof setTimeout> | null = null;
     if (method === 'magic-link') {
       setErrors({});
       setTouched({});
-      // show page in ~700ms max
-      navTimer = setTimeout(doNav, 700);
     }
     const result = await sendWithRateLimit(key, sendFn, { cooldownKey: key });
-    if (navTimer) clearTimeout(navTimer);
     if (result.ok) {
       if (method === 'code') {
         setLoginOtpCode('');
         setLoginPending2fa(false);
         setLoginStep('otp');
-        onShowToast('One-time code sent to ' + email);
       } else {
-        onShowToast('Magic link sent to ' + email + ' — one-time link, direct login.');
-        doNav();
+        // The sent-page is a step of the login flow, not a separate URL —
+        // it opens right here on /login. The ptr stays in component state;
+        // only a direct /magic-sent deep link reads it from the query string.
+        setMagicSentPtr((result as any).ptr || '');
+        setLoginStep('magic-sent');
       }
       return;
     }
-    // Failure AFTER the optimistic navigation: return to /login so the error
-    // toast is shown in context instead of stranding the user on the sent
-    // page. (requestMagicLink returns retryAfterMs at the top level.)
-    const backToLogin = () => {
-      if (window.location.pathname.startsWith('/magic-sent')) {
-        try {
-          window.history.pushState(null, '', '/login');
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        } catch {}
-      }
-    };
     if (result.status === 429) {
       const retryAfterMs = result.retryAfterMs || (result as any).data?.retryAfterMs;
       const resetsAt = (result as any).resetsAt || (retryAfterMs ? Date.now() + retryAfterMs : undefined);
@@ -666,22 +713,21 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
         : retryAfterMs ? Math.ceil(retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
-      backToLogin();
-      onShowToast(
+      notice(
         resetsAt
           ? `Limit reached for magic link sends${resetCopy(resetsAt)}`
           : (result.error || 'Please wait before requesting again'),
       );
     } else {
-      if (lockAccount(result as any)) { backToLogin(); return; }
-      backToLogin();
-      onShowToast(result.error || 'Failed to send. Please try again.');
+      if (lockAccount(result as any)) return;
+      notice(result.error || 'Failed to send. Please try again.');
     }
   };
 
   const handlePasswordResetRequest = async (method: 'otp' | 'recovery') => {
+    setLoginNotice(null);
     if (!email) {
-      onShowToast('Please enter your email first');
+      notice('Please enter your email first');
       return;
     }
     const key = method === 'recovery' ? 'recovery' : 'otp';
@@ -694,11 +740,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       setErrors({});
       setTouched({});
       setLoginStep('recovery');
-      onShowToast(
-        method === 'recovery'
-          ? 'Reset code sent to ' + (loginProfile?.recoveryEmail || 'your recovery email')
-          : 'Reset code sent to ' + email,
-      );
     } else if (result.status === 429) {
       const payload: any = (result as any).data || {};
       const exceeded = payload.exceeded as string | undefined;
@@ -709,19 +750,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
         : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
-      onShowToast(
+      notice(
         resetsAt
           ? `Limit reached${resetCopy(resetsAt)}`
           : (result.error || 'Please wait before requesting another code'),
       );
     } else {
-      onShowToast(result.error || 'Failed to send the reset code');
+      notice(result.error || 'Failed to send the reset code');
     }
   };
 
   const handleResendRecoveryCode = async () => {
+    setLoginNotice(null);
     if (!email) {
-      onShowToast('Please enter your email first');
+      notice('Please enter your email first');
       return;
     }
     if (recoveryMethod === 'magic-link') {
@@ -742,9 +784,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     } else if (result.status === 429) {
       const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
       setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
-      onShowToast(result.error || 'Please wait before requesting another code');
+      notice(result.error || 'Please wait before requesting another code');
     } else {
-      onShowToast(result.error || 'Failed to send the reset code');
+      notice(result.error || 'Failed to send the reset code');
     }
   };
 
@@ -783,24 +825,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const result = await verifyPasswordReset(email, code);
     setIsSubmitting(false);
     if (!result.ok || !result.data?.resetToken) {
-      onShowToast(result.error || 'Invalid or expired code');
+      notice(result.error || 'Invalid or expired code');
       haptic('error');
       captureException(new Error(result.error || 'Reset code verification failed'));
       return;
     }
+    setLoginNotice(null);
     setResetToken(result.data.resetToken);
     setRecoveryStage('password');
-    onShowToast('Code verified — choose a new password.');
   };
 
   const handleRecoveryNewPassword = async (newPassword: string) => {
+    setLoginNotice(null);
     const { error: pwError } = validatePassword(newPassword);
     if (pwError) {
-      onShowToast(pwError);
+      notice(pwError);
       return;
     }
     if (!resetToken) {
-      onShowToast('Session expired. Please request a new code.');
+      notice('Session expired. Please request a new code.');
       setResetToken('');
       return;
     }
@@ -809,7 +852,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const result = await confirmPasswordReset(resetToken, newPassword);
     setIsSubmitting(false);
     if (!result.ok) {
-      onShowToast(result.error || 'Failed to reset password');
+      notice(result.error || 'Failed to reset password');
       haptic('error');
       captureException(new Error(result.error || 'Password reset failed'));
       return;
@@ -820,33 +863,41 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setRecoveryCode('');
     setRecoveryStage('code');
     setResetToken('');
-    setLoginStep('password');
-    onShowToast('Password updated. Sign in with your new password.');
+    setLoginStep('email');
+    notice('Password updated — sign in with your new password.', 'success');
     haptic('success');
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginNotice(null);
+    const emailError = validateField('email', email);
+    if (emailError) {
+      setErrors({ email: emailError });
+      setTouched({ email: true });
+      return;
+    }
+    setErrors({});
+    setTouched({});
+    await handlePasswordResetRequest('otp');
   };
 
   const goBack = () => {
     setErrors({});
     setTouched({});
+    setLoginNotice(null);
     if (mode === 'signup' && signupStep > 1) {
       setSignupStep((signupStep - 1) as SignupStep);
     } else if (mode === 'login') {
-      if (loginStep === 'password') {
+      if (loginStep !== 'email') {
         setPassword('');
-        setLoginProfile(null);
         setLoginStep('email');
-        setErrors({});
-        setTouched({});
-      } else if (loginStep === 'otp') {
-        setLoginStep('more-options');
         setLoginPending2fa(false);
-      } else if (loginStep === '2fa') setLoginStep('password');
-      else if (loginStep === 'recovery') {
         setResetToken('');
         setRecoveryCode('');
-        setLoginStep('password');
+        setErrors({});
+        setTouched({});
       }
-      else if (loginStep === 'more-options') setLoginStep('password');
     }
   };
 
@@ -883,12 +934,44 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   /* Remounts the panel on every step change so the enter animation replays. */
   const panelKey = `${mode}:${signupStep}:${loginStep}`;
 
+  const isLoginEntry = mode === 'login' && loginStep === 'email';
+  const isSignupEntry = mode === 'signup' && signupStep === 1;
+
+  /* Wizard chrome is signup-only — login's step count is unknowable up
+     front (an OTP challenge only sometimes appears), so it stays a plain
+     panel. */
+  const wizard = mode === 'signup' ? { index: signupStep, total: 4, label: signupCopy.label } : undefined;
+  const canGoBack = mode === 'signup' && signupStep > 1;
+
+  /* GSAP transitions — panel slides up + fades in on every step/mode change;
+     side features fade in when the mode swaps. No loaders, just motion. */
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!panelRef.current) return;
+    gsap.fromTo(panelRef.current,
+      { opacity: 0, y: 18 },
+      { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', clearProps: 'transform' });
+  }, [panelKey]);
+  React.useEffect(() => {
+    document.querySelectorAll('.scroll-rail, .story-fan, .pc-side').forEach((node) => {
+      const el = node as HTMLElement;
+      if (!el.getClientRects().length) return;
+      const target = parseFloat(getComputedStyle(el).opacity) || 1;
+      gsap.fromTo(el, { opacity: 0 }, { opacity: target, duration: 0.7, ease: 'power2.out', clearProps: 'opacity' });
+    });
+  }, [mode]);
+
   return (
     <AuthShell
-      title={mode === 'signup' ? signupCopy.title : undefined}
+      step={wizard}
+      onBack={canGoBack ? goBack : undefined}
+      className={mode === 'signup' ? 'mode-signup' : 'mode-login'}
+      title={mode === 'signup' ? signupCopy.title : isLoginEntry ? 'Welcome to Tirbeo' : undefined}
+      subtitle={undefined}
+      kicker={undefined}
       footer={
         <>
-          <span className="block text-center text-[15px] text-white/55">
+          <span className="block text-center text-[15px] text-text-3">
             {mode === 'signup' ? (
               <>
                 Already have an account?{' '}
@@ -902,54 +985,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               </>
             ) : (
               <>
-                Don&apos;t have an account?{' '}
+                <span className="block text-center text-[15px] text-text-3">
+                  Don&apos;t have an account?
+                </span>
                 <button
                   type="button"
+                 
                   onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                  className={FOOTER_ACTION}
+                  className="create-pill"
                 >
-                  Create one
+                  Create new account
                 </button>
               </>
             )}
-          </span>
-          {/* The legal pages are reachable from the first screen, not only from
-              the consent checkboxes on the last signup step. Spans, not <p>:
-              AuthShell already wraps the footer in a paragraph. */}
-          <span className="mt-2 flex items-center justify-center gap-2 text-[14px] text-white/55">
-            <button
-              type="button"
-              onClick={() => onOpenLegalModal('terms')}
-              className="-my-1 inline-block rounded-xl px-1 py-2 text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:text-white"
-            >
-              Terms of Service
-            </button>
-            <span aria-hidden="true" className="text-white/25">
-              ·
-            </span>
-            <button
-              type="button"
-              onClick={() => onOpenLegalModal('privacy')}
-              className="-my-1 inline-block rounded-xl px-1 py-2 text-white/65 transition-colors hover:text-white focus-visible:outline-none focus-visible:text-white"
-            >
-              Privacy Policy
-            </button>
           </span>
         </>
       }
     >
       <div className="w-full">
-        {mode === 'signup' ? (
-          <StepProgress
-            className="mb-7"
-            current={signupStep}
-            total={4}
-            labels={SIGNUP_STEPS.map((s) => s.label)}
-            onSelect={(step) => setSignupStep(step as SignupStep)}
-          />
-        ) : null}
-
-        <div key={panelKey} className="animate-rise">
+        <div key={panelKey} ref={panelRef}>
           {/* ═══ SIGNUP STEP 1 ═══ */}
           {mode === 'signup' && signupStep === 1 && (
           <SignupStep1
@@ -1070,35 +1124,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             key="login-email"
             email={email}
             setEmail={setEmail}
-            errors={errors}
-            touched={touched}
-            handleBlur={handleBlur}
-            loginProfile={loginProfile}
-            isSubmitting={isSubmitting}
-            setLoginStep={setLoginStep}
-            onSubmit={handleLoginSubmit}
-            onMagicLink={() => {
-              handleDirectLoginRequest('magic-link');
-            }}
-            onPasskeySignIn={handlePasskeySignIn}
-            noAccountEmail={noAccountEmail}
-            onCreateAccount={() => {
-              /* Carry the address over — the visitor already typed it, and the
-                 sign-up form opens pre-filled with it. */
-              setErrors({});
-              setTouched({ email: false });
-              switchMode('signup');
-              setSignupStep(1 as SignupStep);
-            }}
-            passkeyLoading={isPasskeyLoading}
-          />
-        )}
-
-        {/* ═══ LOGIN PASSWORD ═══ */}
-        {mode === 'login' && loginStep === 'password' && (
-          <LoginPassword
-            key="login-password"
-            email={email}
             password={password}
             setPassword={setPassword}
             showPassword={showPassword}
@@ -1109,11 +1134,23 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             loginProfile={loginProfile}
             isSubmitting={isSubmitting}
             setLoginStep={setLoginStep}
-            onSwitchAccount={() => { resetLoginPassword(); setLoginStep('email'); }}
             onSubmit={handleLoginSubmit}
-            onMoreOptions={() => setLoginStep('more-options')}
+            onForgot={() => {
+              setErrors({});
+              setTouched({});
+              setLoginNotice(null);
+              setLoginStep('forgot');
+            }}
+            onMoreOptions={() => {
+              setLoginNotice(null);
+              setLoginStep('more-options');
+            }}
+            onMagicLink={() => {
+              handleDirectLoginRequest('magic-link');
+            }}
+            onPasskeySignIn={handlePasskeySignIn}
             /* Only mounted once the API has actually demanded a challenge, so
-               the common case stays a plain password form. */
+               the common case stays a plain login form. */
             captcha={
               captchaSiteKey ? (
                 <TurnstileCaptcha
@@ -1125,6 +1162,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               ) : null
             }
             captchaPending={!!captchaSiteKey && !captchaToken && !captchaBroken}
+            noAccountEmail={noAccountEmail}
+            loginNotice={loginNotice}
+            onCreateAccount={() => {
+              /* Carry the address over — the visitor already typed it, and the
+                 sign-up form opens pre-filled with it. */
+              setErrors({});
+              setTouched({ email: false });
+              switchMode('signup');
+              setSignupStep(1 as SignupStep);
+            }}
+            passkeyLoading={isPasskeyLoading}
           />
         )}
 
@@ -1146,6 +1194,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             onSubmit={handleLoginSubmit}
             onBack={goBack}
             remainingSends={remainingSends}
+            loginNotice={loginNotice}
           />
         )}
 
@@ -1167,6 +1216,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setLoginStep={setLoginStep}
             onSubmit={handleLoginSubmit}
             onBack={goBack}
+            loginNotice={loginNotice}
           />
         )}
 
@@ -1175,6 +1225,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           <LoginMoreOptions
             key="more-options"
             email={email}
+            setEmail={setEmail}
+            setLoginProfile={setLoginProfile}
             loginProfile={loginProfile}
             isSubmitting={isSubmitting}
             canSend={canSend}
@@ -1189,6 +1241,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             onRequestForgotPassword={() => handlePasswordResetRequest('otp')}
             onRequestRecoveryEmail={() => handlePasswordResetRequest('recovery')}
             onBack={goBack}
+            loginNotice={loginNotice}
+          />
+        )}
+
+        {/* ═══ LOGIN MAGIC LINK SENT — inline step, no separate URL ═══ */}
+        {mode === 'login' && loginStep === 'magic-sent' && (
+          <MagicLinkSentPage
+            key="magic-sent"
+            email={email}
+            ptr={magicSentPtr}
+            onClose={() => setLoginStep('more-options')}
+          />
+        )}
+
+        {/* ═══ LOGIN FORGOT PASSWORD ═══ */}
+        {mode === 'login' && loginStep === 'forgot' && (
+          <LoginForgot
+            key="login-forgot"
+            email={email}
+            setEmail={setEmail}
+            errors={errors}
+            touched={touched}
+            handleBlur={handleBlur}
+            isSubmitting={isSubmitting}
+            onSubmit={handleForgotSubmit}
+            onBack={goBack}
+            loginNotice={loginNotice}
           />
         )}
 
@@ -1201,7 +1280,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             recoveryMethod={recoveryMethod}
             recoveryStage={recoveryStage}
             recoveryCode={recoveryCode}
-            setRecoveryCode={setRecoveryCode}
+            setRecoveryCode={changeRecoveryCode}
             isSubmitting={isSubmitting}
             isInCooldown={isInCooldown}
             getCooldownRemaining={getCooldownRemaining}
@@ -1210,6 +1289,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             onSubmitCode={handleRecoveryCodeSubmit}
             onSubmitNewPassword={handleRecoveryNewPassword}
             remainingSends={remainingSends}
+            loginNotice={loginNotice}
           />
           )}
         </div>

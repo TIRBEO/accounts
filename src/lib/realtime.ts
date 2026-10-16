@@ -61,11 +61,6 @@ function getShardRegion(): PusherRegion | null {
   return null;
 }
 
-/** Persist the shard choice for this device. */
-export function setRegion(region: PusherRegion): void {
-  try { localStorage.setItem(STORAGE_KEY, region); } catch {}
-}
-
 /** True when the timezone belongs to the South Asia / APAC edges. */
 export function detectRegion(): PusherRegion {
   // Manual override wins (e.g. set by a "connect to nearest region" setting).
@@ -163,11 +158,6 @@ export async function subscribe(channelName: string): Promise<RealtimeChannel | 
   const client = await getPusher();
   if (!client) return null;
   return client.subscribe(channelName);
-}
-
-export async function unsubscribe(channelName: string): Promise<void> {
-  const client = await getPusher();
-  client?.unsubscribe(channelName);
 }
 
 /**

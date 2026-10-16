@@ -103,12 +103,12 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
 
   if (!supported) {
     return (
-      <section className="mt-6 w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left">
-        <h3 className="flex items-center gap-2 text-[15px] font-bold text-white">
-          <KeyRound size={17} className="text-white/45" aria-hidden />
+      <section className="mt-6 w-full rounded-2xl bg-card p-5 text-left">
+        <h3 className="flex items-center gap-2 text-[15px] font-bold text-fg">
+          <KeyRound size={17} className="text-text-4" aria-hidden />
           Passkeys
         </h3>
-        <p className="mt-2 text-[14px] leading-relaxed text-white/50">
+        <p className="mt-2 text-[14px] leading-relaxed text-text-4">
           This browser does not support passkeys. Use Chrome, Safari, Edge or Firefox on a device
           with Touch ID, Windows Hello or a screen lock.
         </p>
@@ -117,33 +117,33 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
   }
 
   return (
-    <section className="mt-6 w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left">
-      <h3 className="flex items-center gap-2 text-[15px] font-bold text-white">
-        <KeyRound size={17} className="text-white/45" aria-hidden />
+    <section className="mt-6 w-full rounded-2xl bg-card p-5 text-left">
+      <h3 className="flex items-center gap-2 text-[15px] font-bold text-fg">
+        <KeyRound size={17} className="text-text-4" aria-hidden />
         Passkeys
       </h3>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-white/50">
+      <p className="mt-1.5 text-[13px] leading-relaxed text-text-4">
         Sign in with Face ID, Touch ID or your screen lock instead of a password.
         {platform ? ' This device supports it.' : ''}
       </p>
 
       <ul className="mt-4 space-y-2">
         {passkeys === null ? (
-          <li className="text-[14px] text-white/40">Loading passkeys…</li>
+          <li className="text-[14px] text-text-4">Loading passkeys…</li>
         ) : passkeys.length === 0 ? (
-          <li className="text-[14px] text-white/40">No passkeys on this account yet.</li>
+          <li className="text-[14px] text-text-4">No passkeys on this account yet.</li>
         ) : (
           passkeys.map((passkey) => (
             <li
               key={passkey.id}
-              className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-3"
+              className="flex items-center gap-3 rounded-xl bg-field px-3.5 py-3"
             >
-              <Fingerprint size={18} className="shrink-0 text-white/45" aria-hidden />
+              <Fingerprint size={18} className="shrink-0 text-text-4" aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold text-white">
+                <p className="truncate text-[14px] font-semibold text-fg">
                   {passkey.deviceName || 'This device'}
                 </p>
-                <p className="truncate text-[12px] text-white/45">
+                <p className="truncate text-[12px] text-text-4">
                   {passkey.lastUsedAt
                     ? `Last used ${new Date(passkey.lastUsedAt).toLocaleDateString()}`
                     : `Added ${new Date(passkey.createdAt).toLocaleDateString()}`}
@@ -154,7 +154,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
                 onClick={() => handleRemove(passkey)}
                 disabled={busy || pendingId !== null}
                 aria-label={`Remove passkey ${passkey.deviceName || 'this device'}`}
-                className="grid size-10 shrink-0 place-items-center rounded-xl text-white/45 transition-colors hover:bg-white/[0.08] hover:text-white disabled:pointer-events-none disabled:opacity-40"
+                className="grid size-10 shrink-0 place-items-center rounded-xl text-text-4 transition-colors hover:bg-danger/10 hover:text-danger-text disabled:pointer-events-none disabled:opacity-40"
               >
                 <Trash2 size={17} aria-hidden />
               </button>
@@ -174,7 +174,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
             onChange={(e) => setDeviceName(e.target.value)}
             placeholder="e.g. MacBook Pro"
             maxLength={60}
-            className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.07] px-3.5 text-[16px] text-white placeholder:text-white/35 focus:border-white focus:outline-none"
+            className="h-12 min-w-0 flex-1 rounded-xl border border-[rgba(255,255,255,0.14)] bg-field px-3.5 text-[16px] text-fg placeholder:text-placeholder transition-[border-color,box-shadow] duration-150 hover:border-[rgba(255,255,255,0.24)] focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:outline-none"
           />
           <PrimaryButton
             type="button"
@@ -192,7 +192,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       </div>
 
       {passkeys && passkeys.length > 1 ? (
-        <p className="mt-3 text-[12px] leading-relaxed text-white/40">
+        <p className="mt-3 text-[12px] leading-relaxed text-text-4">
           Keep at least one other way in. Removing your last passkey means signing in with your
           password.
         </p>
@@ -211,4 +211,3 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
 }
 
 PasskeyManager.displayName = 'PasskeyManager';
-export default PasskeyManager;
