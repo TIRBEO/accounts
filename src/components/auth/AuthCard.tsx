@@ -179,7 +179,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (error === 'magic_link_invalid') {
       notice('That sign-in link is invalid or has expired — request a new one.');
     } else if (error) {
-      notice('Something went wrong with that link. Please try again.');
+      /* OAuth callbacks that fail server-side redirect here with ?error=…&ref=…
+         — the ref is the event ID recorded in the admin ledger, so what the
+         person sees and what staff can look up are the same code. */
+      const ref = (params.get('ref') || '').replace(/[^0-9a-f-]/gi, '').slice(0, 16);
+      notice(ref && ref.includes('-')
+        ? `Something went wrong with that sign-in. Please try again. (Ref: ${ref})`
+        : 'Something went wrong with that link. Please try again.');
     }
     if (seededEmail && /^[^<>"'\s]+@[^<>"'\s]+\.[^<>"'\s]+$/.test(seededEmail)) {
       setEmail(seededEmail);
