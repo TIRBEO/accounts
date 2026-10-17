@@ -9,6 +9,7 @@
 
 // Vite exposes VITE_* vars; NEXT_PUBLIC_* is read too so the existing
 // .env.local keys work without changes.
+import { trackError } from './telemetry';
 // A prod build (vite build) with a dirty .env.local would otherwise bake
 // http://localhost:... into the bundle and every redirect would follow it.
 const dropLoopbackInProd = (v?: string) =>
@@ -164,6 +165,24 @@ function extractBlock(
   return null;
 }
 
+/** Every denied API response now carries a real `activity_events` id (or a
+    persisted refCode). Suffixing it onto the human error lets a visitor quote
+    "Ref: xxxxxxxx" and staff can look that exact row up in the admin event
+    log — no separate plumbing needed at each toast site. */
+function withEventRef(
+  error: string | undefined,
+  raw: Record<string, unknown> | null,
+): string | undefined {
+  if (!error || !raw) return error;
+  const id =
+    typeof raw.eventId === 'string' ? raw.eventId
+    : typeof raw.refCode === 'string' ? raw.refCode
+    : '';
+  const compact = id.replace(/[^0-9a-z]/gi, '');
+  if (!compact) return error;
+  return `${error} · Ref: ${compact.slice(0, 8)}`;
+}
+
 export async function apiPost<T = Record<string, unknown>>(
   path: string,
   body: unknown,
@@ -176,7 +195,7 @@ export async function apiPost<T = Record<string, unknown>>(
       turnstileRequired?: boolean;
       siteKey?: string;
     }) | null;
-    const error = sanitizeApiError(status, raw?.error);
+    const error = withEventRef(sanitizeApiError(status, raw?.error), raw);
     return {
       ok: status >= 200 && status < 300,
       status,
@@ -217,7 +236,7 @@ export async function apiGet<T = Record<string, unknown>>(path: string): Promise
   try {
     const { status, data } = await requestJson<T>(path, 'GET');
     const raw = data as (Record<string, unknown> & { error?: string }) | null;
-    const error = sanitizeApiError(status, raw?.error);
+    const error = withEventRef(sanitizeApiError(status, raw?.error), raw);
     return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
@@ -228,7 +247,7 @@ export async function apiDelete<T = Record<string, unknown>>(path: string): Prom
   try {
     const { status, data } = await requestJson<T>(path, 'DELETE');
     const raw = data as (Record<string, unknown> & { error?: string }) | null;
-    const error = sanitizeApiError(status, raw?.error);
+    const error = withEventRef(sanitizeApiError(status, raw?.error), raw);
     return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
   } catch {
     return { ok: false, status: 0, data: null, error: 'Could not reach the server. Please try again.' };
@@ -633,7 +652,9 @@ export function refreshSession(): Promise<boolean> {
           credentials: 'include',
         });
         return res.ok;
-      } catch {
+      } catch (err) {
+        // Same UI behavior (return false), but the reason is no longer lost.
+        trackError('api: refreshSession', err);
         return false;
       } finally {
         refreshPromise = null;
@@ -760,8 +781,9 @@ export async function logout(): Promise<void> {
         ...(getCsrfToken() ? { 'X-CSRF-Token': getCsrfToken() } : {}),
       },
     });
-  } catch {
+  } catch (err) {
     // best-effort — even if the request fails the cookie may already be expired
+    trackError('api: logout', err);
   }
 }
 

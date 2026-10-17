@@ -13,6 +13,7 @@ import {
 } from '../../lib/passkeys';
 import { haptic } from '../../lib/haptics';
 import { captureException } from '../../lib/sentry';
+import { trackEvent, trackError } from '../../lib/telemetry';
 import { PrimaryButton, SecondaryButton } from '../ui/ig-ui';
 
 interface PasskeyManagerProps {
@@ -41,6 +42,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
     try {
       setPasskeys(await listPasskeys());
     } catch (err) {
+      trackError('passkey:list', err);
       captureException(err);
       setPasskeys([]);
     }
@@ -66,12 +68,17 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
     setAdding(true);
     try {
       await registerPasskey(deviceName);
+      trackEvent('auth.passkey_registered', { metadata: { named: Boolean(deviceName.trim()) } });
       haptic('success');
       onShowToast('Passkey added to this device');
       setDeviceName('');
       await load();
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : new PasskeyError('Could not add a passkey.');
+      trackEvent('auth.passkey_failed', {
+        detail: failure.message,
+        metadata: { stage: 'register', cancelled: Boolean(failure.cancelled) },
+      });
       if (!failure.cancelled) {
         haptic('error');
         captureException(err);
@@ -88,11 +95,13 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
     setPendingId(passkey.id);
     try {
       await deletePasskey(passkey.id);
+      trackEvent('auth.passkey_removed');
       haptic('success');
       onShowToast('Passkey removed');
       await load();
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : new PasskeyError('Could not remove that passkey.');
+      trackError('passkey:remove', err);
       haptic('error');
       captureException(err);
       onShowToast(failure.message);
@@ -174,7 +183,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
             onChange={(e) => setDeviceName(e.target.value)}
             placeholder="e.g. MacBook Pro"
             maxLength={60}
-            className="h-12 min-w-0 flex-1 rounded-xl border border-[rgba(255,255,255,0.14)] bg-field px-3.5 text-[16px] text-fg placeholder:text-placeholder transition-[border-color,box-shadow] duration-150 hover:border-[rgba(255,255,255,0.24)] focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:outline-none"
+            className="h-12 min-w-0 flex-1 rounded-xl border border-btn-line bg-field px-3.5 text-[16px] text-fg placeholder:text-placeholder transition-[border-color,box-shadow] duration-150 hover:border-btn-line-hover focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:outline-none"
           />
           <PrimaryButton
             type="button"

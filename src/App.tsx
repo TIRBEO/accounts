@@ -868,7 +868,7 @@ export default function App() {
 
   const page = (content: ReactNode) => (
     <div className="login-page">
-      <BrandMark className="page-brand" />
+      <BrandMark className="page-brand" onCanvas />
       <AuthHero />
       <RailsScroll />
       <StoryFan />

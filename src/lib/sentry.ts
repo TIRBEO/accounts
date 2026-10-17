@@ -43,7 +43,13 @@ export function initSentry() {
   else window.addEventListener('load', start, { once: true });
 }
 
-/** Safe capture that buffers until the SDK has loaded. */
+/**
+ * Safe capture that buffers until the SDK has loaded.
+ *
+ * PROD-gate stays: Sentry is the third-party pipe. For full-environment
+ * error reporting use trackError() in ./telemetry.ts — our own pipeline,
+ * which reports from dev and preview builds too.
+ */
 export function captureException(err: unknown): void {
   if (!import.meta.env.PROD) return;
   const send = () => mod?.captureException(err);

@@ -3,33 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Tirbeo - Sign In</title>
+    <title>Sign in to Tirbeo</title>
     <meta name="description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
     <meta name="keywords" content="Tirbeo, sign in, login, workspace, collaboration" />
     <meta name="author" content="Tirbeo" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Tirbeo - Sign In" />
+    <meta property="og:title" content="Sign in to Tirbeo" />
     <meta property="og:description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/logo-white.webp" />
+    <meta property="og:site_name" content="Tirbeo" />
+    <!-- og:image must be an absolute URL — /logo-white.webp exists in public/. -->
+    <meta property="og:image" content="https://tirbeo.com/logo-white.webp" />
     <meta property="og:url" content="https://tirbeo.com" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Tirbeo - Sign In" />
+    <meta name="twitter:title" content="Sign in to Tirbeo" />
     <meta name="twitter:description" content="Sign in to Tirbeo. Access your workspace, collaborate with your team, and manage your projects." />
-    <meta name="twitter:image" content="/logo-white.webp" />
+    <meta name="twitter:image" content="https://tirbeo.com/logo-white.webp" />
 
     <!-- Favicon: tiny PNG instead of the old 1.1MB .ico -->
     <link rel="icon" type="image/png" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#191b1f">
+    <!-- Chrome colour follows the device — matches the app canvas palette
+         (dark charcoal #26262a / light #e9eaee). -->
+    <meta name="theme-color" content="#26262a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#e9eaee" media="(prefers-color-scheme: light)">
 
     <!-- API preconnect: session check fires on load — warm the connection -->
     <link rel="preconnect" href="https://api.tirbeo.com" crossorigin>
+    <!-- Third parties reached during/right after the auth flow. DNS-only
+         hints: Turnstile loads only when the API demands a challenge, and
+         Pusher is lazy-imported after sign-in — a full preconnect here
+         would cost more (speculation rules) than it saves. -->
+    <link rel="dns-prefetch" href="https://challenges.cloudflare.com">
+    <link rel="dns-prefetch" href="https://ws-mt1.pusher.com">
+    <link rel="dns-prefetch" href="https://myprofile.tirbeo.com">
 
     <script type="module" src="/src/main.tsx"></script>
   </head>

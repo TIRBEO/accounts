@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { checkEmailExists, checkUsernameExists, requestSignupOtp, getRemainingLimits, API_BASE_URL } from '../../lib/api';
+import { trackError, trackEvent, emailDomain } from '../../lib/telemetry';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
 import { workFieldMeta } from '../../lib/profile-fields';
@@ -121,7 +122,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ action: 'init' }),
-        }).catch(()=>{});
+        }).catch((err) => trackError('limits:init', err));
       }
       const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, { credentials: 'include' });
       if (res.status === 401) return;
@@ -131,7 +132,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           setSendLimits(prev => ({ ...prev, ...data.limits }));
         }
       }
-    } catch {}
+    } catch (err) {
+      trackError('limits:fetch', err);
+    }
   }, []);
 
   // Only sync limits periodically (not on every render)
@@ -146,7 +149,44 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   // (removed duplicate init — covered by periodic sync above)
 
   // ─── Send attempts tracking ───
+  /* Pure display cache projected from server state (/api/auth/remaining plus
+     the `remaining` maps carried by every send response and 429). The server
+     is the source of truth: the cache is re-fetched immediately on mount and
+     whenever the flow's step/method changes — so a reload shows the real
+     counts — and the optimistic bump below is reconciled with every send. */
   const [sendAttempts, setSendAttempts] = useState<Record<string, { count: number; windowStart: number }>>({});
+
+  /**
+   * Apply the server's per-method `remaining` map to the display cache.
+   * Window start is derived from the server's resetAt (fixed-window anchor)
+   * so local expiry matches the server's window exactly — a reload can never
+   * hand back sends the server hasn't reset.
+   */
+  const applyRemainingMap = useCallback(
+    (rem: Record<string, any>, opts?: { replace?: boolean }) => {
+      const now = Date.now();
+      const next: Record<string, { count: number; windowStart: number }> = {};
+      const nextResets: Record<string, number> = {};
+      for (const [m, info] of Object.entries(rem as Record<string, any>)) {
+        const max = info?.max ?? sendLimits[m] ?? DEFAULT_SEND_LIMITS[m] ?? 3;
+        const remaining = info?.remaining ?? max;
+        const used = Math.max(0, Math.min(max, info?.used ?? max - remaining));
+        const windowStart = info?.resetAt ? Math.max(0, info.resetAt - WINDOW_MS) : now;
+        next[m] = { count: used, windowStart };
+        if (info?.resetAt && (info.exceeded || remaining <= 0)) nextResets[m] = info.resetAt;
+      }
+      if (opts?.replace) {
+        // Full-map sync replaces the cache wholesale, so no stale per-method
+        // counts survive an email/flow switch.
+        setSendAttempts(next);
+        if (Object.keys(nextResets).length) setWindowResetsAt(nextResets);
+      } else {
+        if (Object.keys(next).length) setSendAttempts(prev => ({ ...prev, ...next }));
+        if (Object.keys(nextResets).length) setWindowResetsAt(prev => ({ ...prev, ...nextResets }));
+      }
+    },
+    [sendLimits],
+  );
 
   // Sync from DB — so frontend shows real remaining, not just in-memory numbers
   const syncFromDb = useCallback(async () => {
@@ -154,21 +194,16 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     try {
       const res = await getRemainingLimits(email);
       if (!res.ok || !res.data?.remaining) return;
-      const rem = res.data.remaining;
-      const now = Date.now();
-      const next: Record<string, { count: number; windowStart: number }> = {};
-      const nextResets: Record<string, number> = {};
-      for (const [m, info] of Object.entries(rem as Record<string, any>)) {
-        const max = info.max ?? sendLimits[m] ?? DEFAULT_SEND_LIMITS[m] ?? 3;
-        const remaining = info.remaining ?? max;
-        const used = Math.max(0, max - remaining);
-        next[m] = { count: used, windowStart: now };
-        if (info.resetAt && remaining <= 0) nextResets[m] = info.resetAt;
-      }
-      if (Object.keys(next).length) setSendAttempts(prev => ({ ...prev, ...next }));
-      if (Object.keys(nextResets).length) setWindowResetsAt(prev => ({ ...prev, ...nextResets }));
-    } catch {}
-  }, [email, sendLimits]);
+      applyRemainingMap(res.data.remaining, { replace: true });
+    } catch (err) {
+      trackError('remaining:sync', err);
+    }
+  }, [email, applyRemainingMap]);
+
+  // Latest syncFromDb for event-driven calls (mount, step switches, send
+  // responses) without re-triggering those effects on every keystroke.
+  const syncFromDbRef = useRef(syncFromDb);
+  useEffect(() => { syncFromDbRef.current = syncFromDb; }, [syncFromDb]);
 
   const debouncedSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const periodicSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -177,6 +212,12 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     debouncedSyncRef.current = setTimeout(() => { syncFromDb(); }, SYNC_DEBOUNCE_MS);
     return () => { if (debouncedSyncRef.current) clearTimeout(debouncedSyncRef.current); };
   }, [syncFromDb, mode, email, loginStep]);
+  // Immediate fetch on mount and whenever the flow's step/method changes —
+  // counts survive page reloads without waiting for the 2s debounce or 30s
+  // tick, and a method switch never shows the previous flow's numbers.
+  useEffect(() => {
+    void syncFromDbRef.current();
+  }, [mode, loginStep, signupStep, recoveryMethod]);
   // Periodic sync every 30s for cross-tab consistency
   useEffect(() => {
     periodicSyncRef.current = setInterval(syncFromDb, 30000);
@@ -190,6 +231,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   };
   const getMaxSends = (method: string) => sendLimits[method] ?? DEFAULT_SEND_LIMITS[method] ?? 3;
   const canSend = (method: string) => getSendCount(method) < getMaxSends(method);
+  /** Optimistic display bump only — sendWithRateLimit reconciles it with the
+   *  server's `remaining` map (or a /api/auth/remaining re-sync) as soon as
+   *  the request lands. It never authorizes a send the server hasn't counted. */
   const incrementSend = (method: string) => {
     setSendAttempts(prev => {
       const now = Date.now();
@@ -238,9 +282,13 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     if ((cooldownRef.current[key] || 0) > Date.now()) return Math.ceil((cooldownRef.current[key] - Date.now()) / 1000);
     return cooldowns[key] || 0;
   };
-  const startCooldown = useCallback((key: string) => {
-    cooldownRef.current[key] = Date.now() + COOLDOWN_SECONDS * 1000;
-    setCooldowns(prev => ({ ...prev, [key]: COOLDOWN_SECONDS }));
+  const startCooldown = useCallback((key: string, endAtMs?: number) => {
+    // Cooldown timers stay local (UX), but when the server told us when its
+    // window/cooldown actually ends (429 retryAfterMs → endAtMs), the timer
+    // runs to that end instead of a guessed 30s.
+    const end = endAtMs && endAtMs > Date.now() ? endAtMs : Date.now() + COOLDOWN_SECONDS * 1000;
+    cooldownRef.current[key] = end;
+    setCooldowns(prev => ({ ...prev, [key]: Math.max(1, Math.ceil((end - Date.now()) / 1000)) }));
   }, []);
 
   // Cooldown ticker — single interval (clears ref when expired)
@@ -302,16 +350,34 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         if (cancelled) return;
         if (!result.ok) {
           if (result.status === 429) {
-            const retryAfter = (result as any)?.data?.retryAfterMs ? Math.ceil((result as any).data.retryAfterMs / 1000) : COOLDOWN_SECONDS;
-            setCooldowns(prev => ({ ...prev, 'signup-otp': retryAfter }));
+            const data: any = (result as any).data || {};
+            const exceeded = data.exceeded as string | undefined;
+            const resetsAt: number | undefined =
+              data.remaining?.[exceeded || 'signup-otp']?.resetAt ||
+              (data.retryAfterMs ? Date.now() + data.retryAfterMs : undefined);
+            if (resetsAt) setResetAt('signup-otp', resetsAt);
+            if (data.remaining && typeof data.remaining === 'object') applyRemainingMap(data.remaining);
+            // Cooldown end from the server's value when it provided one.
+            const retryAfter = data.retryAfterMs
+              ? Math.ceil(data.retryAfterMs / 1000)
+              : resetsAt ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000)) : COOLDOWN_SECONDS;
+            startCooldown('signup-otp', Date.now() + retryAfter * 1000);
             onShowToast(result.error || 'Please wait before requesting another code');
           } else {
             onShowToast(result.status === 409 ? 'An account with this email already exists' : 'Error sending verification code');
           }
+          // The signup-otp send response carries no counts map — re-sync so
+          // the optimistic bump is reconciled with the server's truth.
+          void syncFromDb();
         } else {
+          void syncFromDb();
           onShowToast('Verification code sent to ' + email);
+          trackEvent('auth.otp_sent', { metadata: { flow: 'signup', domain: emailDomain(email) } });
         }
-      } catch {}
+      } catch (err) {
+        trackError('signup:send-otp', err);
+        if (!cancelled) void syncFromDb();
+      }
     };
     void sendOtpForVerification();
     return () => { cancelled = true; };
@@ -331,7 +397,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
             setLoginProfile({ email, exists: false });
           }
         })
-        .catch(() => {});
+        .catch((err) => trackError('login:profile-prefetch', err));
     }, 350);
     return () => clearTimeout(timer);
   }, [mode, loginStep, email]);
@@ -374,7 +440,8 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           try {
             const r = await checkUsernameExists(c);
             return { c, r };
-          } catch {
+          } catch (err) {
+            trackError('signup:username-suggest', err);
             return { c, r: { ok: false } as any };
           }
         }),
@@ -485,7 +552,8 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
                 ? "That username isn't allowed here. Try letters, numbers, - or _."
                 : undefined,
       };
-    } catch {
+    } catch (err) {
+      trackError('signup:availability-check', err);
       if (requestId !== signupAvailabilityRequestRef.current) {
         return { emailAvailable: false, usernameAvailable: false, emailTaken: false, usernameTaken: false };
       }
@@ -553,7 +621,8 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         setUsernameStatus('available');
         setUsernameMessage(`${value} is available`);
         setUsernameSuggestions([]);
-      } catch {
+      } catch (err) {
+        trackError('signup:username-check', err);
         setUsernameStatus('error');
         setUsernameMessage('Unable to check availability');
         setUsernameSuggestions([]);
@@ -629,7 +698,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           void checkSignupAvailability(nextEmail, nextUsername);
         }
       }
-    } catch {}
+    } catch (err) {
+      trackError('form:handle-blur', err);
+    }
   };
 
   const getFieldValue = (field: string): string => {
@@ -712,6 +783,13 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     setErrors({});
     setTouched({});
     otpAutoSentRef.current = '';
+    // Drop the display cache — a finished flow must not leave stale counts
+    // behind; the next email/step switch re-fetches fresh numbers from the
+    // server anyway.
+    setSendAttempts({});
+    setWindowResetsAt({});
+    setCooldowns({});
+    cooldownRef.current = {};
   }, []);
 
   const clearValidation = useCallback(() => {
@@ -729,6 +807,11 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   }, []);
 
   // ─── Shared send helper with rate limit enforcement ───
+  /* Local state gates the click for UX; the server is the authority. After
+     every request the cache is reconciled from the response's own `remaining`
+     map (send successes and 429s both carry it on login-otp / magic-link /
+     password-reset), or via a /api/auth/remaining re-sync when the response
+     doesn't (signup-otp, network errors, failed sends). */
   const sendWithRateLimit = useCallback(async (
     method: string,
     sendFn: () => Promise<any>,
@@ -745,19 +828,19 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       return { ok: false, status: 429, error: `Please wait ${getCooldownRemaining(key)}s before sending again.` };
     }
 
-    incrementSend(method);
+    incrementSend(method); // optimistic bump — reconciled below when the response lands
     startCooldown(key);
 
     try {
       const result = await sendFn();
+      const payload = (result as any)?.data || {};
+      const serverRemaining: Record<string, any> | undefined =
+        payload.remaining && typeof payload.remaining === 'object' ? payload.remaining : undefined;
+
       if (!result.ok && result.status === 429) {
         const retryAfterMs = (result as any)?.data?.retryAfterMs ?? (result as any)?.retryAfterMs;
-        const retrySec = retryAfterMs ? Math.ceil(retryAfterMs / 1000) : COOLDOWN_SECONDS;
-        setCooldowns(prev => ({ ...prev, [key]: retrySec }));
-        cooldownRef.current[key] = Date.now() + retrySec * 1000;
-        // Server-reported reset (resetsAt or remaining[key].resetAt) wins over
+        // Server-reported reset (resetsAt or remaining[x].resetAt) wins over
         // the locally guessed retryAfter — the UI can show real HH:MM copy.
-        const payload = (result as any)?.data || {};
         const exceeded = payload.exceeded as string | undefined;
         const resetsAt =
           (exceeded && payload.remaining?.[exceeded]?.resetAt) ||
@@ -765,15 +848,34 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           (result as any)?.resetsAt ||
           (retryAfterMs ? Date.now() + retryAfterMs : undefined);
         if (resetsAt) setResetAt(method, resetsAt);
-        // mark window as exhausted so next click is blocked locally without 5s server hit
-        const max = getMaxSends(method);
-        setSendAttempts(prev => ({ ...prev, [method]: { count: max, windowStart: Date.now() } }));
+        // Cooldown end from the server's retryAfterMs when it provided one —
+        // only the legacy guessed 30s when the server said nothing.
+        startCooldown(key, retryAfterMs ? Date.now() + retryAfterMs : undefined);
+        // Counts come from the server's authoritative map; the blanket
+        // "mark exhausted" fallback only applies when the payload carried none.
+        if (serverRemaining) {
+          applyRemainingMap(serverRemaining);
+        } else {
+          const max = getMaxSends(method);
+          setSendAttempts(prev => ({ ...prev, [method]: { count: max, windowStart: Date.now() } }));
+        }
+      } else if (serverRemaining) {
+        // Any other outcome that still carries the server's counts (success,
+        // or a 502 "could not send" with authoritative numbers) — apply them.
+        applyRemainingMap(serverRemaining);
+      } else {
+        // Success without a counts map (signup-otp) or a non-429 failure —
+        // either way, ask the server what's left so the optimistic bump
+        // (or a bump the server never charged) can't drift.
+        void syncFromDbRef.current();
       }
       return result;
-    } catch {
+    } catch (err) {
+      trackError(`send:${method}`, err);
+      void syncFromDbRef.current();
       return { ok: false, status: 500, error: 'Network error' };
     }
-  }, [canSend, isInCooldown, getCooldownRemaining, incrementSend, startCooldown, setResetAt, getMaxSends]);
+  }, [canSend, isInCooldown, getCooldownRemaining, incrementSend, startCooldown, setResetAt, getMaxSends, applyRemainingMap]);
 
   return {
     // Mode

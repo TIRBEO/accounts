@@ -16,10 +16,10 @@ import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
  */
 const FOOTER_ACTION =
   'inline-flex min-h-11 items-center rounded-full px-1 text-[17px] font-bold tracking-[-0.01em] ' +
-  'text-fg underline decoration-[rgba(255,255,255,0.3)] decoration-2 underline-offset-[6px] ' +
-  'transition-colors duration-150 hover:decoration-[#f2f3f5] ' +
-  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-[#f2f3f5] ' +
-  'focus-visible:shadow-[0_0_0_2px_rgba(0,100,200,0.45)]';
+  'text-fg underline decoration-border-strong decoration-2 underline-offset-[6px] ' +
+  'transition-colors duration-150 hover:decoration-fg ' +
+  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-fg ' +
+  'focus-visible:shadow-[0_0_0_2px_var(--ring)]';
 import {
   login,
   verify2FA,
@@ -40,6 +40,7 @@ import {
 import type { BlockInfo } from '../../lib/api';
 import { validatePassword, validateEmail, validateUsername, validateDob } from '../../lib/validations';
 import { captureException } from '../../lib/sentry';
+import { trackEvent, trackError, emailDomain } from '../../lib/telemetry';
 import { PasskeyError, authenticatePasskey } from '../../lib/passkeys';
 import { haptic } from '../../lib/haptics';
 import { useAuthForm } from './useAuthForm';
@@ -214,16 +215,21 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
     try {
       if (signupStep === 1 || signupStep === 2) {
+        if (signupStep === 1) {
+          trackEvent('auth.signup_start', { metadata: { domain: emailDomain(email) } });
+        }
         setSignupStep((signupStep + 1) as SignupStep);
         setIsSubmitting(false);
       } else if (signupStep === 3) {
         const result = await verifySignupOtp(email, verificationCode);
         if (!result.ok) {
+          trackEvent('auth.signup_failed', { metadata: { reason: 'otp_invalid', step: 3 } });
           onShowToast(result.error || 'Invalid verification code');
           haptic('error');
           setIsSubmitting(false);
           return;
         }
+        trackEvent('auth.otp_verified', { metadata: { flow: 'signup', domain: emailDomain(email) } });
         setSignupStep(4 as SignupStep);
         setIsSubmitting(false);
       } else if (signupStep === 4) {
@@ -248,6 +254,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
         if (!result.ok) {
           if (noteCaptchaChallenge(result)) {
+            trackEvent('auth.signup_failed', { metadata: { reason: 'captcha_required' } });
             setIsSubmitting(false);
             onShowToast('Please complete the security check, then try again.');
             return;
@@ -262,6 +269,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setErrors({ username: 'This username is already taken. Pick another one.' });
             setTouched({ username: true });
           }
+          trackEvent('auth.signup_failed', {
+            metadata: { reason: flags?.usernameTaken ? 'username_taken' : 'server_error', status: result.status },
+          });
           onShowToast(result.error || 'Error creating account');
           haptic('error');
           captureException(new Error(result.error || 'Signup failed'));
@@ -270,6 +280,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           return;
         }
 
+        trackEvent('auth.signup_success', { metadata: { domain: emailDomain(email) } });
         const userId = result.data?.id;
         if (userId && profilePic) {
           try {
@@ -288,12 +299,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             }
             const { url, error: uploadErr } = await uploadAvatarViaApi(uploadFile);
             if (url) {
-              await updateProfile({ photoUrl: url }).catch(() => {});
+              await updateProfile({ photoUrl: url }).catch((err) => trackError('signup:avatar-attach', err));
             } else if (uploadErr) {
-              console.warn('Avatar upload error:', uploadErr);
+              trackError('signup:avatar-upload', new Error(uploadErr));
             }
           } catch (err) {
-            console.warn('Avatar upload after signup failed:', err);
+            trackError('signup:avatar-upload', err);
           }
         }
 
@@ -318,6 +329,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       }
     } catch (err) {
       onShowToast('An unexpected error occurred');
+      trackError('signup:submit', err);
       captureException(err);
       haptic('error');
       setIsSubmitting(false);
@@ -336,6 +348,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setIsPasskeyLoading(true);
     try {
       const account = await authenticatePasskey();
+      trackEvent('auth.passkey_login', { metadata: { mode: opts?.auto ? 'conditional' : 'explicit' } });
       haptic('success');
       if (account.id) {
         try {
@@ -345,6 +358,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       onSuccessAuth(account.email || email, 'Passkey');
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : new PasskeyError('Passkey sign-in failed.');
+      trackEvent('auth.passkey_failed', {
+        detail: failure.message,
+        metadata: { stage: 'login', cancelled: Boolean(failure.cancelled) },
+      });
       if (!failure.cancelled && !opts?.auto) {
         haptic('error');
         notice(failure.message);
@@ -372,10 +389,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   /** Email+password credential exchange, shared by the single-page entry
    *  form and the standalone password step. */
   const attemptPasswordLogin = async () => {
+    trackEvent('auth.login_submit', { metadata: { domain: emailDomain(email) } });
     const result = await login(email, password, captchaToken);
 
     if (!result.ok) {
       if (noteCaptchaChallenge(result)) {
+        trackEvent('auth.login_failed', { metadata: { reason: 'captcha_required' } });
         /* The Turnstile widget renders right on the single-page login form —
            stay put, the visitor solves it and hits Log in again. */
         notice('Please complete the security check, then try again.');
@@ -384,6 +403,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       if (lockAccount(result)) return;
       // The token is single-use, so it is spent either way.
       invalidateCaptcha();
+      trackEvent('auth.login_failed', { metadata: { reason: 'credentials', status: result.status } });
       notice(result.error || 'Invalid email or password');
       haptic('error');
       captureException(new Error(result.error || 'Login failed'));
@@ -393,6 +413,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (result.data?.needsOtp) {
       const otpRes = await requestLoginOtp(email);
       if (otpRes.ok) {
+        trackEvent('auth.otp_sent', { metadata: { flow: 'login', domain: emailDomain(email) } });
         setLoginOtpCode('');
         setLoginStep('otp');
         setLoginPending2fa(!!result.data?.needs2FA);
@@ -409,6 +430,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       return;
     }
 
+    trackEvent('auth.login_success', { metadata: { method: 'password', domain: emailDomain(email) } });
     onSuccessAuth(email, 'Email & Password');
     haptic('success');
   };
@@ -507,11 +529,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
         if (!result.ok) {
           if (lockAccount(result)) return;
+          trackEvent('auth.login_failed', { metadata: { reason: 'otp_invalid', status: result.status } });
           notice(result.error || 'Invalid or expired code');
           haptic('error');
           setIsSubmitting(false);
           return;
         }
+
+        trackEvent('auth.otp_verified', { metadata: { flow: 'login', domain: emailDomain(email) } });
 
         if (result.data?.requiresMfa && result.data?.tempToken) {
           setLoginTempToken(result.data.tempToken);
@@ -521,6 +546,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           return;
         }
 
+        trackEvent('auth.login_success', { metadata: { method: 'otp', domain: emailDomain(email) } });
         onSuccessAuth(email, 'Email & Password');
         setLoginPending2fa(false);
         haptic('success');
@@ -533,6 +559,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           return;
         }
 
+        trackEvent('auth.2fa_submit', { metadata: { via: loginWithBackup ? 'backup_code' : 'totp' } });
+
         let result;
         if (loginWithBackup) {
           result = await recovery2FA(loginTempToken, backupCode);
@@ -542,6 +570,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
         if (!result.ok) {
           if (lockAccount(result)) return;
+          trackEvent('auth.2fa_failed', {
+            metadata: { via: loginWithBackup ? 'backup_code' : 'totp', status: result.status },
+          });
           notice(result.error || (loginWithBackup ? 'Invalid backup code' : 'Invalid 2FA code'));
           haptic('error');
           captureException(new Error(result.error || '2FA verification failed'));
@@ -549,12 +580,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           return;
         }
 
+        if (loginWithBackup) {
+          trackEvent('auth.backup_code_used', { metadata: { domain: emailDomain(email) } });
+        }
+        trackEvent('auth.login_success', { metadata: { method: '2fa', domain: emailDomain(email) } });
         onSuccessAuth(email, 'Email & Password');
         haptic('success');
         setIsSubmitting(false);
       }
     } catch (err) {
       notice('An unexpected error occurred');
+      trackError('login:submit', err);
       captureException(err);
       haptic('error');
       setIsSubmitting(false);
@@ -571,6 +607,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setLoginNotice(null);
     const result = await sendWithRateLimit('login-otp', () => requestLoginOtp(email), { cooldownKey: 'login-otp' });
     if (result.ok) {
+      trackEvent('auth.otp_sent', { metadata: { flow: 'login', purpose: 'resend', domain: emailDomain(email) } });
       setLoginOtpCode('');
       setLoginPending2fa(false);
       setLoginStep('otp');
@@ -693,10 +730,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const result = await sendWithRateLimit(key, sendFn, { cooldownKey: key });
     if (result.ok) {
       if (method === 'code') {
+        trackEvent('auth.otp_sent', { metadata: { flow: 'login', purpose: 'direct', domain: emailDomain(email) } });
         setLoginOtpCode('');
         setLoginPending2fa(false);
         setLoginStep('otp');
       } else {
+        trackEvent('auth.magic_link_requested', { metadata: { domain: emailDomain(email) } });
         // The sent-page is a step of the login flow, not a separate URL —
         // it opens right here on /login. The ptr stays in component state;
         // only a direct /magic-sent deep link reads it from the query string.
@@ -733,6 +772,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     const key = method === 'recovery' ? 'recovery' : 'otp';
     const result = await sendWithRateLimit(key, () => requestPasswordReset(email, method), { cooldownKey: key });
     if (result.ok) {
+      trackEvent('auth.reset_requested', { metadata: { method, domain: emailDomain(email) } });
       setRecoveryMethod(method === 'recovery' ? 'recovery' : 'code');
       setRecoveryStage('code');
       setRecoveryCode('');

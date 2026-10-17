@@ -61,15 +61,15 @@ export function SessionGate({ children, onShowToast }: SessionGateProps) {
           <div className="mt-9 flex flex-col gap-2.5">
             <a
               href={dashboardUrl}
-              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4 text-[15px]"
+              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-accent text-accent-fg transition-colors hover:bg-accent-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4 text-[15px]"
             >
               Continue to dashboard
-              <ArrowRight size={13} className="text-white/50" />
+              <ArrowRight size={13} className="text-accent-fg/50" />
             </a>
 
             <SecondaryButton onClick={signOut}>
               <span className="inline-flex items-center justify-center gap-2">
-                <LogOut size={13} className="text-white/45" />
+                <LogOut size={13} className="text-accent-fg/45" />
                 Sign out
               </span>
             </SecondaryButton>

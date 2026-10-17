@@ -11,10 +11,13 @@ import { GitHubIcon, GoogleIcon, DiscordIcon } from '../SocialIcons';
 /* ═══════════════════════════════════════════════════════════════════════
    Tirbeo Accounts — primitives
 
-   Photograph-and-glass theme: a glass plate over the cover-fit backdrop,
-   low-alpha white fields, and one brand-blue action colour (#0064c8) used as a
-   fill for primary actions. Type inside the card is em-based off the card's
-   --u scale so proportions hold at any viewport.
+   System-theme surface: the canvas follows the OS (black plates on black in
+   dark, white plates on pale grey in light), fields are ink-tinted pills, and
+   one royal-blue accent is used
+   as a fill for primary actions. Every
+   colour here comes from a token, never a literal, so the whole surface moves
+   with the palette. Type inside the card is em-based off the card's --u scale
+   so proportions hold at any viewport.
    ═══════════════════════════════════════════════════════════════════════ */
 
 /** Class joiner — keeps the conditional class lists readable. */
@@ -55,23 +58,23 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * One shape for every action: pill, sentence case, semibold. The primary
- * button is the social login CTA recipe — sky-blue fill, blue glow, hover
- * lift, darker on press.
+ * One shape for every action: a full pill, sentence case, semibold. The primary
+ * is the scheme accent with Social's glow under it, lifting a pixel on hover
+ * and stepping to accent-press on tap — the .login-cta recipe.
  */
 const BUTTON_BASE =
-  'relative inline-flex w-full select-none items-center justify-center gap-2 overflow-hidden ' +
-  'rounded-[18px] font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
-  'transition-[background-color,color,border-color,opacity,transform,box-shadow] duration-150 ' +
+  'relative inline-flex w-full select-none items-center justify-center gap-2 ' +
+  'rounded-full font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
+  'transition-[background-color,box-shadow,transform,opacity] duration-150 ' +
   'disabled:pointer-events-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
-  sm: 'h-12 px-4 text-[14px]',
-  md: 'h-12 px-5 text-[15px]',
-  lg: 'h-[56px] px-6 text-[15px]',
+  sm: 'h-10 px-4 text-[14px] gap-1.5',
+  md: 'h-12 px-5 text-[15px] gap-2',
+  lg: 'h-[52px] px-6 text-[16px] gap-2',
 };
 
-/** Primary — the social `.login-cta`: white fill + soft white glow. */
+/** Primary — the one action fill: royal blue, white label, accent glow. */
 export function PrimaryButton({
   children,
   loading = false,
@@ -91,10 +94,10 @@ export function PrimaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'bg-[#0064c8] text-white',
-        'hover:bg-[#0058b3]',
-        'active:bg-[#004f9e] active:scale-[0.995]',
-        'disabled:bg-[rgba(255,255,255,0.10)] disabled:text-[rgba(255,255,255,0.45)] disabled:opacity-100 disabled:shadow-none',
+        'bg-accent text-accent-fg shadow-accent',
+        'hover:bg-accent-hover hover:-translate-y-px hover:shadow-accent-lg',
+        'active:bg-accent-press active:translate-y-0 active:scale-[0.995]',
+        'disabled:opacity-45 disabled:shadow-none disabled:translate-y-0',
         className,
       )}
     >
@@ -106,7 +109,8 @@ export function PrimaryButton({
   );
 }
 
-/** Secondary — the light outlined pill: hairline, quiet wash on hover. */
+/** Secondary — a hairline outline, never a grey slab: a filled one sitting
+    next to the accent-filled primary reads as the disabled pair. */
 export function SecondaryButton({
   children,
   className = '',
@@ -119,9 +123,10 @@ export function SecondaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'border border-[rgba(255,255,255,0.14)] bg-transparent text-text-2',
-        'hover:border-[rgba(255,255,255,0.26)] hover:bg-hover hover:text-fg',
-        'disabled:text-text-4 disabled:opacity-100',
+        'border border-btn-line bg-transparent text-text-2',
+        'hover:border-btn-line-hover hover:bg-hover hover:text-fg',
+        'active:scale-[0.995]',
+        'disabled:opacity-45',
         className,
       )}
     >
@@ -145,8 +150,7 @@ export function TextButton({
         // tappable on a phone, and let colour carry the affordance.
         'inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 text-[15px] font-semibold text-text-3',
         'transition-colors hover:text-fg active:text-text-2',
-        'focus-visible:outline-none focus-visible:text-fg',
-        'disabled:text-text-4 disabled:opacity-100',
+        'disabled:opacity-45',
         className,
       )}
     >
@@ -171,15 +175,19 @@ export function FormNotice({ notice }: { notice?: { msg: string; tone: 'error' |
 }
 
 /**
- * A filled field: gray plate, no border until focus, Instagram-blue ring
- * and ring on focus. 48px tall so the value sits at a comfortable reading
- * size and the tap target clears the 44px minimum.
+ * A filled field: grey plate, borderless until focus, then an accent border
+ * plus a soft accent ring. The whole box is the target. 48px tall so the value
+ * sits at a comfortable reading size and the tap target clears the 44px
+ * minimum. Identical to myprofile's CONTROL.
  */
 const FIELD_LINE =
-  'w-full rounded-2xl border border-transparent bg-field px-4 text-[16px] text-fg ' +
+  'w-full border border-border bg-field px-4 text-[16px] text-fg outline-none ' +
+  'placeholder:text-placeholder ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ' +
-  'placeholder:text-placeholder hover:bg-field-hover ' +
-  'focus:border-[#0058b3] focus:bg-field-focus focus:shadow-[0_0_0_3px_rgba(0,100,200,0.22)]';
+  'hover:bg-field-hover ' +
+  'focus:border-accent-hover focus:bg-field-focus ' +
+  'focus:shadow-[0_0_0_3px_var(--accent-soft-ring)] focus:outline-none ' +
+  'disabled:opacity-50';
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
@@ -207,7 +215,7 @@ export const Field = React.forwardRef<HTMLInputElement, {
           id={fieldId}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-          className={cn(FIELD_LINE, 'h-12', trailing && 'pr-12', error && '!border-danger', className)}
+          className={cn(FIELD_LINE, 'h-12 rounded-full', trailing && 'pr-12', error && '!border-danger', className)}
           {...inputProps}
         />
         {trailing ? (
@@ -257,7 +265,7 @@ export function TextAreaField({
         id={fieldId}
         rows={rows}
         aria-invalid={error ? true : undefined}
-        className={cn(FIELD_LINE, 'resize-none py-3 leading-snug', error && '!border-danger', className)}
+        className={cn(FIELD_LINE, 'rounded-2xl resize-none py-3 leading-snug', error && '!border-danger', className)}
         {...textProps}
       />
       {error ? (
@@ -332,7 +340,7 @@ export function SelectField({
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={cn(FIELD_LINE, 'h-12 cursor-pointer appearance-none pr-11 [&>option]:bg-card')}
+          className={cn(FIELD_LINE, 'h-12 rounded-full cursor-pointer appearance-none pr-11 [&>option]:bg-card')}
         >
           {options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -340,7 +348,7 @@ export function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-[#8b909a]" />
+        <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-4" />
       </div>
     </div>
   );
@@ -377,7 +385,7 @@ export function ConsentCheck({
       }}
       className={cn(
         'group flex w-full cursor-pointer items-start gap-3 rounded-xl text-left transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,255,255,0.45)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-press',
         className,
       )}
     >
@@ -385,11 +393,11 @@ export function ConsentCheck({
         aria-hidden
         className={cn(
           'mt-[1px] grid size-5 shrink-0 place-items-center rounded-[6px] border-2 transition-colors duration-150',
-          checked ? 'border-ig bg-ig' : 'border-track group-hover:border-border-strong',
+          checked ? 'border-accent bg-accent' : 'border-track group-hover:border-border-strong',
         )}
       >
         {checked ? (
-          <svg viewBox="0 0 24 24" className="size-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round">
+          <svg viewBox="0 0 24 24" className="size-3.5 text-accent-fg" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 6 9 17l-5-5" />
           </svg>
         ) : null}
@@ -468,7 +476,7 @@ export function OtpBoxes({
             error
               ? 'border-danger bg-hover'
               : focused === i
-                ? 'border-[#0058b3] bg-field-focus shadow-[0_0_0_3px_rgba(0,100,200,0.22)]'
+                ? 'border-accent-hover bg-field-focus shadow-[0_0_0_3px_var(--accent-soft-ring)]'
                 : 'hover:bg-field-hover',
           )}
         />
@@ -519,7 +527,7 @@ export function RangeSlider({
         <span aria-hidden className="absolute inset-x-0 h-1 rounded-full bg-track" />
         <span
           aria-hidden
-          className="absolute left-0 h-1 rounded-full bg-ig"
+          className="absolute left-0 h-1 rounded-full bg-accent"
           style={{ width: `${pct}%` }}
         />
         <input
@@ -538,7 +546,8 @@ export function RangeSlider({
   );
 }
 
-/** Segmented control. */
+/** Segmented control — Social's nav recipe: the active choice is an accent-soft
+    chip with accent text, so it reads in both schemes without a raised slab. */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -553,7 +562,7 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn('flex gap-1.5 rounded-2xl border border-border bg-field p-1.5', className)}>
+    <div role="radiogroup" aria-label={label} className={cn('flex gap-1 rounded-full border border-border bg-surface p-1.5', className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -564,8 +573,11 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'flex-1 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors duration-150',
-              active ? 'bg-border-strong text-fg shadow-[0_1px_3px_rgba(0,0,0,0.4)]' : 'text-text-3 hover:bg-white/5 hover:text-fg',
+              'flex-1 rounded-full text-center font-semibold whitespace-nowrap h-9 text-[14px]',
+              'transition-all duration-150',
+              active
+                ? 'bg-accent-soft text-accent-text'
+                : 'bg-transparent text-muted hover:bg-hover hover:text-fg',
             )}
           >
             {o.label}
@@ -591,7 +603,7 @@ export function Block({
     <div className="mb-8">
       <h3 className="mb-4 text-[19px] font-semibold text-fg">{title}</h3>
       {children}
-      {hint ? <p className="mt-3 text-[10px] leading-relaxed text-text-4">{hint}</p> : null}
+      {hint ? <p className="mt-3 text-[13px] leading-relaxed text-text-4">{hint}</p> : null}
     </div>
   );
 }
@@ -599,7 +611,7 @@ export function Block({
 /** Grouped list — a hairline box, rows split by a fainter one. */
 export function Group({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card', className)}>
+    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
       {children}
     </div>
   );
@@ -635,7 +647,8 @@ export function Row({
       {chevron !== false && onClick ? <ChevronRight className="size-[22px] shrink-0 text-text-4" /> : null}
     </>
   );
-  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-hover';
+  const cls =
+    'flex min-h-[3.5rem] w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-hover active:bg-field-focus';
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>
@@ -658,7 +671,7 @@ export function CardToggle({
   onChange: (c: boolean) => void;
 }) {
   return (
-    <div className="flex items-center gap-3.5 px-4 py-3.5">
+    <div className="flex min-h-[3.5rem] items-center gap-4 px-4 py-3.5">
       <span className="min-w-0 flex-1">
         <span className="block text-[16px] leading-snug text-fg">{label}</span>
         {sub ? <span className="mt-1 block text-[14px] leading-snug text-text-3">{sub}</span> : null}
@@ -671,14 +684,13 @@ export function CardToggle({
         onClick={() => onChange(!checked)}
         className={cn(
           'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200',
-          checked ? 'bg-ig' : 'bg-track',
+          checked ? 'bg-accent' : 'bg-track',
         )}
       >
         <span
           className={cn(
-            'block size-6 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-transform duration-200',
-            'bg-white',
-            checked ? 'translate-x-6' : 'translate-x-1',
+            'block size-6 rounded-full bg-accent-fg shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-transform duration-200 ease-out motion-reduce:transition-none',
+            checked ? 'translate-x-[22px]' : 'translate-x-[2px]',
           )}
         />
       </button>
@@ -690,7 +702,7 @@ export function CardToggle({
 
 export const OAUTH: { id: OAuthProvider; name: string; fill: string; hover: string; icon: ReactNode }[] = [
   { id: 'google', name: 'Google', fill: '#4285F6', hover: '#3179E3', icon: <GoogleIcon className="size-[32px] w-[32px]" /> },
-  { id: 'github', name: 'GitHub', fill: '#24292F', hover: '#15191D', icon: <GitHubIcon className="size-[32px] w-[32px] text-white" /> },
+  { id: 'github', name: 'GitHub', fill: '#24292F', hover: '#15191D', icon: <GitHubIcon className="size-[32px] w-[32px] text-fg" /> },
   { id: 'discord', name: 'Discord', fill: '#5865F2', hover: '#4752C4', icon: <DiscordIcon className="size-[32px] w-[32px] text-[#5865F2]" /> },
 ];
 
@@ -735,24 +747,33 @@ export function OrDivider({ label = 'or' }: { label?: string }) {
 
 /* ── Brand + shell ────────────────────────────────────────────────────── */
 
-/** The Tirbeo wordmark, exactly as the social login renders it. */
+/** The Tirbeo wordmark. `onCanvas` swaps between the two ink cuts so the
+    mark stays legible when the page flips light — a CSS filter would invert
+    the glyph's colour along with its fill, so it is two sources, one shown. */
 export function BrandMark({
   size = 'md',
   className = '',
+  onCanvas = false,
 }: {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  onCanvas?: boolean;
 }) {
   const glyph = { sm: 'h-[1.4em]', md: 'h-[1.8em]', lg: 'h-[2.2em]' }[size];
+  const shared = {
+    alt: 'Tirbeo',
+    width: 600,
+    height: 200,
+    decoding: 'async' as const,
+  };
+  if (!onCanvas) {
+    return <img {...shared} src="/logo-white.webp" className={cn('w-auto object-contain', glyph, className)} />;
+  }
   return (
-    <img
-      src="/logo-white.webp"
-      alt="Tirbeo"
-      width={600}
-      height={200}
-      decoding="async"
-      className={cn('w-auto object-contain', glyph, className)}
-    />
+    <>
+      <img {...shared} src="/logo-dark.webp" className={cn('brand-mark w-auto object-contain', glyph, className)} />
+      <img {...shared} src="/logo-white.webp" className={cn('brand-mark w-auto object-contain', glyph, className)} />
+    </>
   );
 }
 

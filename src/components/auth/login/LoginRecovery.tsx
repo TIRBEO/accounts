@@ -135,7 +135,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
                 <>Resend in {getCooldownRemaining(cooldownKey)}s</>
               ) : (
                 <TextButton onClick={doResend} disabled={resending}>
-                  {resending && <Spinner size={14} className="text-[#a9cdf5]" />}
+                  {resending && <Spinner size={14} className="text-accent-text" />}
                   Resend {methodLabel}
                 </TextButton>
               )}
@@ -164,7 +164,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
                 <>Resend in {getCooldownRemaining(cooldownKey)}s</>
               ) : (
                 <TextButton onClick={doResend} disabled={resending}>
-                  {resending && <Spinner size={14} className="text-[#a9cdf5]" />}
+                  {resending && <Spinner size={14} className="text-accent-text" />}
                   Resend magic link
                 </TextButton>
               )}

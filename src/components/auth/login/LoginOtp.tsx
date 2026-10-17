@@ -81,7 +81,7 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
             <>Resend in {getCooldownRemaining('login-otp')}s</>
           ) : (
             <TextButton onClick={doResend} disabled={resending}>
-              {resending && <Spinner size={14} className="text-[#a9cdf5]" />}
+              {resending && <Spinner size={14} className="text-accent-text" />}
               Resend code
             </TextButton>
           )}

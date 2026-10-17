@@ -32,7 +32,7 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
         transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col items-center gap-7"
       >
-        <BrandMark size="lg" />
+        <BrandMark size="lg" onCanvas />
 
         {/* Indeterminate rail — a travelling azure segment, the standard
             "working, duration unknown" signal. */}
@@ -41,7 +41,7 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
           role="presentation"
         >
           <motion.div
-            className="absolute inset-y-0 w-[54px] rounded-full bg-ig"
+            className="absolute inset-y-0 w-[54px] rounded-full bg-accent"
             animate={reduceMotion ? undefined : { x: ['-54px', '168px'] }}
             transition={
               reduceMotion

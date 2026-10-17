@@ -3,6 +3,7 @@ import { CheckCircle2, Mail, XCircle } from 'lucide-react';
 import { getCurrentUser, apiPost, verifyMagicLink } from '../lib/api';
 import { isAllowedRedirectTarget, unwrapHandoffTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
 import { haptic } from '../lib/haptics';
+import { trackEvent, trackError } from '../lib/telemetry';
 import { broadcastSession } from '../lib/sessionSync';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { AuthShell, PrimaryButton, SecondaryButton, Spinner } from './ui/ig-ui';
@@ -46,6 +47,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       try { window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[\?&]magic_token=[^&]+/, '').replace(/^\?$/, '')); } catch {}
       verifyMagicLink(magicToken).then((res) => {
         if (res.ok) {
+          trackEvent('auth.login_success', { metadata: { method: 'magic_link' } });
           setMagicStatus('success'); haptic('success');
           onToast?.(`Magic link verified${res.email ? ' for ' + res.email : ''} — redirecting...`, 'success');
           broadcastSession('login');
@@ -59,10 +61,11 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
             }); return;
           }
           const msg = res.error || 'This magic link is invalid, expired, or already used. Please request a new one.';
+          trackEvent('auth.login_failed', { metadata: { reason: 'magic_link_invalid', method: 'magic_link' } });
           setMagicStatus('error'); setMagicError(msg); onToast?.(msg, 'error'); haptic('error');
         }
         setChecking(false);
-      }).catch(() => { setMagicStatus('error'); setMagicError('Could not verify magic link. Please try again.'); setChecking(false); });
+      }).catch((err) => { trackError('callback:magic-link-verify', err); setMagicStatus('error'); setMagicError('Could not verify magic link. Please try again.'); setChecking(false); });
       return;
     }
     if (isMerge) { setChecking(false); return; }
@@ -77,7 +80,13 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
     // Verify the session, then hand off automatically. No intermediate step.
     getCurrentUser().then((res) => {
       if (cancelled) return;
-      if (res.ok && res.data) { window.location.href = redirectTo; return; }
+      if (res.ok && res.data) {
+        // OAuth handoff finished: the API session cookie is live. Provider id
+        // only — never the account email.
+        trackEvent('auth.oauth_complete', { metadata: { provider: provider || 'unknown' } });
+        window.location.href = redirectTo; return;
+      }
+      trackEvent('auth.login_failed', { metadata: { reason: 'callback_session_missing', provider: provider || 'unknown' } });
       const block = (res as { block?: { kind?: string; reason?: string | null } }).block;
       if (block) {
         const kind = block.kind === 'banned' ? 'banned' : block.kind === 'deleted' ? 'deleted' : 'suspended';
@@ -109,8 +118,8 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
         <div className={cardCls}>
           {magicStatus === 'verifying' || checking ? (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-white/12 bg-white/[0.05]">
-                <Mail size={30} className="text-white/80" />
+              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
+                <Mail size={30} className="text-text-2" />
               </div>
               <div>
                 <h1 className="tb-heading">Verifying magic link</h1>
@@ -122,7 +131,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
             </div>
           ) : magicStatus === 'success' ? (
             <div className="flex flex-col items-center gap-3 py-3 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-white/12 bg-white/[0.05]">
+              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
                 <CheckCircle2 size={32} className="text-success" />
               </div>
               <div>
@@ -130,13 +139,13 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
                 <p className="tb-sub mt-1.5">Magic link verified — opening your workspace.</p>
               </div>
               <div className="mt-2 h-px w-full overflow-hidden rounded-full bg-divider">
-                <div className="h-full w-full rounded-full bg-ig" />
+                <div className="h-full w-full rounded-full bg-accent" />
               </div>
               <p className="text-[16px] text-text-4">Redirecting to {redirectTo.replace(/^https?:\/\//,'').slice(0,32)}…</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 py-3 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-white/12 bg-white/[0.05]">
+              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
                 <Mail size={30} className="text-danger" />
               </div>
               <div>
@@ -159,7 +168,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       <div className={cardCls}>
         {denied ? (
           <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
-            <div className="grid size-20 place-items-center rounded-3xl border border-white/12 bg-white/[0.05]">
+            <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
               <XCircle size={30} className="text-danger" />
             </div>
             <h1 className="tb-heading">Not allowed</h1>
@@ -168,8 +177,8 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
         ) : isMerge ? (
           <>
             <div className="mb-5 flex flex-col items-center text-center">
-              <div className="mb-4 grid size-16 place-items-center rounded-2xl border border-white/12 bg-white/[0.05]">
-                {PROVIDER_ICONS[provider] || <CheckCircle2 size={24} className="text-white/80" />}
+              <div className="mb-4 grid size-16 place-items-center rounded-2xl border border-border bg-faint">
+                {PROVIDER_ICONS[provider] || <CheckCircle2 size={24} className="text-text-2" />}
               </div>
               <h1 className="tb-heading">{mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}</h1>
               <p className="mt-2 max-w-[320px] text-[16px] leading-relaxed text-text-3">

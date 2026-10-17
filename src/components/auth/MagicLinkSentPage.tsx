@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { requestMagicLink, getRemainingLimits } from '../../lib/api';
+import { trackEvent } from '../../lib/telemetry';
 import { AuthShell, Field, PrimaryButton, TextButton } from '../ui/ig-ui';
 import { validateEmail } from '../../lib/validations';
 
@@ -106,6 +107,7 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
     try {
       const res = await requestMagicLink(email, { ptr });
       if (res.ok) {
+        trackEvent('auth.magic_link_requested', { metadata: { purpose: 'resend' } });
         // The server rotates the key every send — keep the URL honest so a
         // refresh still works from this device.
         if (res.ptr) {
@@ -171,6 +173,7 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
     try {
       const res = await requestMagicLink(addr);
       if (res.ok) {
+        trackEvent('auth.magic_link_requested', { metadata: { purpose: 'manual' } });
         // Hand off to the same screen a normal request lands on, carrying the
         // fresh key so resend works here too.
         const q = new URLSearchParams({ email: addr });

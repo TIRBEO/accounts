@@ -3,162 +3,230 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Tirbeo Accounts — design system
 
-   The photograph is the page. A cover-fit backdrop sits under everything,
-   the form sits on one dark glass plate (blurred and saturated so the photo
-   tints it but never lightens it), and film grain over the whole thing at
-   2.5%. One action colour — brand blue #0064c8 — used as a fill.
+   The palette is Tirbeo Social's palette, token-for-token, so signing in and
+   the app you land in render identically. The scheme follows the device: no
+   picker, no stored preference, nothing to keep in sync — `:root` carries the
+   dark ladder and a single media query swaps every token at once.
+
+   Tirbeo's language is charcoal and near-black: a #26262a canvas with
+   #1a1a1d plates in the dark scheme, #e9eaee behind white plates in the
+   light one; controls are grey pills one step above the surface.
+   One action colour — sky blue — #0d6ecf dark, #0066cc light (white-text-safe) — used as
+   a fill, and #ffffff / #121316 for the high-contrast outline actions.
 
    • desktop          — marketing hero left, form pane right
    • portrait phones  — full-width column pinned near the top
    Card sizes are em-based off --u so proportions hold at any resolution.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── Palettes ────────────────────────────────────────────────────────────
+   Values are opaque hex, not ink-over-canvas alphas: two apps deriving the
+   same ramp from different bases drift the moment either tweaks an alpha, so
+   both now state every colour outright and share the list. */
 :root {
-  /* Canvas — the page is the photograph, not a plate. --bg only paints the
-     one frame before the backdrop image decodes. */
-  --bg: #101014;
-  --card: rgba(18, 18, 21, 0.72);
-  --surface: rgba(255, 255, 255, 0.09);
-  --surface-hover: rgba(255, 255, 255, 0.16);
-  --surface-3: rgba(255, 255, 255, 0.18);
+  color-scheme: dark;
 
-  /* Text — white alphas over glass, held just above the floor where copy
-     still carries its meaning: --text-2 clears 6:1 on the card, --text-3 4:1. */
-  --fg: rgba(255, 255, 255, 0.96);
-  --text-2: rgba(255, 255, 255, 0.76);
-  --text-3: rgba(255, 255, 255, 0.62);
-  --text-4: rgba(255, 255, 255, 0.48);
-  --placeholder: rgba(255, 255, 255, 0.45);
-  --muted: var(--text-2);
-  --muted-2: var(--text-3);
-  --link: var(--accent-2);
-
-  /* Washes */
-  --ambient: rgba(255, 255, 255, 0.06);
-  --faint: rgba(255, 255, 255, 0.07);
-  --glass: var(--surface);
-  --glass-2: var(--surface-hover);
-  --glass-3: var(--surface-3);
-
-  /* Fields keep a plate. The photo-era inputs were a line with no fill, but
-     every control here is `bg-field`, so on a translucent card a transparent
-     fill would leave the value floating on the photograph. */
-  --field: rgba(255, 255, 255, 0.07);
-  --field-focus: rgba(255, 255, 255, 0.13);
-  --field-hover: rgba(255, 255, 255, 0.11);
-  /* Chrome paints its own opaque block over a field and colours the value.
-     This is the surface that covers it. Must stay opaque and dark. */
-  --autofill-fill: #0e0e10;
-
-  /* Lines */
-  --border: rgba(255, 255, 255, 0.15);
-  --border-strong: rgba(255, 255, 255, 0.34);
-  --border-hover: rgba(255, 255, 255, 0.24);
-  --divider: rgba(255, 255, 255, 0.12);
-  --hover: rgba(255, 255, 255, 0.08);
-  --track: rgba(255, 255, 255, 0.14);
-
-  /* Accent — action blue. Instagram's #0095f6 fails AA behind 13px white
-     labels (3.17:1); one step down the same ramp clears it at 5.74:1 while
-     still reading as the brand blue. Hover/press step darker rather than
-     lighter so contrast only ever improves under the pointer. */
-  --accent: #0064c8;
-  --accent-hover: #0058b3;
-  --accent-press: #004f9e;
-  --ig: #0064c8;
-  --ig-hover: #0058b3;
-  --ig-press: #004f9e;
-  --btn-label: rgba(255, 255, 255, 0.55);
-  /* --accent-2 is the same hue read *as ink*: blue glyphs, links and kickers on
-     a dark plate. The action fill is #0064c8, which is fine behind white type
-     but far too dark for blue type on glass, so the secondary ramp runs light. */
-  --accent-2: #a9cdf5;
-  --accent-2-hover: #c2dcf7;
-  --accent-2-press: #0058b3;
-  --accent-soft: rgba(0, 100, 200, 0.4);
+  /* Charcoal canvas with near-black plates — the reference's ladder
+     (chat1.jpg, ref1.jpg): the page sits mid-grey and the panels sink
+     below it, controls float back up as grey pills. */
+  --bg: #26262a;
+  --card: #1a1a1d;
+  --surface: #1a1a1d;
+  --surface-2: #262629;
+  --surface-3: #303034;
+  --fg: #ffffff;
+  --muted: #a1a1a8;
+  --link: #9aa6ff;
+  --text-2: #dcdce1;
+  --text-3: #a1a1a8;
+  --text-4: #87878e;
+  --placeholder: #71717a;
+  --border: #34343a;
+  --border-strong: #ffffff;
+  --divider: #2e2e32;
+  --hover: #26262a;
+  --accent: #0d6ecf;
+  --accent-hover: #2b86e0;
+  --accent-press: #0a5cb0;
+  --accent-soft: #123049;
+  --accent-text: #9aa6ff;
   --accent-fg: #ffffff;
+  --danger: #ff453a;
+  --danger-text: #ff6961;
+  --success: #32d74b;
+  --success-text: #32d74b;
+  --warn: #ffd60a;
+  --warn-text: #ffd60a;
+  --stack-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --rail: #2b2b2f;
+  --scrim: rgb(10 10 12 / 68%);
+  --track: #4e4e56;
+  --focus-ring: #ffffff;
+  --ink: #ffffff;
+  --ink-fg: #000000;
+  --shadow-card: 0 2px 4px rgb(0 0 0 / 26%), 0 18px 44px -18px rgb(0 0 0 / 58%);
+  --shadow-pop: 0 16px 44px -12px rgb(0 0 0 / 62%);
 
-  /* State */
-  --danger: #ff7a7a;
-  --danger-text: #ffa1a1;
-  --success: #6fd68a;
-  --success-text: #8fe0a5;
-  --warn: #f0c674;
-  --warn-text: #f5d494;
-
-  /* Focus */
-  --ring: rgba(0, 100, 200, 0.45);
-  --focus-ring: #0064c8;
-
-  /* Motion */
+  /* Accounts-only tokens, each derived from a Social token so it cannot drift.
+     --field/--btn-line/--glass exist because this app's controls sit on grey
+     plates over black, where Social's sit on a light card over full-bleed art. */
+  --autofill-fill: #2a2a2e;
+  --shadow-sheet: 0 -18px 48px -12px rgb(0 0 0 / 70%);
+  --shadow-ambient: var(--shadow-card);
+  --field: #2a2a2e;
+  --field-hover: #323237;
+  --field-focus: #3a3a40;
+  --hairline: var(--divider);
+  --btn-line: rgb(255 255 255 / 22%);
+  --btn-line-hover: rgb(255 255 255 / 40%);
+  --glass: rgb(26 26 29 / 85%);
+  --glass-2: rgb(26 26 29 / 94%);
+  --glass-3: var(--card);
+  --accent-soft-ring: rgb(10 132 255 / 45%);
+  --accent-glow: rgb(10 132 255 / 50%);
+  --ambient: rgb(255 255 255 / 6%);
+  --faint: rgb(255 255 255 / 7%);
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
-
-  /* Surfaces */
-  --hairline: rgba(255, 255, 255, 0.12);
-  --ink: #ffffff;
-  --ink-fg: #0b0d10;
+  --surface-hover: var(--surface-2);
+  --border-hover: var(--surface-3);
+  --btn-label: var(--text-2);
+  --muted-2: var(--text-3);
+  --ring: var(--accent-soft-ring);
 }
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --bg: #e9eaee;
+    --card: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f3f4f8;
+    --surface-3: #e9ebf1;
+    --fg: #121316;
+    --muted: #6e727c;
+    --link: #0068d6;
+    --text-2: #33353b;
+    --text-3: #6e727c;
+    --text-4: #8b8f99;
+    --placeholder: #a6aab3;
+    --border: #e2e4ea;
+    --border-strong: #121316;
+    --divider: #dfe1e8;
+    --hover: #eef0f5;
+    --accent: #0066cc;
+    --accent-hover: #0058b3;
+    --accent-press: #004892;
+    --accent-soft: #eceffe;
+    --accent-text: #0068d6;
+    --danger: #e0342c;
+    --danger-text: #c9261f;
+    --success: #1ea64b;
+    --success-text: #188a3e;
+    --warn: #c47b00;
+    --warn-text: #9d6300;
+    --rail: #ffffff;
+    --scrim: rgb(18 19 22 / 45%);
+    --track: #cdd1da;
+    --focus-ring: #0066cc;
+    --ink: #121316;
+    --ink-fg: #ffffff;
+    --shadow-card: 0 1px 3px rgb(18 19 22 / 7%), 0 16px 36px -16px rgb(18 19 22 / 20%);
+    --shadow-pop: 0 14px 36px -10px rgb(18 19 22 / 22%);
+
+    --autofill-fill: var(--surface-3);
+    --field: #ffffff;
+    --field-hover: #f2f3f7;
+    --field-focus: #eef0f6;
+    --hairline: #e2e4ea;
+    --shadow-sheet: 0 -18px 48px -12px rgb(18 19 22 / 22%), 0 2px 8px rgb(18 19 22 / 10%);
+    --btn-line: rgb(18 19 22 / 18%);
+    --btn-line-hover: rgb(18 19 22 / 30%);
+    --glass: rgb(255 255 255 / 86%);
+    --glass-2: rgb(255 255 255 / 95%);
+    --glass-3: #ffffff;
+    --accent-soft-ring: rgb(10 132 255 / 35%);
+    --accent-glow: rgb(10 132 255 / 45%);
+    --ambient: rgb(18 19 22 / 4%);
+    --faint: rgb(18 19 22 / 5%);
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
-  --color-fg: var(--fg);
   --color-card: var(--card);
   --color-surface: var(--surface);
-  --color-surface-2: var(--surface-hover);
+  --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
-  --color-text-2: var(--text-2);
-  --color-text-3: var(--text-3);
-  --color-text-4: var(--text-4);
+  --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-muted-2: var(--muted-2);
-  --color-faint: var(--faint);
-  --color-glass: var(--glass);
-  --color-glass-2: var(--glass-2);
-  --color-glass-3: var(--glass-3);
+  --color-link: var(--link);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-hover: var(--border-hover);
   --color-divider: var(--divider);
+  --color-hover: var(--hover);
+  --color-faint: var(--faint);
+  --color-ambient: var(--ambient);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-press: var(--accent-press);
-  --color-ig: var(--ig);
-  --color-ig-hover: var(--ig-hover);
-  --color-ig-press: var(--ig-press);
-  --color-accent-2: var(--accent-2);
-  --color-accent-2-hover: var(--accent-2-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
   --color-accent-fg: var(--accent-fg);
+  --shadow-accent: 0 10px 22px -8px var(--accent-glow);
+  --shadow-accent-lg: 0 14px 28px -8px var(--accent-glow);
   --color-danger: var(--danger);
   --color-danger-text: var(--danger-text);
   --color-success: var(--success);
+  --color-success-text: var(--success-text);
   --color-warn: var(--warn);
-  --color-hover: var(--hover);
-  --color-link: var(--link);
+  --color-warn-text: var(--warn-text);
+  --color-rail: var(--rail);
+  --color-scrim: var(--scrim);
   --color-track: var(--track);
-  --color-field: var(--field);
-  --color-field-focus: var(--field-focus);
-  --color-field-hover: var(--field-hover);
-  --color-border-hover: var(--border-hover);
   --color-ink: var(--ink);
   --color-ink-fg: var(--ink-fg);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
   --color-placeholder: var(--placeholder);
+  --color-field: var(--field);
+  --color-field-hover: var(--field-hover);
+  --color-field-focus: var(--field-focus);
+  --color-hairline: var(--hairline);
+  --color-btn-line: var(--btn-line);
+  --color-btn-line-hover: var(--btn-line-hover);
+  --color-glass: var(--glass);
+  --color-glass-2: var(--glass-2);
+  --color-glass-3: var(--glass-3);
+  --font-sans: var(--stack-sans);
+  --font-display: var(--stack-sans);
+  --font-mono: var(--stack-mono);
 
-  --shadow-ambient: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
-  --shadow-pop: 0 10px 30px -8px rgb(0 0 0 / 55%);
+  --shadow-ambient: var(--shadow-ambient);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-sheet: var(--shadow-sheet);
 
-  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-  --radius-2xl: 14px;
-
-  --animate-rise: rise 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
   --animate-fade-in: fade-in 180ms ease-out both;
+  --animate-fade-out: fade-out 200ms ease-in both;
+  --animate-scale-in: scale-in 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-scale-out: scale-out 200ms cubic-bezier(0.32, 0, 0.67, 0) both;
+  --animate-sheet-up: sheet-up 340ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-sheet-down: sheet-down 280ms cubic-bezier(0.32, 0, 0.67, 0) both;
+  --animate-drawer-in: drawer-in 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-rise: rise 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
 }
 
 /* ── Legacy --tb-* aliases (still referenced by token-class markup) ── */
@@ -168,7 +236,7 @@
   --tb-on-surface: var(--fg);
   --tb-on-surface-variant: var(--muted);
   --tb-primary: var(--accent);
-  --tb-on-primary: #ffffff;
+  --tb-on-primary: var(--accent-fg);
   --tb-outline-variant: var(--border);
   --tb-surface-container-low: var(--faint);
   --tb-surface-container: var(--card);
@@ -190,27 +258,43 @@
   }
 
   html {
-    color-scheme: dark;
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
+    margin: 0;
+    min-height: 100dvh;
     background: var(--bg);
     color: var(--fg);
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-      sans-serif;
+    font-family: var(--stack-sans);
     font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
     /* A full-bleed photo page must never scroll sideways. */
     overflow-x: clip;
   }
 
+  /* One palette swap, so flipping themes cross-fades instead of snapping. */
+  body,
+  body * {
+    transition-property: background-color, color, border-color, fill, stroke;
+    transition-duration: 160ms;
+    transition-timing-function: ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body,
+    body * {
+      transition-duration: 0s;
+    }
+  }
+
   ::selection {
-    background: rgba(0, 100, 200, 0.30);
+    background: color-mix(in srgb, var(--accent) 32%, transparent);
     color: var(--fg);
   }
 
@@ -220,29 +304,36 @@
   }
   ::-webkit-scrollbar-thumb {
     background: var(--track);
-    border-radius: 4px;
+    border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #404040;
+    background: var(--border-strong);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  button {
+  button,
+  [role="button"] {
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   a {
     color: inherit;
+    text-decoration: none;
   }
 
   input,
   textarea,
   select {
-    color-scheme: dark;
+    color-scheme: inherit;
+    font: inherit;
   }
 
   input::placeholder,
@@ -252,9 +343,12 @@
 }
 
 .text-link {
-  color: var(--link);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.text-link:hover {
   text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -339,41 +433,34 @@ select:-webkit-autofill {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: var(--accent-text);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Surfaces — one frosted-glass treatment, the social login recipe.
+   Surfaces — flat plates, no frosting. Depth comes from the fill ladder
+   (--surface → --surface-2 → --surface-3) and the hairline, not blur.
    ═══════════════════════════════════════════════════════════════════════ */
-.glass,
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .glass-soft {
-  background: rgba(24, 24, 26, 0.92);
-  border: 1px solid var(--hairline);
-  box-shadow:
-    0 18px 36px -12px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
-.glass-soft {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.glass::before,
-.glass-soft::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-  pointer-events: none;
-}
+
 .sheen::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, var(--hairline), transparent);
   pointer-events: none;
 }
 
@@ -416,7 +503,7 @@ input[type='range']::-moz-range-thumb {
   background: var(--fg);
 }
 input[type='range']:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 0 5px rgba(0, 100, 200, 0.20);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 input[type='range']:disabled {
   opacity: 0.4;
@@ -434,8 +521,8 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Login shell — one charcoal theme at every size, the same recipe as the
-   PC form pane (charcoal var(--bg) canvas, var(--field) borderless fields, sky action).
+   Login shell — one theme at every size, the same recipe as the
+   PC form pane (var(--bg) canvas, var(--field) borderless fields, royal-blue action).
    • desktop (≥1280)  → two-pane split, art left / form right
    • tablet + phone   → single centered column, in-flow brand + footer
    Card sizes are em-based off --u so proportions hold at any resolution.
@@ -456,52 +543,11 @@ input[type='number']::-webkit-inner-spin-button {
   background-color: var(--bg);
 }
 
-/* The photograph is the aesthetic. Dimmed enough that 16px white text on top
-   still clears contrast, saturated enough to still read as a photo. */
-.login-page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      circle 760px at 50% 40%,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0) 70%
-    ),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.32) 100%),
-    url('/background.jpg') center / cover no-repeat;
-  filter: saturate(1.12) brightness(0.94);
-}
+/* The canvas is plain — no falloff, no grain, no vignette. Depth in this
+   theme comes from the plates sitting on it, not from the page itself. */
 
-
-/* Film grain — 2.5%, above the backdrop, below the UI, never interactive. */
-.login-page::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
-  background-size: 160px 160px;
-}
-
-
-/* Phones get the form and nothing else. A cover-fit photograph behind a
-   full-bleed card on a 390px screen is a compressed sliver at the edges that
-   also costs a full-viewport image download before anything is readable. */
-@media (max-width: 640px) {
-  .login-page::before,
-  .login-page::after {
-    display: none;
-  }
-}
-
-/* The form column — a glass plate over the photograph. The dark plate is what
-   makes the blur read as glass rather than as a grey wash: the content behind
-   tints it, but never lightens it. */
+/* The form sits bare on the charcoal canvas — no container, no plate; the
+   reading width and the field fills are the only framing it needs. */
 .login-card {
   --u: min(
     clamp(13px, 0.45vw + 10.6px, 18px),
@@ -513,18 +559,13 @@ input[type='number']::-webkit-inner-spin-button {
   flex-direction: column;
   width: min(600px, 100%);
   margin: auto;
-  padding: 1.8em 1.5em 2.2em;
+  padding: 0;
   font-size: var(--u);
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 24px;
-  background: var(--card);
-  box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 70px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
 /* Wider frame for the settings-style screens (2FA, passkeys, callback). */
@@ -546,6 +587,17 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .page-brand:hover { opacity: 1; }
+
+/* Two cuts of the wordmark ship in the DOM and one is shown: dark ink on the
+   light canvas, white on charcoal. Declared after .page-brand so its
+   display: block does not win the tie. */
+.brand-mark { display: none; }
+.brand-mark:first-child { display: block; }
+
+@media (prefers-color-scheme: dark) {
+  .brand-mark:first-child { display: none; }
+  .brand-mark:last-child { display: block; }
+}
 
 /* Wizard chrome — Back / step counter row and the progress track. */
 /* Minimal wizard chrome — one hairline track + small caption. */
@@ -622,7 +674,7 @@ input[type='number']::-webkit-inner-spin-button {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: var(--accent-hover);
 }
 
 .login-title {
@@ -654,7 +706,7 @@ input[type='number']::-webkit-inner-spin-button {
   border: 0;
   border-radius: 999px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--accent-fg);
   font-family: inherit;
   font-size: 1.02em;
   font-weight: 600;
@@ -662,7 +714,8 @@ input[type='number']::-webkit-inner-spin-button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.16s ease, transform 0.16s ease;
+  box-shadow: 0 10px 20px -8px var(--accent-glow);
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .login-cta img {
@@ -673,11 +726,13 @@ input[type='number']::-webkit-inner-spin-button {
 
 .login-cta:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 13px 25px -8px var(--accent-glow);
 }
 
 .login-cta:active {
   background: var(--accent-press);
-  transform: scale(0.995);
+  transform: translateY(0) scale(0.995);
 }
 
 .login-cta:focus-visible {
@@ -686,7 +741,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .login-cta:disabled {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-3);
   color: var(--placeholder);
   opacity: 1;
   box-shadow: none;
@@ -701,7 +756,7 @@ input[type='number']::-webkit-inner-spin-button {
   /* keep >=1.7em gap even when pinned */
   margin-block-start: auto;
   padding-top: 2.2em;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--border);
   font-size: 0.8em;
   line-height: 1.55;
   text-align: center;
@@ -744,8 +799,9 @@ input[type='number']::-webkit-inner-spin-button {
     padding: 0;
   }
 
-  /* Clear split: the photograph carries the art side, the glass plate the
-     form. No opaque pane — the card is what makes the blur read as glass. */
+  /* Clear split: the rails carry the art side, the column carries the form.
+     Both sit straight on the canvas — nothing is blurred, so nothing has to
+     be opaque to read as a surface. */
   .login-page {
     background: var(--bg);
   }
@@ -899,8 +955,8 @@ input[type='number']::-webkit-inner-spin-button {
     z-index: 6;
     margin: 0;
     padding: 14px 16px;
-    background: rgba(24, 24, 26, 0.94);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 18px;
     box-shadow:
       0 28px 56px -18px rgba(0, 0, 0, 0.5),
@@ -916,10 +972,10 @@ input[type='number']::-webkit-inner-spin-button {
     rotate: -1.5deg;
     padding: 13px 15px 14px;
     border-radius: 20px;
-    background: rgba(24, 24, 26, 0.92);
+    background: var(--glass-2);
     -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
     box-shadow:
       0 24px 52px -18px rgba(0, 0, 0, 0.3),
       0 6px 16px -6px rgba(0, 0, 0, 0.16);
@@ -937,7 +993,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
   }
 
   .mini-head-txt {
@@ -984,7 +1040,7 @@ input[type='number']::-webkit-inner-spin-button {
     font-size: 13px;
     line-height: 1.45;
     font-weight: 500;
-    color: #dfe2e7;
+    color: var(--text-2);
   }
 
   .mini-shot {
@@ -1043,7 +1099,7 @@ input[type='number']::-webkit-inner-spin-button {
 
   .mini-comment > b {
     margin-right: 6px;
-    color: #ffffff;
+    color: var(--fg);
     font-weight: 600;
   }
 
@@ -1054,13 +1110,13 @@ input[type='number']::-webkit-inner-spin-button {
     gap: 8px;
     margin-top: 11px;
     padding: 10px 10px 10px 6px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--divider);
     border-radius: 0 0 8px 8px;
     background: transparent;
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
-    color: rgba(255, 255, 255, 0.42);
+    color: var(--text-4);
     font-size: 12px;
     white-space: nowrap;
   }
@@ -1076,7 +1132,7 @@ input[type='number']::-webkit-inner-spin-button {
   .mini-composer > svg {
     margin-left: auto;
     flex: none;
-    color: var(--accent-2);
+    color: var(--accent-text);
   }
 
   /* now-playing widget — full Spotify player card, low-right of the collage */
@@ -1156,7 +1212,7 @@ input[type='number']::-webkit-inner-spin-button {
     display: block;
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, var(--accent), #a9cdf5);
+    background: linear-gradient(90deg, var(--accent-press), var(--accent) 45%, var(--accent-hover));
     animation: music-run 14s linear infinite;
   }
 
@@ -1198,7 +1254,7 @@ input[type='number']::-webkit-inner-spin-button {
     aspect-ratio: 1;
     padding: 2.5px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0058b3, #004f9e);
+    background: linear-gradient(135deg, var(--accent-hover), var(--accent-press));
   }
 
   .mini-avatar > img {
@@ -1218,7 +1274,7 @@ input[type='number']::-webkit-inner-spin-button {
 
   .mini-sub {
     font-size: 12.5px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-3);
     white-space: nowrap;
   }
 
@@ -1230,13 +1286,13 @@ input[type='number']::-webkit-inner-spin-button {
     align-items: center;
     padding: 8px 15px;
     border-radius: 999px;
-    background: #0064c8;
-    border: 1px solid rgba(110, 198, 255, 0.40);
-    color: #ffffff;
+    background: var(--accent);
+    border: 1px solid color-mix(in srgb, #ffffff 30%, transparent);
+    color: var(--accent-fg);
     font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.01em;
-    box-shadow: 0 10px 22px -8px rgba(0, 100, 200, 0.55);
+    box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--accent) 55%, transparent);
   }
 
   /* story progress track */
@@ -1249,7 +1305,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 3px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(0, 100, 200, 0.30);
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
   }
 
   .story-bar > i {
@@ -1329,7 +1385,7 @@ input[type='number']::-webkit-inner-spin-button {
     aspect-ratio: 1;
     padding: 3px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #a9cdf5, #0064c8 55%, #004f9e);
+    background: linear-gradient(135deg, var(--accent-hover), var(--accent) 55%, var(--accent-press));
     box-shadow: 0 20px 38px -12px rgba(0, 0, 0, 0.7);
   }
 
@@ -1358,8 +1414,7 @@ input[type='number']::-webkit-inner-spin-button {
     width: auto;
   }
 
-  /* The card stays a floating glass plate on the desktop split too — the form
-     pane is the photograph, not a surface. */
+  /* Desktop: the form is a bare centered column on the canvas — no container. */
   .login-card {
     --u: 15px;
     position: relative;
@@ -1369,14 +1424,12 @@ input[type='number']::-webkit-inner-spin-button {
     justify-self: center;
     align-self: center;
     margin: 0;
-    padding: 56px 48px;
+    padding: 0;
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 24px;
-    background: var(--card);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
   }
 
   .login-card[data-wide='true'] {
@@ -1398,6 +1451,10 @@ input[type='number']::-webkit-inner-spin-button {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 @keyframes rise {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1405,6 +1462,22 @@ input[type='number']::-webkit-inner-spin-button {
 @keyframes scale-in {
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
+}
+@keyframes scale-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sheet-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 @keyframes shimmer {
   0% { background-position: 200% 0; }
@@ -1416,7 +1489,12 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .tb-shimmer {
-  background: linear-gradient(90deg, #1d1d1f 25%, #28282b 37%, #1d1d1f 63%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 37%,
+    var(--surface-2) 63%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }
@@ -1448,7 +1526,7 @@ input[type='number']::-webkit-inner-spin-button {
   padding: 14px 20px;
   border: 1px solid var(--hairline);
   border-radius: 9999px;
-  background: rgba(24, 24, 26, 0.92);
+  background: var(--glass-2);
   box-shadow: var(--shadow-pop);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
@@ -1505,7 +1583,9 @@ input[type='number']::-webkit-inner-spin-button {
 
 .legal-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin: 0;
 }
@@ -1629,8 +1709,8 @@ input[type='number']::-webkit-inner-spin-button {
 /* Collapsible optional work block. */
 .work-box {
   border: 1px solid var(--border);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-2xl);
+  background: var(--ambient);
 }
 
 .work-box summary {
@@ -1696,10 +1776,17 @@ input[type='number']::-webkit-inner-spin-button {
   margin-top: -14px;
 }
 
+/* It is an aria-live region, so it has to stay mounted — but reserving 26px
+   of nothing between the fields and the button is what made the form look
+   hollow. Collapsed when it has no message. */
+.no-account-slot:empty {
+  display: none;
+}
+
 .no-account-note {
   font-size: 15px;
   font-weight: 600;
-  color: #ff6b71;
+  color: var(--danger-text);
   animation: fade-in 180ms var(--ease-enter) both;
 }
 
@@ -1709,14 +1796,14 @@ input[type='number']::-webkit-inner-spin-button {
   background: none;
   font: inherit;
   font-weight: 800;
-  color: #ff8e93;
+  color: var(--danger-text);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 
 .no-account-note button:hover {
-  color: #ffb0b4;
+  color: var(--danger);
 }
 
 /* Inline error/success line on login screens — replaces toasts. */
@@ -1729,11 +1816,11 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .form-notice-error {
-  color: #ff6b71;
+  color: var(--danger-text);
 }
 
 .form-notice-success {
-  color: #5dd39e;
+  color: var(--success-text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1746,18 +1833,15 @@ input[type='number']::-webkit-inner-spin-button {
   }
 }
 
-/* Footer links belong to the left pane — center them on the 60% side.
-   Must come after the base .legal-bar rule (equal specificity). */
+/* Footer stays in normal flow at every width. It used to be position:fixed so
+   it could centre itself under the left pane, but a fixed footer does not move
+   when the form column grows past the viewport — on a short laptop the last
+   button landed on top of it. `margin-top: auto` in the base rule already
+   pushes it down; the page simply scrolls when the form is taller than the
+   viewport. */
 @media (min-width: 1280px) {
   .legal-bar {
-    position: fixed;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    left: 30%;
-    translate: -50% 0;
-    width: max-content;
-    max-width: calc(100vw - 32px);
-    padding-top: 0;
-    z-index: 7;
+    padding-top: 26px;
   }
 }
 
@@ -1779,20 +1863,20 @@ input[type='number']::-webkit-inner-spin-button {
 
   .login-card input {
     height: 58px;
-    border-radius: 16px;
-    background: rgba(0, 0, 0, 0.32);
-    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: var(--field);
+    border-color: var(--border);
   }
 
   .login-card input:hover {
-    background: rgba(0, 0, 0, 0.42);
-    border-color: rgba(255, 255, 255, 0.14);
+    background: var(--field-hover);
+    border-color: var(--border);
   }
 
   .login-card input:focus {
-    background: rgba(0, 0, 0, 0.5);
-    border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.22);
+    background: var(--field-focus);
+    border-color: var(--accent-text);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   }
 
   .forgot-link {
@@ -1819,21 +1903,21 @@ input[type='number']::-webkit-inner-spin-button {
   justify-content: center;
   border-radius: 18px;
   border: none;
-  background: #0064c8;
+  background: var(--accent);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #ffffff;
+  color: var(--accent-fg);
   transition:
     background-color 150ms ease;
 }
 
 .create-pill:hover {
-  background: #0058b3;
+  background: var(--accent-hover);
 }
 
 .create-pill:active {
-  background: #004f9e;
+  background: var(--accent-press);
 }
 
 @media (min-width: 1280px) {
@@ -1858,11 +1942,6 @@ input[type='number']::-webkit-inner-spin-button {
 
   .login-page {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .login-page::before {
-    width: 100%;
-    border-left: 0;
   }
 
 
@@ -1938,14 +2017,14 @@ input[type='number']::-webkit-inner-spin-button {
     border: 0;
     border-radius: 50%;
     background: none;
-    color: #aeb4bf;
+    color: var(--text-3);
     cursor: pointer;
     transition: color 0.18s ease, background 0.18s ease, scale 0.18s ease;
   }
 
   .scroll-rail .rail-act:hover {
     color: var(--fg);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--hover);
     scale: 1.12;
   }
 
@@ -1964,7 +2043,7 @@ input[type='number']::-webkit-inner-spin-button {
     padding: 6px 14px;
     font-size: 12.5px;
     font-weight: 600;
-    color: #fff;
+    color: var(--accent-fg);
     background: var(--accent);
     border-radius: 10px;
     cursor: pointer;
@@ -1977,8 +2056,8 @@ input[type='number']::-webkit-inner-spin-button {
   }
 
   .scroll-rail .connect-btn--on {
-    color: #aeb4bf;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-3);
+    background: var(--surface-2);
   }
 
   .scroll-rail__track {
@@ -2090,7 +2169,7 @@ input[type='number']::-webkit-inner-spin-button {
     margin: 0;
     font-size: 13px;
     line-height: 1.45;
-    color: #aeb4bf;
+    color: var(--text-3);
   }
 
   .pc-track p b {
@@ -2112,7 +2191,7 @@ input[type='number']::-webkit-inner-spin-button {
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.14);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-    background: #000;
+    background: var(--card);
   }
 
   .fan-card img {
@@ -2189,7 +2268,7 @@ input[type='number']::-webkit-inner-spin-button {
     border-radius: 20px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #000;
+    background: var(--card);
   }
 
   .rail-photo {
@@ -2206,7 +2285,7 @@ input[type='number']::-webkit-inner-spin-button {
     flex-direction: column;
     gap: 10px;
     padding: 12px;
-    background: rgba(18, 20, 24, 0.85);
+    background: var(--card);
   }
 
   .rail-post .rail-photo {
@@ -2226,7 +2305,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 36px;
     border-radius: 50%;
     padding: 2px;
-    background: linear-gradient(135deg, #0058b3, #0064c8 60%, #a9cdf5);
+    background: linear-gradient(135deg, var(--accent-hover), var(--accent) 60%, var(--accent-press));
   }
 
   .rail-ring img {
@@ -2235,7 +2314,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #12141a;
+    border: 2px solid var(--card);
   }
 
   .rail-head-txt {
@@ -2260,24 +2339,24 @@ input[type='number']::-webkit-inner-spin-button {
 
   .rail-sub {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-3);
   }
 
   .rail-sub--on {
-    color: #35d07a;
+    color: var(--success-text);
   }
 
   .rail-time {
     margin-left: auto;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-4);
   }
 
   .rail-actions {
     display: flex;
     align-items: center;
     gap: 14px;
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--muted);
   }
 
   .rail-act {
@@ -2292,14 +2371,14 @@ input[type='number']::-webkit-inner-spin-button {
     margin-left: auto;
     font-size: 11.5px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--text-3);
   }
 
   .rail-caption {
     margin: 0;
     font-size: 12px;
     line-height: 1.45;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--text-2);
   }
 
   .rail-caption b {
@@ -2324,8 +2403,8 @@ input[type='number']::-webkit-inner-spin-button {
 
   .bubble--in {
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.85);
+    background: var(--surface-2);
+    color: var(--text-2);
     border-bottom-left-radius: 5px;
   }
 
@@ -2334,8 +2413,8 @@ input[type='number']::-webkit-inner-spin-button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #0064c8;
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-fg);
     border-bottom-right-radius: 5px;
   }
 
@@ -2354,7 +2433,7 @@ input[type='number']::-webkit-inner-spin-button {
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--text-4);
     animation: chat-typing 1.2s ease-in-out infinite;
   }
 
@@ -2454,7 +2533,7 @@ input[type='number']::-webkit-inner-spin-button {
 
   .story-cta svg {
     flex: none;
-    color: #a9cdf5;
+    color: var(--accent-text);
   }
 
   .story-ring {
@@ -2464,7 +2543,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 34px;
     border-radius: 50%;
     padding: 2px;
-    background: conic-gradient(from 210deg, #0058b3, #0064c8, #a9cdf5, #004f9e, #0058b3);
+    background: conic-gradient(from 210deg, var(--accent-press), var(--accent), var(--accent-hover), var(--accent), var(--accent-press));
   }
 
   .story-ring img {
@@ -2473,7 +2552,7 @@ input[type='number']::-webkit-inner-spin-button {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #12141a;
+    border: 2px solid var(--card);
   }
 
   .rail-reels .reels-live {
@@ -2619,7 +2698,7 @@ input[type='number']::-webkit-inner-spin-button {
       0 48px 96px -28px rgba(0, 0, 0, 0.9),
       0 10px 28px -8px rgba(0, 0, 0, 0.55),
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 110px -24px rgba(0, 100, 200, 0.35);
+      0 0 110px -24px color-mix(in srgb, var(--accent) 35%, transparent);
   }
   .mini-post { animation: hero-bob 10s ease-in-out -2s infinite; }
   .mini-music { animation: hero-bob 12s ease-in-out -5s infinite; }
@@ -2635,18 +2714,16 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page:has(.mode-signup) .login-card,
   .login-page:has(.mode-login) .login-card {
     --u: 16px;
-    width: min(680px, 92%);
-    max-width: 680px;
+    width: min(460px, 92%);
+    max-width: 460px;
     margin: 0 auto;
-    padding: 32px 28px;
+    padding: 0;
     text-align: left;
     z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 24px;
-    background: var(--card);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
   }
 
   .login-page .login-card .tb-heading,
@@ -2660,8 +2737,8 @@ input[type='number']::-webkit-inner-spin-button {
     background: none;
     -webkit-background-clip: initial;
     background-clip: initial;
-    -webkit-text-fill-color: #ffffff;
-    color: #ffffff;
+    -webkit-text-fill-color: var(--fg);
+    color: var(--fg);
   }
 
   .login-page .login-head,
@@ -2681,17 +2758,17 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page:has(.mode-signup) .login-card input {
     height: 58px;
     font-size: 16px;
-    border-radius: 16px;
+    border-radius: 999px;
     background: var(--field);
-    border-color: transparent;
+    border-color: var(--border);
     color: var(--fg);
   }
   .login-page .login-card input::placeholder { color: var(--placeholder); }
   .login-page .login-card input:hover { background: var(--field-hover); }
   .login-page .login-card input:focus {
     background: var(--field-focus);
-    border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.20);
+    border-color: var(--accent-text);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
   }
 
   .login-page .login-card .PrimaryButton,
@@ -2700,7 +2777,7 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page:has(.mode-signup) .login-card button[type='submit'] {
     height: 58px;
     font-size: 16px;
-    border-radius: 16px;
+    border-radius: 999px;
   }
 
   .login-page .signup-fields,
@@ -2754,9 +2831,9 @@ input[type='number']::-webkit-inner-spin-button {
     gap: 6px;
     padding: 6px 11px;
     border-radius: 999px;
-    background: rgba(0, 100, 200, 0.16);
-    border: 1px solid rgba(110, 198, 255, 0.45);
-    color: #e4dcfa;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, #ffffff 34%, transparent);
+    color: rgba(255, 255, 255, 0.92);
     font-size: 10.5px;
     font-weight: 800;
     letter-spacing: 0.16em;
@@ -2784,7 +2861,7 @@ input[type='number']::-webkit-inner-spin-button {
     -webkit-backdrop-filter: blur(8px);
   }
 
-  .tb-place svg { color: var(--accent-2); }
+  .tb-place svg { color: var(--accent-text); }
 
   .tb-place--top { top: 12px; bottom: auto; }
 
@@ -2826,9 +2903,9 @@ input[type='number']::-webkit-inner-spin-button {
     width: 34px;
     height: 34px;
     border-radius: 12px;
-    background: #0064c8;
-    color: #fff;
-    box-shadow: 0 8px 18px -6px rgba(0, 100, 200, 0.6);
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--accent) 60%, transparent);
   }
 
   .tb-alt {
@@ -2843,21 +2920,21 @@ input[type='number']::-webkit-inner-spin-button {
     border-radius: 999px;
     background: rgba(18, 20, 24, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #cfd2d8;
+    color: rgba(255, 255, 255, 0.86);
     font-size: 12px;
     font-weight: 700;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
 
-  .tb-alt svg { color: var(--accent-2); }
+  .tb-alt svg { color: var(--accent-text); }
 
   .mini-stats {
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 14px 16px 0;
-    color: #b9bcc2;
+    color: var(--text-2);
     font-size: 13px;
     font-weight: 600;
   }
@@ -2868,7 +2945,7 @@ input[type='number']::-webkit-inner-spin-button {
     gap: 6px;
   }
 
-  .mini-stats svg { color: var(--accent-2); }
+  .mini-stats svg { color: var(--accent-text); }
 
   .mini-cta {
     display: flex;
@@ -2877,8 +2954,8 @@ input[type='number']::-webkit-inner-spin-button {
     margin: 12px 16px 16px;
     padding: 10px 16px;
     border-radius: 12px;
-    background: #0064c8;
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-fg);
     font-size: 13.5px;
     font-weight: 700;
   }
@@ -2896,10 +2973,10 @@ input[type='number']::-webkit-inner-spin-button {
 .login-page:has(.mode-signup) input:-webkit-autofill:focus , .login-page:has(.mode-login) input:-webkit-autofill:focus {
   -webkit-box-shadow:
     0 0 0 1000px var(--autofill-fill) inset,
-    0 0 0 3px rgba(0, 100, 200, 0.20) !important;
+    0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) !important;
   box-shadow:
     0 0 0 1000px var(--autofill-fill) inset,
-    0 0 0 3px rgba(0, 100, 200, 0.20) !important;
+    0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) !important;
   -webkit-text-fill-color: var(--fg) !important;
 }
 
@@ -2936,15 +3013,14 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Tirbeo rail identity — charcoal UI. The side feed uses the same
-   charcoal plates as the signup fields (var(--field) family), hairline
-   borders and a single Tirbeo-blue accent. Calm, professional, no
-   rainbow gradients.
+   Rail identity — Social's plates. The side feed uses the same surface
+   tokens as the signup fields, hairline borders and one Instagram-blue
+   accent. No rainbow gradients, no separate palette.
    ═══════════════════════════════════════════════════════════════════════ */
 @media (min-width: 1280px) {
   .rail-card {
-    background: #232427;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: var(--card);
+    border: 1px solid var(--divider);
     border-radius: 22px;
     box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
   }
@@ -2957,7 +3033,7 @@ input[type='number']::-webkit-inner-spin-button {
   /* single-tone blue rings instead of the IG rainbow */
   .rail-ring,
   .story-ring {
-    background: linear-gradient(135deg, #0058b3, #004f9e);
+    background: linear-gradient(135deg, var(--accent-hover), var(--accent-press));
     padding: 1.5px;
   }
 
@@ -2975,16 +3051,16 @@ input[type='number']::-webkit-inner-spin-button {
   }
 
   .rail-sub--on {
-    color: #5cd98e;
+    color: var(--success-text);
   }
 
   .bubble--in {
     background: var(--field-focus);
-    color: #d6d9de;
+    color: var(--text-2);
   }
 
   .bubble--out {
-    background: #0064c8;
+    background: var(--accent);
   }
 
   .rail-post .rail-photo {
@@ -3012,7 +3088,7 @@ input[type='number']::-webkit-inner-spin-button {
   .sugg-see {
     font-size: 11.5px;
     font-weight: 700;
-    color: #a9cdf5;
+    color: var(--accent-text);
   }
 
   .sugg-row {
@@ -3031,29 +3107,29 @@ input[type='number']::-webkit-inner-spin-button {
     margin-left: auto;
     padding: 7px 14px;
     border-radius: 999px;
-    background: #0064c8;
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-fg);
     font-size: 11.5px;
     font-weight: 700;
-    box-shadow: 0 6px 14px -6px rgba(0, 100, 200, 0.60);
+    box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--accent) 60%, transparent);
   }
 
   .connect-btn--on {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: rgba(255, 255, 255, 0.75);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
     box-shadow: none;
   }
 
   .reels-play {
-    background: rgba(35, 36, 39, 0.68);
-    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(47, 50, 55, 0.68);
+    border-color: var(--border-strong);
   }
 
   .tb-place,
   .tb-trail,
   .tb-alt {
-    background: rgba(35, 36, 39, 0.86);
+    background: rgba(47, 50, 55, 0.86);
     border-color: rgba(255, 255, 255, 0.12);
   }
 }
@@ -3071,12 +3147,12 @@ input[type='number']::-webkit-inner-spin-button {
   padding: 4px 2px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #8f8f98;
+  color: var(--text-3);
   transition: color 0.2s ease;
 }
 
 .forgot-link:hover {
-  color: #a9cdf5;
+  color: var(--accent-text);
 }
 
 .forgot-link:disabled {
@@ -3092,14 +3168,14 @@ input[type='number']::-webkit-inner-spin-button {
 .more-ways-btn {
   display: inline-block;
   padding: 4px 6px;
-  color: #8f8f98;
+  color: var(--text-3);
   font-size: 14.5px;
   font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .more-ways-btn:hover {
-  color: #f2f2f4;
+  color: var(--fg);
 }
 
 .more-ways-btn:disabled {
@@ -3137,7 +3213,7 @@ input[type='number']::-webkit-inner-spin-button {
   background: none;
   font: inherit;
   font-weight: 700;
-  color: #a9cdf5;
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -3145,12 +3221,12 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .mwo-change:hover {
-  color: #c2dcf7;
+  color: var(--accent-hover);
 }
 
 .mwo-list {
   margin-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--divider);
 }
 
 .mwo-line {
@@ -3161,7 +3237,7 @@ input[type='number']::-webkit-inner-spin-button {
   gap: clamp(10px, 2vw, 16px);
   padding: 16px clamp(2px, 1vw, 6px);
   border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--divider);
   background: none;
   text-align: left;
   cursor: pointer;
@@ -3169,7 +3245,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .mwo-line:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ambient);
 }
 
 /* Non-interactive info row (e.g. "Sent to" on the magic-link page). */
@@ -3219,24 +3295,24 @@ input[type='number']::-webkit-inner-spin-button {
   display: block;
   margin-top: 3px;
   font-size: 13.5px;
-  color: #8f8f98;
+  color: var(--text-3);
 }
 
 .mwo-line-action {
   flex: none;
   font-size: 14px;
   font-weight: 700;
-  color: #a9cdf5;
+  color: var(--accent-text);
   transition: color 150ms ease;
 }
 
 .mwo-line:hover:not(:disabled) .mwo-line-action {
-  color: #c2dcf7;
+  color: var(--accent-hover);
 }
 
 .mwo-spin {
   flex: none;
-  color: #a9cdf5;
+  color: var(--accent-text);
 }
 
 .mwo-list + .form-notice {
@@ -3263,44 +3339,44 @@ input[type='number']::-webkit-inner-spin-button {
   height: 34px;
   margin-right: 7px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 100, 200, 0.35);
-  background: rgba(0, 100, 200, 0.14);
-  color: #a9cdf5;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent-text);
 }
 
 /* ── OAuth row — airy, evenly spaced icons with hairline separators. ── */
+/* Provider sign-in — circular icon buttons on a lifted plate, the way the
+   camera and compose buttons sit in the app chrome. No separator rules: the
+   gap and the plate are what group them. */
 .oauth-row {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: clamp(14px, 4vw, 22px);
   padding: 10px 0 6px;
-}
-.oauth-sep {
-  width: 1px;
-  height: 36px;
-  flex: none;
-  margin-inline: clamp(20px, 7vw, 56px);
-  background: rgba(255, 255, 255, 0.16);
 }
 .oauth-btn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 54px;
+  height: 54px;
   flex: none;
-  border: 0;
+  border: 1px solid var(--hairline);
   padding: 0;
-  border-radius: 12px;
-  background: none;
-  opacity: 0.8;
-  transition: opacity 150ms ease, transform 150ms var(--ease-enter);
+  border-radius: 50%;
+  background: var(--field);
+  opacity: 0.92;
+  transition: background-color 150ms ease, border-color 150ms ease,
+    transform 150ms var(--ease-enter);
 }
 .oauth-btn:hover {
   opacity: 1;
-  transform: scale(1.1);
+  border-color: var(--border-hover);
+  background: var(--field-hover);
+  transform: scale(1.06);
 }
 .oauth-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 .oauth-btn:focus-visible {
   outline: none;
@@ -3311,8 +3387,8 @@ input[type='number']::-webkit-inner-spin-button {
   opacity: 0.4;
 }
 .oauth-btn svg {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -3323,13 +3399,13 @@ input[type='number']::-webkit-inner-spin-button {
 @media (max-width: 1279px) {
   .login-card {
     --u: 16px;
-    width: min(680px, 100%);
+    width: min(440px, 100%);
     margin: auto;
-    padding: 24px;
+    padding: 0;
   }
 
   .login-card[data-wide='true'] {
-    width: min(680px, 100%);
+    width: min(560px, 100%);
   }
 
   .login-card .tb-heading {
@@ -3350,13 +3426,13 @@ input[type='number']::-webkit-inner-spin-button {
   .login-card input,
   .login-card select {
     height: 58px;
-    border-radius: 16px;
+    border-radius: 999px;
     font-size: 16px;
   }
 
   .login-card button[type='submit'] {
     height: 58px;
-    border-radius: 16px;
+    border-radius: 999px;
   }
 
   /* OAuth row — bigger touch targets on phones/tablets. */
@@ -3400,39 +3476,39 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   Final premium polish — depth, glow and micro-interactions.
+   Final polish — Social's .login-cta treatment: a flat accent fill with
+   the accent glow underneath it, a one-pixel lift on hover and the press
+   tone on tap. No gradient, no inset highlight.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Primary actions: gradient fill, lift and glow on hover. */
+/* Primary actions: accent fill + accent glow. */
 .login-card button[type='submit']:not(:disabled),
 .primary-btn:not(:disabled),
 .signup-submit:not(:disabled) {
-  background-image: linear-gradient(180deg, var(--accent-hover), var(--accent));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-}
-
-.login-card button[type='submit']:disabled,
-.primary-btn:disabled,
-.signup-submit:disabled {
-  background-image: none;
-  box-shadow: none;
-  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  background: var(--accent);
+  box-shadow: 0 10px 22px -8px var(--accent-glow);
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .login-card button[type='submit']:hover:not(:disabled),
 .primary-btn:hover:not(:disabled),
 .signup-submit:hover:not(:disabled) {
-  filter: brightness(1.08);
+  background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 100, 200, 0.30);
+  box-shadow: 0 14px 28px -8px var(--accent-glow);
 }
 
 .login-card button[type='submit']:active:not(:disabled),
 .primary-btn:active:not(:disabled),
 .signup-submit:active:not(:disabled) {
-  transform: translateY(0);
-  background-image: linear-gradient(180deg, var(--accent), var(--accent-press, #004f9e));
+  background: var(--accent-press);
+  transform: translateY(0) scale(0.995);
+}
+
+.login-card button[type='submit']:disabled,
+.primary-btn:disabled,
+.signup-submit:disabled {
+  box-shadow: none;
 }
 
 /* Inputs: smooth focus ring. */
@@ -3442,11 +3518,11 @@ input[type='number']::-webkit-inner-spin-button {
   transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
 }
 
-/* Side feature cards: richer depth. */
+/* Side feature cards: the same card shadow the settings surfaces use. */
 .fan-card,
 .pc-side .rail-card,
 .scroll-rail .rail-card {
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 /* Footer links: gentle hover. */
@@ -3460,29 +3536,139 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--fg);
 }
 
-/* Dark scrollbars. */
+/* Themed scrollbars — the same track colour in either scheme. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  scrollbar-color: var(--track) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--track);
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+
+/* ═══════════════ Shared utility classes — same names as myprofile ═══════════════ */
+.grouped {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.list-divide > * + * {
+  border-top: 1px solid var(--divider);
+}
+
+.no-divider > * + * {
+  border-top: 0;
+}
+
+.hairline {
+  height: 1px;
+  background: var(--divider);
+}
+
+.label {
+  font-family: var(--stack-sans);
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.rule-label {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.rule-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+.mono {
+  font-family: var(--stack-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.index-no {
+  font-family: var(--stack-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent-text);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 37%,
+    var(--surface-2) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 0;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.story-ring {
+  border-radius: 9999px;
+  padding: 2.5px;
+  background: var(--accent);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--track) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--track);
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* ═══════════════ Mobile & small screens: compact everything ═══════════════ */
 @media (max-width: 639px) {
+  /* The wordmark is position:fixed at top:16px and the card is full-bleed at
+     this width, so without clearance the heading slides under the logo. */
+  .login-page {
+    padding-top: 66px;
+  }
+
   .login-card {
     --u: 12.5px;
-    padding: 1.15em 1.1em 1.5em;
+    padding: 0;
   }
 
   .tb-heading {
@@ -3493,11 +3679,16 @@ input[type='number']::-webkit-inner-spin-button {
   .login-head { margin-bottom: 0.6em; }
 
   .login-card input,
-  .login-card select,
+  .login-card select {
+    height: 44px;
+    font-size: 14px;
+    border-radius: 999px;
+  }
+
   .login-card textarea {
     height: 44px;
     font-size: 14px;
-    border-radius: 14px;
+    border-radius: var(--radius-2xl);
   }
 
   .login-card button[type='submit'],
@@ -3505,7 +3696,7 @@ input[type='number']::-webkit-inner-spin-button {
   .signup-submit {
     height: 46px;
     font-size: 14px;
-    border-radius: 15px;
+    border-radius: 999px;
   }
 
   .oauth-btn { width: 40px; height: 40px; }

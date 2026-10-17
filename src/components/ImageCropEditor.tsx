@@ -165,7 +165,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
 
   return (
     <div
-      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+      className="image-crop-editor fixed inset-0 z-[300] flex items-center justify-center bg-scrim p-4 backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
@@ -246,7 +246,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-[rgba(255,255,255,0.14)] px-3.5 py-2.5 text-[16px] text-text-2 transition-colors hover:bg-hover"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-btn-line px-3.5 py-2.5 text-[16px] text-text-2 transition-colors hover:bg-hover"
             >
               <RotateCw size={13} />
               Rotate
@@ -272,7 +272,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-transparent bg-ig px-5 py-2.5 text-[17px] text-white transition-colors hover:bg-ig-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-transparent bg-accent px-5 py-2.5 text-[17px] text-accent-fg transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}

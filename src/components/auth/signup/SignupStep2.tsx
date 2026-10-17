@@ -47,15 +47,15 @@ function formatDate(y:number,m:number,d:number){ if(y<=0||m<0||m>11||d<=0) retur
 function daysInMonth(y:number,m:number){ return new Date(y,m+1,0).getDate(); }
 
 const calNavCls =
-  'flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-field text-text-2 transition-colors hover:border-[rgba(255,255,255,0.24)] hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-40';
+  'flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-field text-text-2 transition-colors hover:border-btn-line-hover hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-40';
 const footBtnCls =
-  'h-12 rounded-xl border border-border bg-field px-4 text-[15px] font-semibold text-text-2 transition-colors hover:border-[rgba(255,255,255,0.24)] hover:bg-hover hover:text-fg';
+  'h-12 rounded-xl border border-border bg-field px-4 text-[15px] font-semibold text-text-2 transition-colors hover:border-btn-line-hover hover:bg-hover hover:text-fg';
 const gridBtnCls = (sel: boolean, dis = false) =>
   `rounded-xl text-[16px] transition-colors ${
     dis
       ? 'cursor-not-allowed text-text-4'
       : sel
-        ? 'bg-ig text-white'
+        ? 'bg-accent text-accent-fg'
         : 'text-text-3 hover:bg-hover'
   }`;
 
@@ -169,7 +169,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
             aria-haspopup="dialog"
             aria-expanded={dobOpen}
             aria-label="Select date of birth"
-            className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-left text-[16px] outline-none transition-[border-color,background-color,box-shadow] ${dobError?'border-danger':'border-[rgba(255,255,255,0.14)] bg-field hover:border-[rgba(255,255,255,0.24)]'}`}
+            className={`flex h-12 w-full items-center justify-between rounded-xl border px-4 text-left text-[16px] outline-none transition-[border-color,background-color,box-shadow] ${dobError?'border-danger':'border-btn-line bg-field hover:border-btn-line-hover'}`}
           >
             <span className={`truncate ${dob?'text-fg':'text-text-4'}`}>{dobDisplay || 'Pick a date'}</span>
             <ChevronDown className="size-5 shrink-0 text-text-4" />
@@ -179,7 +179,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
           )}
           {dobOpen && (
             <div
-              className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm"
+              className="fixed inset-0 z-[1000] flex items-center justify-center bg-scrim p-3 backdrop-blur-sm"
               onClick={(e)=>{ if(e.target===e.currentTarget){ setDobOpen(false); handleBlur('dob'); } }}
             >
               <div
@@ -251,7 +251,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
                         <button
                           type="button"
                           onClick={()=>{handleBlur('dob'); setDobOpen(false);}}
-                          className="h-12 rounded-xl px-5 text-[15px] font-semibold bg-ig text-white transition-colors hover:bg-ig-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4"
+                          className="h-12 rounded-xl px-5 text-[15px] font-semibold bg-accent text-accent-fg transition-colors hover:bg-accent-hover active:scale-[0.97] disabled:pointer-events-none disabled:bg-field disabled:text-text-4"
                         >
                           Done
                         </button>
