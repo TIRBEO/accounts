@@ -428,6 +428,19 @@ select:-webkit-autofill {
   color: var(--text-3);
   text-wrap: balance;
 }
+/* Brand cut inside a heading — the iOS-blue gradient on the product name. */
+.tb-heading-accent {
+  background: linear-gradient(118deg, #0a84ff 0%, #5ac8fa 55%, #0a84ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #0a84ff;
+}
+:root[data-theme="light"] .tb-heading-accent {
+  background: linear-gradient(118deg, #007aff 0%, #32ade6 55%, #007aff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
 /* Breathing room between a step's title and its description. */
 .tb-heading + .tb-sub {
   margin-top: 14px;
@@ -1948,11 +1961,6 @@ input[type='number']::-webkit-inner-spin-button {
     margin: 12px 0;
   }
 
-  .rail-story .rail-photo {
-    aspect-ratio: 3 / 3.8;
-    margin-bottom: 12px;
-  }
-
   .rail-head {
     display: flex;
     align-items: center;
@@ -2093,11 +2101,113 @@ input[type='number']::-webkit-inner-spin-button {
     margin-top: 12px;
   }
 
-  .rail-strip {
+  /* Stories strip — gradient rings, the first thing a social app shows. */
+  .stories-strip {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .story-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .story-ring {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    padding: 2.5px;
+    background: conic-gradient(from 210deg, #f58529, #dd2a7b, #8134af, #515bd4, #f58529);
+    display: inline-flex;
+  }
+
+  .story-ring img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2.5px solid var(--card);
+  }
+
+  .story-ring--seen {
+    background: var(--track);
+  }
+
+  .story-ring--sm {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: none;
+  }
+
+  .story-ring--sm img {
+    border-width: 0;
+  }
+
+  .story-name {
+    font-size: 10.5px;
+    color: var(--text-3);
+    max-width: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Reel — tall clip with a view-count chip over the photo. */
+  .rail-reels {
+    position: relative;
+  }
+
+  .rail-reels .rail-photo {
+    aspect-ratio: 3 / 3.6;
+    margin-bottom: 0;
+  }
+
+  .reels-meta {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+
+  .reels-meta .rail-user {
+    font-size: 12px;
+  }
+
+  .reels-views {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  /* Trending topics */
+  .trend-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-width: 0;
+    margin-top: 12px;
+  }
+
+  .trend-spark {
+    margin-left: auto;
+    flex: none;
+    color: var(--success);
   }
 
   .login-page .login-card {
@@ -2603,14 +2713,16 @@ input[type='number']::-webkit-inner-spin-button {
 .more-ways-btn {
   display: inline-block;
   padding: 4px 6px;
-  color: #8f8f98;
+  /* iOS treats secondary actions as blue text, not gray. */
+  color: var(--accent-text);
   font-size: 14.5px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   transition: color 0.2s ease;
 }
 
 .more-ways-btn:hover {
-  color: #f2f2f4;
+  color: var(--accent-2-hover);
 }
 
 .more-ways-btn:disabled {
@@ -2797,9 +2909,9 @@ input[type='number']::-webkit-inner-spin-button {
   border: 1px solid var(--hairline);
   border-radius: 16px;
   background: var(--field);
-  color: var(--fg);
+  color: var(--text-2);
   font-size: 15.5px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
   text-align: left;
   cursor: pointer;
@@ -2840,6 +2952,12 @@ input[type='number']::-webkit-inner-spin-button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* The provider name carries the weight — "Continue with" stays quiet. */
+.oauth-brand {
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.01em;
 }
 .oauth-chev {
   flex: none;

@@ -1056,8 +1056,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       step={wizard}
       onBack={canGoBack ? goBack : undefined}
       className={mode === 'signup' ? 'mode-signup' : 'mode-login'}
-      title={mode === 'signup' ? signupCopy.title : isLoginEntry ? 'Welcome to Tirbeo' : undefined}
-      subtitle={mode === 'signup' ? signupCopy.sub : isLoginEntry ? 'Sign in and see what everyone is sharing today.' : undefined}
+      title={mode === 'signup' ? signupCopy.title : isLoginEntry ? <>Welcome to <span className="tb-heading-accent">Tirbeo</span></> : undefined}
+      subtitle={mode === 'signup' ? signupCopy.sub : isLoginEntry ? 'Stories, reels, posts and people — see what the world is sharing today.' : undefined}
       kicker={undefined}
       footer={
         <>

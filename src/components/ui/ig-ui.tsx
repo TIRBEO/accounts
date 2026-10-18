@@ -720,7 +720,7 @@ export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
           className="oauth-item"
         >
           <span className="oauth-ico" aria-hidden="true">{p.icon}</span>
-          <span className="oauth-label">Continue with {p.name}</span>
+          <span className="oauth-label">Continue with <span className="oauth-brand">{p.name}</span></span>
           <ChevronRight className="oauth-chev size-[18px]" aria-hidden="true" />
         </button>
       ))}
@@ -728,12 +728,13 @@ export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
   );
 }
 
-/** Divider with a centred label. */
+/** Divider with a centred label — iOS section-header style: sentence case,
+    quiet ink, hairlines fading out at both ends. */
 export function OrDivider({ label = 'or' }: { label?: string }) {
   return (
     <div className="or-divider flex items-center gap-3" role="separator">
       <span className="h-px flex-1 bg-divider" />
-      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-4">
+      <span className="text-[12.5px] font-medium tracking-[0.01em] text-text-3">
         {label}
       </span>
       <span className="h-px flex-1 bg-divider" />

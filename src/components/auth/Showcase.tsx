@@ -1,11 +1,13 @@
 import React from 'react';
-import { Flame, MessageCircle, Send, Heart, CheckCheck } from 'lucide-react';
+import { MessageCircle, Send, Heart, CheckCheck, Play, TrendingUp } from 'lucide-react';
 
 /* Side art for the auth screens (≥1280px only): two quiet columns of
-   static cards — nothing scrolls, overlaps, or clips.
+   static cards — nothing scrolls, overlaps, or clips. Each column mixes the
+   kinds of things a social app actually shows: stories, a feed post, a DM
+   chat, friend suggestions, a reel and trending topics.
 
-     • login:  one feed post (left) + one DM chat (right)
-     • signup: one friend-suggestions card (left) + one story photo (right)
+     • login:  left = stories + post,   right = chat + trending
+     • signup: left = stories + people, right = reel + trending
 
    Photos rotate on a 2-hour clock seed (same set for everyone at a given
    time) and the slot ranges are DISJOINT per variant — login draws 0–11,
@@ -124,27 +126,64 @@ const SuggCard: React.FC<{ v: ShowcaseVariant }> = ({ v }) => (
   </figure>
 );
 
-const StoryCard: React.FC<{ v: ShowcaseVariant }> = ({ v }) => (
-  <figure className="rail-card rail-story">
-    <img className="rail-photo" src={ph(v, 6)} alt="" loading="lazy" />
-    <figcaption className="rail-strip">
-      <span className="rail-ring"><img src={ph(v, 9)} alt="" loading="lazy" /></span>
-      <span className="rail-head-txt">
-        <span className="rail-user">{HANDLES[5]}</span>
-        <span className="rail-sub">{CAPS[5]}</span>
-      </span>
-      <span className="rail-act rail-act--on"><Flame size={16} strokeWidth={2.2} fill="currentColor" /></span>
+/* Stories — the ring strip people expect first when they open a social app. */
+const StoriesCard: React.FC<{ v: ShowcaseVariant }> = ({ v }) => (
+  <figure className="rail-card rail-stories">
+    <div className="sugg-head"><span>Stories</span><span className="sugg-see">See all</span></div>
+    <div className="stories-strip">
+      {[0, 1, 2, 3, 4].map((k) => (
+        <span className="story-dot" key={k}>
+          <span className={`story-ring${k === 0 ? ' story-ring--seen' : ''}`}>
+            <img src={ph(v, k * 5 + 2)} alt="" loading="lazy" />
+          </span>
+          <span className="story-name">{HANDLES[k % HANDLES.length].split('.')[0]}</span>
+        </span>
+      ))}
+    </div>
+  </figure>
+);
+
+/* Reel — a tall clip with a view count, the other half of the feed. */
+const ReelsCard: React.FC<{ v: ShowcaseVariant }> = ({ v }) => (
+  <figure className="rail-card rail-reels">
+    <img className="rail-photo" src={ph(v, 8)} alt="" loading="lazy" />
+    <figcaption className="reels-meta">
+      <span className="reels-views"><Play size={11} fill="currentColor" /> 12.4k</span>
+      <span className="rail-user">{HANDLES[3]}</span>
     </figcaption>
+  </figure>
+);
+
+/* Trending topics — what a discovery tab would lead with. */
+const TrendingCard: React.FC<{ v: ShowcaseVariant }> = ({ v }) => (
+  <figure className="rail-card rail-trending">
+    <div className="sugg-head"><span>Trending</span><span className="sugg-see">Explore</span></div>
+    {[
+      { tag: '#HimalayanSunrise', posts: '4.2k' },
+      { tag: '#StreetFoodNepal', posts: '3.1k' },
+      { tag: '#MonsoonTrails', posts: '1.8k' },
+    ].map((t, k) => (
+      <div className="trend-row" key={t.tag}>
+        <span className="rail-ring story-ring--sm"><img src={ph(v, k * 3 + 5)} alt="" loading="lazy" /></span>
+        <span className="rail-head-txt">
+          <span className="rail-user">{t.tag}</span>
+          <span className="rail-sub">{t.posts} posts today</span>
+        </span>
+        <span className="trend-spark"><TrendingUp size={14} strokeWidth={2.4} /></span>
+      </div>
+    ))}
   </figure>
 );
 
 export const Showcase: React.FC<{ variant?: ShowcaseVariant }> = ({ variant = 'login' }) => (
   <>
     <aside className="sc-col sc-col--left" aria-hidden="true">
+      <StoriesCard v={variant} />
       {variant === 'login' ? <PostCard v={variant} /> : <SuggCard v={variant} />}
     </aside>
     <aside className="sc-col sc-col--right" aria-hidden="true">
-      {variant === 'login' ? <ChatCard v={variant} /> : <StoryCard v={variant} />}
+      {variant === 'login' ? <ChatCard v={variant} /> : <ReelsCard v={variant} />}
+      <TrendingCard v={variant} />
     </aside>
   </>
 );
