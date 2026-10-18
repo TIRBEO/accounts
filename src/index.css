@@ -35,9 +35,9 @@
   /* Text — the landing's ink ladder, opaque so type stays crisp. */
   --fg: #ffffff;
   --text-2: #ebeaf0;
-  --text-3: #a1a1a8;
-  --text-4: #8e8e93;
-  --placeholder: #7c7c85;
+  --text-3: #b6b6bd;
+  --text-4: #a8a8af;
+  --placeholder: #a8a8af;
   --muted: var(--text-3);
   --muted-2: var(--text-3);
   --link: #64a5ff;
@@ -70,6 +70,9 @@
   --accent: #0a84ff;
   --accent-hover: #409cff;
   --accent-press: #0060c9;
+  /* Filled-button blue — iOS #0a84ff is only 3.65:1 under white text. */
+  --accent-solid: #0a63e5;
+  --accent-solid-hover: #0a52c9;
   --ig: #0a84ff;
   --ig-hover: #409cff;
   --ig-press: #0060c9;
@@ -128,8 +131,8 @@
   --fg: #171717;
   --text-2: #3f3f46;
   --text-3: #5d5d66;
-  --text-4: #8e8e93;
-  --placeholder: #a1a1aa;
+  --text-4: #6e6e76;
+  --placeholder: #6e6e76;
   --muted: var(--text-3);
   --muted-2: var(--text-3);
   --link: #0068d6;
@@ -155,6 +158,8 @@
   --accent: #007aff;
   --accent-hover: #0066d6;
   --accent-press: #0055b8;
+  --accent-solid: #0062cc;
+  --accent-solid-hover: #004fb8;
   --ig: #007aff;
   --ig-hover: #0066d6;
   --ig-press: #0055b8;
@@ -709,7 +714,7 @@ input[type='number']::-webkit-inner-spin-button {
   margin-top: 1.8em;
   border: 0;
   border-radius: 12px;
-  background: var(--accent);
+  background: var(--accent-solid);
   color: #ffffff;
   font-family: inherit;
   font-size: 1.02em;
@@ -728,7 +733,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .login-cta:hover {
-  background: var(--accent-hover);
+  background: var(--accent-solid-hover);
 }
 
 .login-cta:active {
@@ -1151,7 +1156,7 @@ input[type='number']::-webkit-inner-spin-button {
   justify-content: center;
   border-radius: 12px;
   border: none;
-  background: var(--accent);
+  background: var(--accent-solid);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -1161,7 +1166,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .create-pill:hover {
-  background: var(--accent-hover);
+  background: var(--accent-solid-hover);
 }
 
 .create-pill:active {
@@ -1280,7 +1285,7 @@ input[type='number']::-webkit-inner-spin-button {
   padding: 4px 2px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #8f8f98;
+  color: var(--text-4);
   transition: color 0.2s ease;
 }
 
@@ -1301,7 +1306,7 @@ input[type='number']::-webkit-inner-spin-button {
 .more-ways-btn {
   display: inline-block;
   padding: 4px 6px;
-  color: #8f8f98;
+  color: var(--text-4);
   font-size: 14.5px;
   font-weight: 600;
   transition: color 0.2s ease;
@@ -1435,7 +1440,7 @@ input[type='number']::-webkit-inner-spin-button {
   display: block;
   margin-top: 3px;
   font-size: 13.5px;
-  color: #8f8f98;
+  color: var(--text-4);
 }
 
 .mwo-line-action {
@@ -1614,7 +1619,7 @@ input[type='number']::-webkit-inner-spin-button {
 .primary-btn:not(:disabled),
 .signup-submit:not(:disabled) {
   background-image: none;
-  background-color: var(--accent);
+  background-color: var(--accent-solid);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
 }
@@ -1630,7 +1635,7 @@ input[type='number']::-webkit-inner-spin-button {
 .login-card button[type='submit']:hover:not(:disabled),
 .primary-btn:hover:not(:disabled),
 .signup-submit:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--accent-solid-hover);
   transform: translateY(-1px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
