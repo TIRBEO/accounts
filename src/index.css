@@ -1,245 +1,301 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Tirbeo Accounts — Apple / iOS design system
+   Tirbeo Accounts — the photograph era (restored), dual-theme
 
-   The palette is Tirbeo's canonical Apple ladder (docs/design/apple-tokens.css),
-   replicated verbatim so signing in and the app you land in look identical.
-   The scheme is driven by <html data-theme="dark|light"> — set before the
-   first paint by the boot script in index.html — not by a media query, so an
-   in-app choice and the device preference both resolve to one source.
+   The photograph is the page. A cover-fit Nepal backdrop sits under
+   everything, the form sits on one glass plate (blurred and saturated so
+   the photo tints it but never flattens it), and film grain over the whole
+   thing at 2.5%. One action colour — brand blue #0064c8 — used as a fill,
+   flat, with only a neutral drop shadow. No coloured glows.
 
-   Ladder (Apple's order): ground (--bg) → plate (--card) → control
-   (--field/--surface-2) → hairline (--divider/--hairline). Dark gets lighter
-   as it comes forward; light puts white plates on a #f2f2f7 canvas. One blue
-   marks everything pressable: #0A84FF dark / #007AFF light. Radii ~12 for
-   controls, 17–24 for grouped plates; system font stack; iOS switches.
+   The scheme is driven by <html data-theme="dark|light"> (set pre-paint by
+   the boot script in index.html), not by a media query:
+   • dark  — the original plate: charcoal glass, white-alpha ink.
+   • light — the same composition inverted: white glass plates on the same
+     photo under a lighter scrim, dark ink, identical blues.
+
+   • desktop (≥1280) — scrolling feed rails (signup) / story fan + comments
+     post (login) flank the centered card
+   • portrait phones — full-width column pinned near the top, backdrop off
+   Card sizes are em-based off --u so proportions hold at any resolution.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #1c1c1e;
-  --card: #2c2c2e;
-  --surface: #2c2c2e;
-  --surface-2: #3a3a3c;
-  --surface-3: #48484a;
-  --fg: #ffffff;
-  --muted: #a1a1a8;
-  --link: #64a5ff;
-  --text-2: #ebeaf0;
-  --text-3: #a1a1a8;
-  --text-4: #8e8e93;
-  --placeholder: #7c7c85;
-  --border: #48484a;
-  --border-strong: #5a5a5e;
-  --divider: #38383a;
-  --hover: #3a3a3c;
+  /* Canvas — the page is the photograph, not a plate. --bg only paints the
+     one frame before the backdrop image decodes. */
+  --bg: #101014;
+  --card: rgba(18, 18, 21, 0.72);
+  --surface: rgba(255, 255, 255, 0.09);
+  --surface-hover: rgba(255, 255, 255, 0.16);
+  --surface-3: rgba(255, 255, 255, 0.18);
 
-  --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --accent-press: #0060c9;
-  --accent-soft: rgba(10, 132, 255, 0.18);
-  --accent-soft-ring: rgba(10, 132, 255, 0.35);
-  --accent-text: #64a5ff;
+  /* Text — white alphas over glass, held just above the floor where copy
+     still carries its meaning: --text-2 clears 6:1 on the card, --text-3 4:1. */
+  --fg: rgba(255, 255, 255, 0.96);
+  --text-2: rgba(255, 255, 255, 0.76);
+  --text-3: rgba(255, 255, 255, 0.62);
+  --text-4: rgba(255, 255, 255, 0.48);
+  --placeholder: rgba(255, 255, 255, 0.45);
+  --muted: var(--text-2);
+  --muted-2: var(--text-3);
+  --link: var(--accent-2);
+
+  /* Washes */
+  --ambient: rgba(255, 255, 255, 0.06);
+  --faint: rgba(255, 255, 255, 0.07);
+  --glass: var(--surface);
+  --glass-2: var(--surface-hover);
+  --glass-3: var(--surface-3);
+
+  /* Fields keep a plate. The photo-era inputs were a line with no fill, but
+     every control here is `bg-field`, so on a translucent card a transparent
+     fill would leave the value floating on the photograph. */
+  --field: rgba(255, 255, 255, 0.07);
+  --field-focus: rgba(255, 255, 255, 0.13);
+  --field-hover: rgba(255, 255, 255, 0.11);
+  /* Chrome paints its own opaque block over a field and colours the value.
+     This is the surface that covers it. Must stay opaque and dark. */
+  --autofill-fill: #0e0e10;
+
+  /* Lines */
+  --border: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.34);
+  --border-hover: rgba(255, 255, 255, 0.24);
+  --divider: rgba(255, 255, 255, 0.12);
+  --hover: rgba(255, 255, 255, 0.08);
+  --track: rgba(255, 255, 255, 0.14);
+
+  /* Accent — action blue. Instagram's #0095f6 fails AA behind 13px white
+     labels (3.17:1); one step down the same ramp clears it at 5.74:1 while
+     still reading as the brand blue. Hover/press step darker rather than
+     lighter so contrast only ever improves under the pointer. */
+  --accent: #0064c8;
+  --accent-hover: #0058b3;
+  --accent-press: #004f9e;
+  --ig: #0064c8;
+  --ig-hover: #0058b3;
+  --ig-press: #004f9e;
+  --btn-label: rgba(255, 255, 255, 0.55);
+  /* --accent-2 is the same hue read *as ink*: blue glyphs, links and kickers on
+     a dark plate. The action fill is #0064c8, which is fine behind white type
+     but far too dark for blue type on glass, so the secondary ramp runs light. */
+  --accent-2: #a9cdf5;
+  --accent-2-hover: #c2dcf7;
+  --accent-2-press: #0058b3;
+  --accent-soft: rgba(0, 100, 200, 0.4);
   --accent-fg: #ffffff;
-  --accent-glow: rgb(10 132 255 / 55%);
 
-  --danger: #ff453a;
-  --danger-text: #ff6961;
-  --success: #32d74b;
-  --success-text: #5ce070;
-  --warn: #ffd60a;
-  --warn-text: #e5c209;
+  /* State */
+  --danger: #ff7a7a;
+  --danger-text: #ffa1a1;
+  --success: #6fd68a;
+  --success-text: #8fe0a5;
+  --warn: #f0c674;
+  --warn-text: #f5d494;
 
-  --stack-sans: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  --stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Focus */
+  --ring: rgba(0, 100, 200, 0.45);
+  --focus-ring: #0064c8;
 
-  --rail: #161618;
-  --scrim: rgb(0 0 0 / 62%);
-  --track: #48484a;
-  --focus-ring: #0a84ff;
-  --autofill-fill: #3a3a3c;
-  --ink: #ffffff;
-  --ink-fg: #000000;
-
-  --field: #3a3a3c;
-  --field-hover: #454549;
-  --field-focus: #4b4b4f;
-
-  /* iOS disabled primary: a muted grey fill with a dimmed label — never a
-     darkened blue, which reads as a broken accent rather than "not yet". */
-  --btn-disabled-bg: #3a3a3c;
-  --btn-disabled-fg: #8e8e93;
-
-  --hairline: #38383a;
-  --glass: rgba(28, 28, 30, 0.85);
-  --glass-2: rgba(28, 28, 30, 0.94);
-  --glass-3: #1c1c1e;
-
-  --ambient: rgba(255, 255, 255, 0.05);
-  --faint: rgba(255, 255, 255, 0.06);
-
-  --shadow-card: 0 2px 6px -2px rgb(0 0 0 / 45%), 0 20px 44px -20px rgb(0 0 0 / 60%);
-  --shadow-pop: 0 16px 44px -12px rgb(0 0 0 / 62%);
-  --shadow-sheet: 0 -20px 60px -12px rgb(0 0 0 / 68%);
-
-  /* Accounts-only controls: outline buttons and the focus ring read a touch
-     softer than the plate they sit on. Derived so they cannot drift. */
-  --btn-line: rgb(255 255 255 / 14%);
-  --btn-line-hover: rgb(255 255 255 / 26%);
-  --ring: var(--accent-soft-ring);
-  --border-hover: var(--surface-3);
-  --surface-hover: var(--surface-2);
-
+  /* Motion */
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
-  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Surfaces */
+  --hairline: rgba(255, 255, 255, 0.12);
+  --ink: #ffffff;
+  --ink-fg: #0b0d10;
+
+  /* Scrim behind floating sheets; outline-button lines; the disabled
+     primary plate. Added for the current sheet/passkey markup. */
+  --scrim: rgba(4, 6, 10, 0.62);
+  --btn-line: rgba(255, 255, 255, 0.14);
+  --btn-line-hover: rgba(255, 255, 255, 0.26);
+  --btn-disabled-bg: rgba(255, 255, 255, 0.12);
+  --btn-disabled-fg: rgba(255, 255, 255, 0.45);
+
+  /* --accent-text is the accent read as ink (glyphs/links), not as a fill.
+     On the dark plate that is the light ramp; the fill would be too dark. */
+  --accent-text: var(--accent-2);
 }
 
+/* Light mode — same architecture, mirrored washes. White glass plate over a
+   lighter-scrimmed photo; the alpha ladder flips from white-on-dark to
+   near-black-on-white; blues stay identical (the fill keeps white type). */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f2f2f7;
-  --card: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f2f2f7;
-  --surface-3: #e8e8ee;
-  --fg: #171717;
-  --muted: #5d5d66;
-  --link: #0068d6;
-  --text-2: #3f3f46;
-  --text-3: #5d5d66;
-  --text-4: #8e8e93;
-  --placeholder: #a1a1aa;
-  --border: #eaeaea;
-  --border-strong: #d1d1d6;
-  --divider: #c6c6c8;
-  --hover: #ececf1;
+  --bg: #cfd4dc;
+  --card: rgba(255, 255, 255, 0.74);
+  --surface: rgba(18, 19, 22, 0.06);
+  --surface-hover: rgba(18, 19, 22, 0.1);
+  --surface-3: rgba(18, 19, 22, 0.14);
 
-  --accent: #007aff;
-  --accent-hover: #0066d6;
-  --accent-press: #0062cc;
-  --accent-soft: rgba(0, 122, 255, 0.12);
-  --accent-soft-ring: rgba(0, 122, 255, 0.32);
-  --accent-text: #0068d6;
-  --accent-fg: #ffffff;
-  --accent-glow: rgb(0 122 255 / 40%);
-
-  --danger: #e0342c;
-  --danger-text: #c9261f;
-  --success: #1ea64b;
-  --success-text: #188a3e;
-  --warn: #c47b00;
-  --warn-text: #9d6300;
-
-  --rail: #ffffff;
-  --scrim: rgb(18 19 22 / 45%);
-  --track: #c6c6c8;
-  --focus-ring: #007aff;
-  --autofill-fill: #ececf1;
-  --ink: #171717;
-  --ink-fg: #ffffff;
-
-  --field: #ffffff;
-  --field-hover: #f2f2f7;
-  --field-focus: #ececf1;
-
-  /* iOS disabled primary: a muted grey fill with a dimmed label — never a
-     darkened blue, which reads as a broken accent rather than "not yet". */
-  --btn-disabled-bg: #e8e8ee;
-  --btn-disabled-fg: #a1a1aa;
-
-  --hairline: #c6c6c8;
-  --glass: rgba(255, 255, 255, 0.86);
-  --glass-2: rgba(255, 255, 255, 0.95);
-  --glass-3: #ffffff;
+  --fg: rgba(15, 16, 19, 0.96);
+  --text-2: rgba(15, 16, 19, 0.74);
+  --text-3: rgba(15, 16, 19, 0.62);
+  --text-4: rgba(15, 16, 19, 0.5);
+  --placeholder: rgba(15, 16, 19, 0.44);
+  --muted: var(--text-2);
+  --muted-2: var(--text-3);
+  --link: var(--accent-2);
 
   --ambient: rgba(18, 19, 22, 0.04);
   --faint: rgba(18, 19, 22, 0.05);
+  --glass: rgba(255, 255, 255, 0.92);
+  --glass-2: rgba(255, 255, 255, 0.96);
+  --glass-3: #ffffff;
 
-  --shadow-card: 0 1px 2px rgb(18 19 22 / 6%), 0 12px 30px -18px rgb(18 19 22 / 22%);
-  --shadow-pop: 0 14px 36px -10px rgb(18 19 22 / 22%), 0 2px 6px rgb(18 19 22 / 10%);
-  --shadow-sheet: 0 -20px 56px -12px rgb(18 19 22 / 26%), 0 2px 8px rgb(18 19 22 / 12%);
+  --field: rgba(255, 255, 255, 0.6);
+  --field-focus: rgba(255, 255, 255, 0.92);
+  --field-hover: rgba(255, 255, 255, 0.78);
+  --autofill-fill: #ffffff;
 
-  --btn-line: rgb(18 19 22 / 12%);
-  --btn-line-hover: rgb(18 19 22 / 22%);
-  --ring: var(--accent-soft-ring);
-  --border-hover: var(--border-strong);
-  --surface-hover: var(--surface-2);
+  --border: rgba(18, 19, 22, 0.16);
+  --border-strong: rgba(18, 19, 22, 0.32);
+  --border-hover: rgba(18, 19, 22, 0.24);
+  --divider: rgba(18, 19, 22, 0.12);
+  --hover: rgba(18, 19, 22, 0.06);
+  --track: rgba(18, 19, 22, 0.18);
+
+  --accent: #0064c8;
+  --accent-hover: #0058b3;
+  --accent-press: #004f9e;
+  --ig: #0064c8;
+  --ig-hover: #0058b3;
+  --ig-press: #004f9e;
+  --btn-label: rgba(255, 255, 255, 0.55);
+  /* As ink on a white plate the light blue ramp would fail AA — the link
+     colour flips to the dark end of the same hue. */
+  --accent-2: #00509f;
+  --accent-2-hover: #003f7e;
+  --accent-2-press: #003f7e;
+  --accent-soft: rgba(0, 100, 200, 0.3);
+  --accent-fg: #ffffff;
+
+  --danger: #d33430;
+  --danger-text: #b3261e;
+  --success: #1a8f43;
+  --success-text: #146c33;
+  --warn: #b26a00;
+  --warn-text: #8a5200;
+
+  --ring: rgba(0, 100, 200, 0.35);
+  --focus-ring: #0064c8;
+
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
+
+  --hairline: rgba(18, 19, 22, 0.12);
+  --ink: #17171a;
+  --ink-fg: #ffffff;
+
+  --scrim: rgba(226, 229, 235, 0.6);
+  --btn-line: rgba(18, 19, 22, 0.16);
+  --btn-line-hover: rgba(18, 19, 22, 0.3);
+  --btn-disabled-bg: rgba(18, 19, 22, 0.08);
+  --btn-disabled-fg: rgba(18, 19, 22, 0.42);
+
+  --accent-text: var(--accent-2);
 }
 
-/* ── Tailwind v4 mapping ─────────────────────────────────────────────── */
 @theme inline {
   --color-bg: var(--bg);
+  --color-fg: var(--fg);
   --color-card: var(--card);
   --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
+  --color-surface-2: var(--surface-hover);
   --color-surface-3: var(--surface-3);
-  --color-fg: var(--fg);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
   --color-muted: var(--muted);
-  --color-link: var(--link);
+  --color-muted-2: var(--muted-2);
+  --color-faint: var(--faint);
+  --color-glass: var(--glass);
+  --color-glass-2: var(--glass-2);
+  --color-glass-3: var(--glass-3);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-border-hover: var(--border-hover);
   --color-divider: var(--divider);
-  --color-hairline: var(--hairline);
-  --color-hover: var(--hover);
-  --color-faint: var(--faint);
-  --color-ambient: var(--ambient);
-
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-press: var(--accent-press);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-text: var(--accent-text);
+  --color-ig: var(--ig);
+  --color-ig-hover: var(--ig-hover);
+  --color-ig-press: var(--ig-press);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-hover: var(--accent-2-hover);
   --color-accent-fg: var(--accent-fg);
   --color-danger: var(--danger);
   --color-danger-text: var(--danger-text);
   --color-success: var(--success);
-  --color-success-text: var(--success-text);
   --color-warn: var(--warn);
-  --color-warn-text: var(--warn-text);
-
-  --color-rail: var(--rail);
-  --color-scrim: var(--scrim);
+  --color-hover: var(--hover);
+  --color-link: var(--link);
   --color-track: var(--track);
+  --color-field: var(--field);
+  --color-field-focus: var(--field-focus);
+  --color-field-hover: var(--field-hover);
+  --color-border-hover: var(--border-hover);
   --color-ink: var(--ink);
   --color-ink-fg: var(--ink-fg);
-
-  --color-text-2: var(--text-2);
-  --color-text-3: var(--text-3);
-  --color-text-4: var(--text-4);
   --color-placeholder: var(--placeholder);
 
-  --color-field: var(--field);
-  --color-field-hover: var(--field-hover);
-  --color-field-focus: var(--field-focus);
-
+  /* Additions the current component markup leans on. */
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-success-text: var(--success-text);
+  --color-warn-text: var(--warn-text);
+  --color-hairline: var(--hairline);
+  --color-ambient: var(--ambient);
+  --color-muted-ink: var(--muted-2);
+  --color-scrim: var(--scrim);
   --color-btn-line: var(--btn-line);
   --color-btn-line-hover: var(--btn-line-hover);
   --color-btn-disabled-bg: var(--btn-disabled-bg);
   --color-btn-disabled-fg: var(--btn-disabled-fg);
 
-  --color-glass: var(--glass);
-  --color-glass-2: var(--glass-2);
-  --color-glass-3: var(--glass-3);
+  --shadow-ambient: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
+  --shadow-pop: 0 10px 30px -8px rgb(0 0 0 / 55%);
+  --shadow-sheet: 0 -20px 60px -12px rgb(0 0 0 / 68%);
 
-  --font-sans: var(--stack-sans);
-  --font-display: var(--stack-sans);
-  --font-mono: var(--stack-mono);
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 
-  /* Primary buttons are flat: a solid accent fill with at most a hair of
-     neutral depth underneath. No coloured glow anywhere. */
-  --shadow-accent: 0 1px 2px rgb(0 0 0 / 0.2);
-  --shadow-accent-lg: 0 1px 2px rgb(0 0 0 / 0.2);
-  --shadow-card: var(--shadow-card);
-  --shadow-pop: var(--shadow-pop);
-  --shadow-sheet: var(--shadow-sheet);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
 
-  --animate-fade-in: fade-in 200ms var(--ease-apple) both;
+  --animate-rise: rise 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-fade-in: fade-in 180ms ease-out both;
+}
+
+/* ── Legacy --tb-* aliases (still referenced by token-class markup) ── */
+:root {
+  --tb-bg: var(--bg);
+  --tb-text: var(--fg);
+  --tb-on-surface: var(--fg);
+  --tb-on-surface-variant: var(--muted);
+  --tb-primary: var(--accent);
+  --tb-on-primary: #ffffff;
+  --tb-outline-variant: var(--border);
+  --tb-surface-container-low: var(--faint);
+  --tb-surface-container: var(--card);
+  --tb-surface-container-high: var(--hover);
+  --tb-surface-container-highest: var(--divider);
+  --tb-state-hover: var(--hover);
+  --tb-error: var(--danger-text);
+  --tb-success: var(--success-text);
 }
 
 @layer base {
@@ -247,41 +303,32 @@
   *::before,
   *::after {
     border-color: var(--border);
-    /* Every row here is a flex row with text in it; without this a long value
-       pushes the layout wider than the viewport. */
+    /* Flex children default to min-width:auto and push the layout wider than
+       the viewport; every row in this app is a flex row with text in it. */
     min-width: 0;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
   }
 
   body {
-    margin: 0;
-    min-height: 100dvh;
     background: var(--bg);
     color: var(--fg);
-    font-family: var(--stack-sans);
-    font-size: 16px;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+      sans-serif;
+    font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
+    /* A full-bleed photo page must never scroll sideways. */
     overflow-x: clip;
   }
 
-  /* A palette flip should cross-fade, not snap. */
-  body,
-  body * {
-    transition-property: background-color, color, border-color, fill, stroke;
-    transition-duration: 160ms;
-    transition-timing-function: ease;
-  }
-
   ::selection {
-    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    background: rgba(0, 100, 200, 0.30);
     color: var(--fg);
   }
 
@@ -291,36 +338,29 @@
   }
   ::-webkit-scrollbar-thumb {
     background: var(--track);
-    border-radius: 999px;
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
+    background: #404040;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  button,
-  [role="button"] {
+  button {
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
-  button:disabled {
-    cursor: not-allowed;
-  }
-
   a {
     color: inherit;
-    text-decoration: none;
   }
 
   input,
   textarea,
   select {
     color-scheme: inherit;
-    font: inherit;
   }
 
   input::placeholder,
@@ -329,11 +369,15 @@
   }
 }
 
+.text-link {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
-   Focus — one 2px accent ring for the whole app, unlayered so it outranks
-   the `outline-none` utilities the inputs use. Inputs draw their own focus
-   (accent border + soft ring) instead, which reads better than an outline
-   crossing a field.
+   Focus — one rule for the whole app (2px accent, like Social)
+   Unlayered so it outranks the `outline-none` utilities the inputs use.
    ═══════════════════════════════════════════════════════════════════════ */
 :focus-visible {
   outline: 2px solid var(--focus-ring) !important;
@@ -342,13 +386,19 @@
 :where(:focus):not(:focus-visible) {
   outline: none !important;
 }
+/* Inputs draw their own focus (accent border + soft ring), which reads
+   better than an outline crossing the field. */
 :where(input, textarea, select):focus,
 :where(input, textarea, select):focus-visible {
   outline: none !important;
 }
 
-/* Chrome paints an opaque block over autofilled fields — cover it with our
-   own control fill and suppress the flash with an absurd transition length. */
+/* ═══════════════════════════════════════════════════════════════════════
+   Autofill
+   Chrome paints an opaque block over the field and recolours the value.
+   Cover it with our own white and suppress the flash with an absurd
+   transition length.
+   ═══════════════════════════════════════════════════════════════════════ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -363,56 +413,90 @@ select:-webkit-autofill {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Type
+   Type — em-based off the card's --u scale so everything inside the card
+   keeps its proportions at any viewport size.
    ═══════════════════════════════════════════════════════════════════════ */
 .tb-heading {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.022em;
+  font-size: 1.95em;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.032em;
   color: var(--fg);
   text-align: center;
   text-wrap: balance;
 }
 .tb-sub {
-  margin: 12px 0 0;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 0.98em;
+  line-height: 1.6;
   color: var(--text-3);
-  text-align: center;
   text-wrap: balance;
+}
+/* Breathing room between a step's title and its description. */
+.tb-heading + .tb-sub {
+  margin-top: 14px;
 }
 .tb-label {
   display: block;
-  margin-bottom: 7px;
-  font-size: 13px;
+  margin-bottom: 0.45em;
+  font-size: 0.9em;
   font-weight: 600;
-  letter-spacing: 0.005em;
   color: var(--text-2);
 }
+/* Error and hint copy sits directly under its field. */
 .tb-hint {
-  margin-top: 7px;
-  font-size: 13px;
+  margin-top: 0.5em;
+  font-size: 0.82em;
   line-height: 1.45;
   color: var(--text-3);
 }
 .tb-error {
   color: var(--danger-text);
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Surfaces — iOS translucent chrome for floating sheets and banners.
-   ═══════════════════════════════════════════════════════════════════════ */
-.glass {
-  background: var(--glass-2);
-  border: 1px solid var(--border);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+.tb-wordmark {
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-2);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Range slider — an iOS track with a white knob.
+   Surfaces — one frosted-glass treatment, the social login recipe.
+   ═══════════════════════════════════════════════════════════════════════ */
+.glass,
+.glass-soft {
+  background: rgba(24, 24, 26, 0.92);
+  border: 1px solid var(--hairline);
+  box-shadow:
+    0 18px 36px -12px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.glass-soft {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.glass::before,
+.glass-soft::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  pointer-events: none;
+}
+.sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Range slider — a hairline track with a white knob
    ═══════════════════════════════════════════════════════════════════════ */
 input[type='range'] {
   -webkit-appearance: none;
@@ -433,8 +517,8 @@ input[type='range']::-moz-range-track {
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   margin-top: -9px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -443,20 +527,19 @@ input[type='range']::-webkit-slider-thumb {
   transition: box-shadow 150ms ease;
 }
 input[type='range']::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--fg);
 }
 input[type='range']:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: 0 0 0 5px rgba(0, 100, 200, 0.20);
 }
 input[type='range']:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-/* RangeSlider paints its own filled portion, so hide the native track. */
 .tb-range::-webkit-slider-runnable-track,
 .tb-range::-moz-range-track {
   background: transparent;
@@ -469,15 +552,20 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Auth shell — a single centered column on the canvas, the way iOS renders
-   a native sign-in. No card plate around the form: the field fills are the
-   framing. One scale at every width; only the gutters and width cap flex.
+   Login shell — one charcoal theme at every size, the same recipe as the
+   PC form pane (charcoal var(--bg) canvas, var(--field) borderless fields, sky action).
+   • desktop (≥1280)  → two-pane split, art left / form right
+   • tablet + phone   → single centered column, in-flow brand + footer
+   Card sizes are em-based off --u so proportions hold at any resolution.
    ═══════════════════════════════════════════════════════════════════════ */
 .login-page {
   position: relative;
+  /* Owns a stacking context so the negative-z backdrop layers below still
+     paint over --bg and under every pane. */
   z-index: 0;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 16px;
@@ -486,121 +574,140 @@ input[type='number']::-webkit-inner-spin-button {
   background-color: var(--bg);
 }
 
+/* The photograph is the aesthetic. Dimmed enough that 16px white text on top
+   still clears contrast, saturated enough to still read as a photo. */
+.login-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 760px at 50% 40%,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.32) 100%),
+    url('/background.jpg') center / cover no-repeat;
+  filter: saturate(1.12) brightness(0.94);
+}
+
+
+/* Film grain — 2.5%, above the backdrop, below the UI, never interactive. */
+.login-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+
+/* Phones get the form and nothing else. A cover-fit photograph behind a
+   full-bleed card on a 390px screen is a compressed sliver at the edges that
+   also costs a full-viewport image download before anything is readable. */
+@media (max-width: 640px) {
+  .login-page::before,
+  .login-page::after {
+    display: none;
+  }
+}
+
+/* The form column — a glass plate over the photograph. The dark plate is what
+   makes the blur read as glass rather than as a grey wash: the content behind
+   tints it, but never lightens it. */
 .login-card {
+  --u: min(
+    clamp(13px, 0.45vw + 10.6px, 18px),
+    clamp(12px, 2.1vh + 4px, 18px)
+  );
   box-sizing: border-box;
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(520px, 100%);
+  width: min(600px, 100%);
   margin: auto;
+  padding: 1.8em 1.5em 2.2em;
+  font-size: var(--u);
   text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 70px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
 }
 
 /* Wider frame for the settings-style screens (2FA, passkeys, callback). */
 .login-card[data-wide="true"] {
-  width: min(560px, 100%);
+  width: min(640px, 100%);
 }
 
-.login-head {
-  margin-bottom: 24px;
-}
-
-.login-kicker {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent-text);
-  text-align: center;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.login-terms {
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid var(--hairline);
-  font-size: 13px;
-  line-height: 1.55;
-  text-align: center;
-  color: var(--text-4);
-}
-.login-terms a {
-  color: var(--text-3);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.login-terms a:hover {
-  color: var(--fg);
-}
-
-/* Fixed wordmark, top-left. Two cuts ship in the DOM; data-theme shows one. */
+/* The wordmark is hidden at every width — the heading is the only title. */
 .page-brand {
   display: block;
   position: fixed;
-  top: 18px;
+  top: 16px;
   left: 20px;
   z-index: 6;
-  height: 28px;
+  height: 30px;
   width: auto;
   opacity: 0.95;
   transition: opacity 0.2s ease;
 }
-.page-brand:hover {
-  opacity: 1;
-}
 
-.brand-mark { display: none; }
-:root[data-theme="light"] .brand-mark:first-child { display: block; }
-:root[data-theme="dark"] .brand-mark:last-child { display: block; }
+.page-brand:hover { opacity: 1; }
 
-/* ── Wizard chrome — Back / step counter and the progress track ───────── */
+/* Wizard chrome — Back / step counter row and the progress track. */
+/* Minimal wizard chrome — one hairline track + small caption. */
 .wizard-rail {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 1.2em;
 }
+
 .wizard-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.9em;
 }
+
 .wizard-back {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  margin-left: -6px;
-  padding: 8px 12px 8px 6px;
-  border: 0;
+  gap: 0.35em;
+  padding: 0.35em 0.8em 0.35em 0.55em;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: none;
-  font-size: 15px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 0.88em;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--accent-text);
-  transition: color 150ms ease, opacity 150ms ease;
+  color: var(--text-2);
+  transition:
+    background 150ms ease,
+    color 150ms ease;
 }
-.wizard-back svg {
-  width: 17px;
-  height: 17px;
-}
+
 .wizard-back:hover {
-  color: var(--accent-hover);
+  background: var(--surface-hover);
+  color: var(--fg);
 }
-.wizard-back:active {
-  opacity: 0.6;
-}
+
 .wizard-track {
   flex: 1;
-  height: 3px;
-  border-radius: 999px;
+  height: 2px;
+  border-radius: 2px;
   background: var(--surface-3);
   overflow: hidden;
 }
+
 .wizard-track > i {
   display: block;
   height: 100%;
@@ -608,150 +715,2611 @@ input[type='number']::-webkit-inner-spin-button {
   background: var(--accent);
   transition: width 420ms var(--ease-enter);
 }
+
 .wizard-caption {
-  margin: 12px 0 0;
+  margin: 0.7em 0 0;
   text-align: center;
-  font-size: 12px;
+  font-size: 0.72em;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-4);
 }
 
-/* ── Create-account button (login footer) ────────────────────────────── */
+/* The form column — separated from the head by a soft gap. */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 1.7em;
+}
+
+.login-kicker {
+  margin: 1.5em 0 0;
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+.login-title {
+  margin-top: 0.42em;
+  font-size: 2.05em;
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.032em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+.login-sub {
+  margin-top: 0.8em;
+  max-width: 38ch;
+  font-size: 0.98em;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.login-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75em;
+  width: 100%;
+  height: 3em;
+  margin-top: 1.8em;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.login-cta img {
+  height: 1.4em;
+  width: auto;
+  flex: none;
+}
+
+.login-cta:hover {
+  background: var(--accent-hover);
+}
+
+.login-cta:active {
+  background: var(--accent-press);
+  transform: scale(0.995);
+}
+
+.login-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.login-cta:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--placeholder);
+  opacity: 1;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.login-terms {
+  margin-top: auto;
+  padding-bottom: 0.6em;
+  margin-bottom: 0;
+  /* keep >=1.7em gap even when pinned */
+  margin-block-start: auto;
+  padding-top: 2.2em;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.8em;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--text-4);
+}
+
+.login-terms a {
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.login-terms a:hover {
+  color: var(--fg);
+}
+
+/* Desktop: the same centered panel, slightly larger type rhythm. */
+/* ── Desktop marketing hero (left column) — wide PC screens only ── */
+.auth-hero {
+  display: none;
+}
+
+.pane-brand {
+  display: none;
+}
+
+.hero-brand {
+  position: absolute;
+  top: 36px;
+  left: 44px;
+  height: 28px;
+  width: auto;
+}
+
+@media (min-width: 1280px) {
+  .login-page {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: center;
+    padding: 0;
+  }
+
+  /* Clear split: the photograph carries the art side, the glass plate the
+     form. No opaque pane — the card is what makes the blur read as glass. */
+  .login-page {
+    background: var(--bg);
+  }
+
+  .auth-hero {
+    position: relative;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    min-height: 100dvh;
+    padding: 48px clamp(16px, 2.5vw, 56px) 48px;
+  }
+
+  /* Instagram-style tagline — big, plain white, centered over the collage. */
+  .hero-tagline {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    align-self: center;
+    margin: 0 auto 30px;
+    max-width: 760px;
+    min-height: 116px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: 0.15px;
+    text-align: center;
+    color: var(--fg);
+  }
+
+  .hero-tagline em {
+    font-style: normal;
+  }
+
+  /* Fixed-size collage — identical at every PC width, never rescales. */
+  .hero-stack {
+    position: relative;
+    flex: none;
+    width: 640px;
+    aspect-ratio: 1 / 1;
+    align-self: center;
+    margin-left: 0;
+  }
+
+  .hero-card {
+    position: absolute;
+    margin: 0;
+    overflow: visible;
+    aspect-ratio: 9 / 16.5;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 48px 96px -28px rgba(0, 0, 0, 0.9),
+      0 10px 28px -8px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: #000000;
+  }
+
+  .hero-card > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+
+  /* Top/bottom shading so the overlays stay legible on bright photos. */
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0) 32%
+    );
+    pointer-events: none;
+  }
+
+  /* Staggered collage — three story cards at different depths. */
+  .hero-card--left {
+    top: 18%;
+    left: 1.5%;
+    width: 26%;
+    rotate: -8deg;
+    z-index: 2;
+  }
+
+  .hero-card--left > img {
+    filter: brightness(0.82) saturate(1.12) contrast(1.04);
+  }
+
+  .hero-card--right {
+    top: 13%;
+    right: 1.5%;
+    width: 25%;
+    rotate: 8deg;
+    z-index: 1;
+  }
+
+  .hero-card--right > img {
+    filter: brightness(0.78) saturate(1.12) contrast(1.04);
+  }
+
+  .hero-card--front {
+    top: 3%;
+    left: 44.5%;
+    translate: -50% 0;
+    z-index: 4;
+    width: 33%;
+    rotate: -2deg;
+    box-shadow:
+      0 60px 110px -30px rgba(0, 0, 0, 0.9),
+      0 12px 34px -10px rgba(0, 0, 0, 0.55);
+  }
+
+  /* square photo sticker */
+  .hero-tile {
+    position: absolute;
+    z-index: 5;
+    margin: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+    box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.85);
+  }
+
+  .hero-tile > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-tile--a {
+    top: 1%;
+    left: 11%;
+    width: 8%;
+    rotate: -9deg;
+  }
+
+  /* ── mini "app preview" cards — post + profile ── */
+  .mini-card {
+    position: absolute;
+    z-index: 6;
+    margin: 0;
+    padding: 14px 16px;
+    background: rgba(24, 24, 26, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    box-shadow:
+      0 28px 56px -18px rgba(0, 0, 0, 0.5),
+      0 8px 18px -6px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* status-update post card — roomy classic IG post, glass base */
+  .mini-post {
+    bottom: -2%;
+    left: 1%;
+    width: 40%;
+    rotate: -1.5deg;
+    padding: 13px 15px 14px;
+    border-radius: 20px;
+    background: rgba(24, 24, 26, 0.92);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 24px 52px -18px rgba(0, 0, 0, 0.3),
+      0 6px 16px -6px rgba(0, 0, 0, 0.16);
+  }
+
+  .mini-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 9px;
+  }
+
+  .mini-head > img:first-child {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mini-head-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .mini-place {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--fg);
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .mini-tick {
+    width: 15px;
+    height: 15px;
+    flex: none;
+  }
+
+  .mini-time {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--muted);
+    align-self: flex-start;
+  }
+
+  .mini-caption {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 500;
+    color: #dfe2e7;
+  }
+
+  .mini-shot {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .mini-shot > img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 21 / 8;
+    object-fit: cover;
+  }
+
+  .mini-actions {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 11px;
+    color: var(--fg);
+  }
+
+  .mini-actions > svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .mini-save {
+    margin-left: auto;
+  }
+
+  .mini-likes {
+    margin: 9px 0 0;
+    font-size: 12px;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-likes b {
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  .mini-comment {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mini-comment > b {
+    margin-right: 6px;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* reply composer with the viewer's avatar */
+  .mini-composer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 11px;
+    padding: 10px 10px 10px 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 8px 8px;
+    background: transparent;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .mini-composer > img {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: none;
+  }
+
+  .mini-composer > svg {
+    margin-left: auto;
+    flex: none;
+    color: var(--accent-2);
+  }
+
+  /* now-playing widget — full Spotify player card, low-right of the collage */
+  .story-heart--liked {
+    fill: #ff3b6b;
+    stroke: #ff3b6b;
+  }
+
+  .mini-music {
+    left: 44%;
+    bottom: 4.5%;
+    width: 38%;
+    rotate: 7deg;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 15px;
+    border-radius: 22px;
+    background: #1a1a1c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 30px 60px -20px rgba(0, 0, 0, 0.75),
+      0 8px 20px -8px rgba(0, 0, 0, 0.45);
+  }
+
+  .music-art {
+    position: relative;
+    flex: none;
+  }
+
+  .music-art > img {
+    display: block;
+    width: 62px;
+    height: 62px;
+    border-radius: 16px;
+    object-fit: cover;
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.7);
+  }
+
+  .music-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .music-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .music-artist {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .music-progress {
+    display: block;
+    height: 3px;
+    margin-top: 9px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+  }
+
+  .music-progress > i {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), #a9cdf5);
+    animation: music-run 14s linear infinite;
+  }
+
+  @keyframes music-run {
+    from {
+      width: 8%;
+    }
+    to {
+      width: 94%;
+    }
+  }
+
+  .music-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex: none;
+    background: #ffffff;
+    color: #14161a;
+    box-shadow: 0 12px 26px -8px rgba(0, 0, 0, 0.8);
+  }
+
+.mini-profile {
+    top: -5%;
+    right: 2%;
+    width: 34%;
+    rotate: 10deg;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .mini-avatar {
+    flex: none;
+    width: 44px;
+    aspect-ratio: 1;
+    padding: 2.5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0058b3, #004f9e);
+  }
+
+  .mini-avatar > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+  }
+
+  .mini-id {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .mini-sub {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+  }
+
+  /* "Connect" pill — Tirbeo's own follow affordance */
+  .mini-add {
+    margin-left: auto;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: #0064c8;
+    border: 1px solid rgba(110, 198, 255, 0.40);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 22px -8px rgba(0, 0, 0, 0.55);
+  }
+
+  /* story progress track */
+  .story-bar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(0, 100, 200, 0.30);
+  }
+
+  .story-bar > i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #ffffff;
+  }
+
+  /* time sticker (time.png) inside the front card — child-selector keeps
+     priority over `.hero-card > img` stretch rules */
+  .hero-card > .story-time {
+    position: absolute;
+    top: 44px;
+    right: 10px;
+    z-index: 3;
+    width: 136px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55));
+  }
+
+  /* story header — avatar + handle, like the real viewer */
+  .story-user {
+    position: absolute;
+    top: 26px;
+    left: 13px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
+  }
+
+  .story-user > img:first-child {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .story-user > .mini-tick {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .story-like {
+    position: absolute;
+    top: 40%;
+    right: -46px;
+    left: auto;
+    z-index: 4;
+    width: 96px;
+    height: 96px;
+  }
+
+  .story-like > img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 22px rgba(255, 59, 107, 0.4));
+  }
+
+  /* photo bubble with a gradient ring, anchored to the front card corner */
+  .hero-avatar {
+    position: absolute;
+    left: 56.5%;
+    bottom: 23%;
+    z-index: 5;
+    width: 84px;
+    aspect-ratio: 1;
+    padding: 3px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a9cdf5, #0064c8 55%, #004f9e);
+    box-shadow: 0 20px 38px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  .hero-avatar > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+  }
+
+  .page-brand {
+    top: 22px;
+    left: 28px;
+    height: 38px;
+  }
+
+  /* Tirbeo logo pinned to the very top-right of the form pane. */
+  .pane-brand {
+    display: block;
+    position: fixed;
+    top: 22px;
+    right: 28px;
+    z-index: 6;
+    height: 26px;
+    width: auto;
+  }
+
+  /* The card stays a floating glass plate on the desktop split too — the form
+     pane is the photograph, not a surface. */
+  .login-card {
+    --u: 15px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    justify-self: center;
+    align-self: center;
+    margin: 0;
+    padding: 56px 48px;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    background: var(--card);
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+  }
+
+  .login-card[data-wide='true'] {
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+/* Phones and tablets are handled by the unified <1280 block at the end
+   of this file — one charcoal column, no fixed overlays. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Keyframes
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes halo {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+.tb-shimmer {
+  background: linear-gradient(90deg, #1d1d1f 25%, #28282b 37%, #1d1d1f 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Toast — light frosted pill floating over the art
+   ═══════════════════════════════════════════════════════════════════════ */
+.tb-toast {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  translate: -50% 0;
+  width: fit-content;
+  max-width: min(420px, calc(100vw - 32px));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 20px;
+  border: 1px solid var(--hairline);
+  border-radius: 9999px;
+  background: rgba(24, 24, 26, 0.92);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  font-size: 15px;
+  color: var(--fg);
+  will-change: transform, opacity;
+}
+.tb-toast--success { border-color: rgba(0, 168, 68, 0.35); }
+.tb-toast--success > span:first-child { color: var(--success-text); }
+.tb-toast--error { border-color: rgba(255, 48, 64, 0.35); }
+.tb-toast--error > span:first-child { color: var(--danger-text); }
+.tb-toast--info > span:first-child { color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Legal bar — muted link row + language/copyright row. Below 1280 it is a
+   static footer at the end of the column (never overlapping the card);
+   the desktop queries pin it to the bottom of the art pane.
+   ═══════════════════════════════════════════════════════════════════════ */
+.legal-bar {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding-top: 18px;
+  font-size: 12.5px;
+  color: var(--text-4);
+  user-select: none;
+}
+
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: clamp(12px, 2vw, 22px);
+}
+
+.legal-links button,
+.legal-links a {
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  font: inherit;
+  color: var(--text-4);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.legal-links button:hover,
+.legal-links a:hover {
+  color: var(--text-2);
+}
+
+.legal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* The full footer shows at every width; the below-PC bar is static and in
+   the flow, so extra rows can never overlap the card. */
+
+/* ═══ Signup step 2 — "Tell us about you" ═══ */
+.step2-lede {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+.avatar-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+/* The plate itself is not the button: a gradient overlay carries the camera
+   action and a separate trash badge removes the photo, so both stay reachable
+   without squashing a 136px circle into one control. */
+.avatar-plate {
+  position: relative;
+  width: 136px;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px dashed var(--divider);
+  background: var(--field);
+}
+
+.avatar-plate > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-ph {
+  width: 48px;
+  height: 48px;
+  color: var(--text-4);
+  opacity: 0.6;
+}
+
+.avatar-cta {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+  border: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 62%);
+  cursor: pointer;
+}
+
+.avatar-cta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+
+.avatar-cta:hover > span {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.avatar-x {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.avatar-x:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.avatar-cap {
+  margin: 0;
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.avatar-cap span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-4);
+}
+
+/* Collapsible optional work block. */
+.work-box {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.work-box summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.work-box summary::-webkit-details-marker {
+  display: none;
+}
+
+.work-box summary em {
+  margin-left: 8px;
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-4);
+}
+
+/* The chevron is the open/closed state — it flips rather than changing words. */
+.work-box summary svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-4);
+  transition: transform 180ms var(--ease-enter);
+}
+
+.work-box[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.work-body {
+  display: grid;
+  gap: 14px;
+  padding: 2px 16px 16px;
+}
+
+@media (min-width: 640px) {
+  .work-body {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   No-account notice — one small line under the fields when a lookup finds
+   nothing for the address. The slot keeps its height reserved so nothing
+   on the form jumps. No card, no buttons, no toast.
+   ═══════════════════════════════════════════════════════════════════════ */
+.no-account-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  margin-top: -14px;
+}
+
+.no-account-note {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ff6b71;
+  animation: fade-in 180ms var(--ease-enter) both;
+}
+
+.no-account-note button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  color: #ff8e93;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.no-account-note button:hover {
+  color: #ffb0b4;
+}
+
+/* Inline error/success line on login screens — replaces toasts. */
+.form-notice {
+  margin-top: -8px;
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 600;
+  animation: fade-in 180ms var(--ease-enter) both;
+}
+
+.form-notice-error {
+  color: #ff6b71;
+}
+
+.form-notice-success {
+  color: #5dd39e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Footer links belong to the left pane — center them on the 60% side.
+   Must come after the base .legal-bar rule (equal specificity). */
+@media (min-width: 1280px) {
+  .legal-bar {
+    position: fixed;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    left: 30%;
+    translate: -50% 0;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding-top: 0;
+    z-index: 7;
+  }
+}
+
+/* Right pane — IG login style: roomier column, left title, outlined fields. */
+@media (min-width: 1280px) {
+  .login-card {
+    max-width: none;
+    padding: 0 clamp(56px, 5.5vw, 88px);
+  }
+
+  .login-card[data-wide='true'] {
+    max-width: none;
+  }
+
+  .login-card .tb-heading {
+    font-size: 27px;
+    letter-spacing: -0.02em;
+  }
+
+  .login-card input {
+    height: 58px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.32);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .login-card input:hover {
+    background: rgba(0, 0, 0, 0.42);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .login-card input:focus {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.22);
+  }
+
+  .forgot-link {
+    margin-top: 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: color 150ms ease;
+  }
+
+  .forgot-link:hover {
+    color: var(--fg);
+  }
+}
+
+/* Login footer: full-width outlined create pill (IG-style). */
+/* Login footer: simple solid create button. */
 .create-pill {
   display: flex;
   width: 100%;
-  height: 50px;
+  height: 56px;
   margin-top: 12px;
   align-items: center;
   justify-content: center;
+  border-radius: 18px;
   border: none;
-  border-radius: 12px;
-  background: var(--accent);
+  background: #0064c8;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--accent-fg);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
-}
-.create-pill:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-}
-.create-pill:active {
-  background: var(--accent-press);
-  transform: translateY(0) scale(0.995);
+  color: #ffffff;
+  transition:
+    background-color 150ms ease;
 }
 
-/* ── Forgot link + "more ways" text affordances ──────────────────────── */
+.create-pill:hover {
+  background: #0058b3;
+}
+
+.create-pill:active {
+  background: #004f9e;
+}
+
+@media (min-width: 1280px) {
+  .login-card .tb-heading {
+    font-size: 33px;
+    letter-spacing: -0.025em;
+    color: var(--fg);
+  }
+}
+
+/* ═══ Signup: scrolling photo rails · Login: fanned story cluster ═══ */
+.scroll-rail,
+.story-fan,
+.pc-side {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .login-page .auth-hero {
+    display: none;
+  }
+
+  .login-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .login-page::before {
+    width: 100%;
+    border-left: 0;
+  }
+
+
+  /* ── Signup: two rails of mixed story/photo/post cards, scrolling ── */
+  .login-page:has(.mode-signup) .scroll-rail {
+    display: block;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 25vw;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+  }
+
+  .scroll-rail--left { left: 0; }
+  .scroll-rail--right { right: 0; }
+
+  .scroll-rail .rail-card {
+    pointer-events: auto;
+  }
+
+  /* Premium ambient state: dimmed until hovered — then the rail pauses
+     and the card wakes to its true colors with a soft lift. */
+  .scroll-rail .rail-card {
+    opacity: 0.72;
+    filter: saturate(0.6) brightness(0.82);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.35s ease, filter 0.35s ease;
+  }
+
+  .scroll-rail .rail-card:hover {
+    opacity: 1;
+    filter: none;
+  }
+
+  .scroll-rail .rail-card img {
+    border-radius: 14px;
+  }
+
+  .scroll-rail .rail-act:focus-visible,
+  .scroll-rail .connect-btn:focus-visible {
+    outline: 2px solid var(--accent-hover);
+    outline-offset: 2px;
+  }
+
+  /* varied card sizes so the rails read like a real feature mix */
+  .scroll-rail__track { align-items: flex-start; }
+  .rv-post { width: 100%; }
+  .rv-photo { width: 86%; margin-left: 6%; }
+  .rv-story { width: 68%; margin-left: 2%; }
+  .rv-reels { width: 70%; margin-left: 16%; }
+  .rv-chat { width: 92%; margin-left: 4%; }
+  .rv-sugg { width: 100%; margin-left: 2%; }
+
+  .scroll-rail .rail-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 12px 10px;
+  }
+
+  .scroll-rail .rail-act {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: #aeb4bf;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, scale 0.18s ease;
+  }
+
+  .scroll-rail .rail-act:hover {
+    color: var(--fg);
+    background: rgba(255, 255, 255, 0.08);
+    scale: 1.12;
+  }
+
+  .scroll-rail .rail-act--on {
+    color: #ff5a4e;
+  }
+
+  .scroll-rail .rail-count {
+    flex: 1;
+    font-size: 12.5px;
+    color: var(--text-4);
+  }
+
+  .scroll-rail .connect-btn {
+    border: 0;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.18s ease, scale 0.18s ease;
+  }
+
+  .scroll-rail .connect-btn:hover {
+    background: var(--accent-hover);
+    scale: 1.05;
+  }
+
+  .scroll-rail .connect-btn--on {
+    color: #aeb4bf;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .scroll-rail__track {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    will-change: transform;
+  }
+
+  .scroll-rail--left .scroll-rail__track { animation: rail-up 46s linear infinite; }
+  .scroll-rail--right .scroll-rail__track { animation: rail-down 52s linear infinite; }
+
+  @keyframes rail-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+
+  @keyframes rail-down {
+    from { transform: translateY(-50%); }
+    to { transform: translateY(0); }
+  }
+
+  .rail-strip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+  }
+
+  .rail-photo-card {
+    position: relative;
+  }
+
+  .rail-strip--over {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 26px 12px 10px;
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72));
+  }
+
+  .rail-strip--over .rail-user {
+    color: #fff;
+  }
+
+  .rail-story-bars {
+    position: absolute;
+    top: 9px;
+    left: 11px;
+    right: 11px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .rail-story-bars i {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .rail-story-bars i.on { background: #fff; }
+
+  /* fan + post */
+  /* ── Login: story fan on the left, live-comments post on the right ── */
+  .login-page:has(.mode-login) .story-fan {
+    display: block;
+    position: fixed;
+    left: clamp(-24px, 0.1vw, 4px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.85);
+    transform-origin: left center;
+    width: 640px;
+    height: 580px;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.95;
+  }
+
+  .login-page:has(.mode-login) .pc-side {
+    display: block;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    right: clamp(16px, 3vw, 56px);
+    width: clamp(250px, 20vw, 370px);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.95;
+  }
+
+  .pc-comments {
+    height: 120px;
+    overflow: hidden;
+    padding-top: 8px;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 80%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 22%, #000 80%, transparent);
+  }
+
+  .pc-track {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    animation: pc-up 16s linear infinite;
+  }
+
+  .pc-track p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #aeb4bf;
+  }
+
+  .pc-track p b {
+    margin-right: 5px;
+    color: var(--fg);
+  }
+
+  @keyframes pc-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+
+  .fan-card {
+    position: absolute;
+    margin: 0;
+    width: 232px;
+    aspect-ratio: 9 / 16;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    background: #000;
+  }
+
+  .fan-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fan-card--left { left: 0; top: 70px; transform: rotate(-8deg) scale(0.86); }
+  .fan-card--right { right: 0; top: 70px; transform: rotate(8deg) scale(0.86); }
+  .fan-card--center {
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 276px;
+    z-index: 2;
+  }
+
+  .fan-bars {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .fan-bars i {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .fan-bars i.on { background: #fff; }
+
+  .fan-foot {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+  }
+
+  .fan-reply {
+    flex: 1;
+    height: 30px;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+  }
+
+
+  .fan-love {
+    position: absolute;
+    left: 22px;
+    top: 240px;
+    z-index: 3;
+    color: #ff2e63;
+  }
+
+
+
+
+  @keyframes fanbob {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -10px; }
+  }
+  .rail-card {
+    position: relative;
+    margin: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #000;
+  }
+
+  .rail-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+
+  /* ── Feed-style rail cards: posts, DM chats, stories ── */
+  .rail-post,
+  .rail-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(18, 20, 24, 0.85);
+  }
+
+  .rail-post .rail-photo {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+  }
+
+  .rail-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rail-ring {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 2px;
+    background: linear-gradient(135deg, #0058b3, #0064c8 60%, #a9cdf5);
+  }
+
+  .rail-ring img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #12141a;
+  }
+
+  .rail-head-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .rail-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--fg);
+  }
+
+  .rail-tick {
+    width: 12px;
+    height: 12px;
+  }
+
+  .rail-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .rail-sub--on {
+    color: #35d07a;
+  }
+
+  .rail-time {
+    margin-left: auto;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .rail-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .rail-act {
+    display: inline-flex;
+  }
+
+  .rail-act--on {
+    color: #ff7a45;
+  }
+
+  .rail-count {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .rail-caption {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .rail-caption b {
+    color: var(--fg);
+    font-weight: 700;
+    margin-right: 5px;
+  }
+
+  .chat-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bubble {
+    max-width: 88%;
+    padding: 8px 11px;
+    border-radius: 14px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .bubble--in {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border-bottom-left-radius: 5px;
+  }
+
+  .bubble--out {
+    align-self: flex-end;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0064c8;
+    color: #fff;
+    border-bottom-right-radius: 5px;
+  }
+
+  .chat-ticks {
+    flex: none;
+    opacity: 0.85;
+  }
+
+  .bubble--typing {
+    display: inline-flex;
+    gap: 4px;
+    padding: 11px 13px;
+  }
+
+  .bubble--typing i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    animation: chat-typing 1.2s ease-in-out infinite;
+  }
+
+  .bubble--typing i:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+
+  .bubble--typing i:nth-child(3) {
+    animation-delay: 0.36s;
+  }
+
+  .rail-story .rail-photo,
+  .rail-reels .rail-photo {
+    aspect-ratio: 3 / 4;
+  }
+
+  /* story viewer chrome: segmented progress, header, reply bar */
+  .rail-story::before,
+  .rail-reels::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 26%, transparent 62%, rgba(0, 0, 0, 0.62) 100%);
+    pointer-events: none;
+  }
+
+  .story-bars {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    gap: 4px;
+  }
+
+  .story-bars i {
+    flex: 1;
+    height: 2.5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.32);
+  }
+
+  .story-bars i.on {
+    background: #fff;
+  }
+
+  .story-head {
+    position: absolute;
+    top: 24px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .story-head .rail-user,
+  .story-head .rail-sub {
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .story-head .rail-sub {
+    opacity: 0.75;
+  }
+
+  .story-more-ic {
+    margin-left: auto;
+    color: #fff;
+    opacity: 0.85;
+  }
+
+  .story-cta {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: rgba(35, 36, 39, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .story-cta svg {
+    flex: none;
+    color: #a9cdf5;
+  }
+
+  .story-ring {
+    position: static;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    padding: 2px;
+    background: conic-gradient(from 210deg, #0058b3, #0064c8, #a9cdf5, #004f9e, #0058b3);
+  }
+
+  .story-ring img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #12141a;
+  }
+
+  .rail-reels .reels-live {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: #d61f3f;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .reels-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 3;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: rgba(18, 20, 24, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    padding-left: 3px;
+  }
+
+  .reels-rail {
+    position: absolute;
+    right: 10px;
+    bottom: 74px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+    color: #fff;
+  }
+
+  .reels-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  }
+
+  .reels-btn b {
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .reels-btn--on {
+    color: #ff7a45;
+  }
+
+  .reels-foot {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 44px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reels-foot .rail-user {
+    font-size: 12.5px;
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .reels-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
+  }
+
+  .reels-cap {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .reels-music {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @keyframes chat-typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  .login-page .login-card {
+    margin: 0 auto;
+    max-width: 560px;
+    z-index: 2;
+  }
+
+  .login-page .legal-bar {
+    left: 50%;
+  }
+}
+
+/* Premium motion pass on the login hero collage (rotate/translate are
+   separate properties, so the transform-bob never fights the collage tilt). */
+@keyframes hero-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+@media (min-width: 1280px) {
+  .hero-card--left { animation: hero-bob 9s ease-in-out infinite; }
+  .hero-card--right { animation: hero-bob 11s ease-in-out -3s infinite; }
+  .hero-card--front {
+    animation: hero-bob 13s ease-in-out -6s infinite;
+    box-shadow:
+      0 48px 96px -28px rgba(0, 0, 0, 0.9),
+      0 10px 28px -8px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 110px -24px rgba(0, 100, 200, 0.35);
+  }
+  .mini-post { animation: hero-bob 10s ease-in-out -2s infinite; }
+  .mini-music { animation: hero-bob 12s ease-in-out -5s infinite; }
+  .mini-profile { animation: hero-bob 8s ease-in-out -1s infinite; }
+  .hero-avatar { animation: hero-bob 7s ease-in-out -4s infinite; }
+  .hero-tile--a { animation: hero-bob 9.5s ease-in-out -7s infinite; }
+}
+
+/* ── Desktop form (≥1280) — ONE consistent scale for login + signup.
+   Glass plate, centered column, same rhythm as the tablet band. ── */
+@media (min-width: 1280px) {
+  .login-page .login-card,
+  .login-page:has(.mode-signup) .login-card,
+  .login-page:has(.mode-login) .login-card {
+    --u: 16px;
+    width: min(680px, 92%);
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 32px 28px;
+    text-align: left;
+    z-index: 2;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    background: var(--card);
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+  }
+
+  .login-page .login-card .tb-heading,
+  .login-page:has(.mode-signup) .login-card .tb-heading,
+  .login-page:has(.mode-login) .login-card .tb-heading {
+    font-size: 40px;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    white-space: normal;
+    text-align: center;
+    background: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    -webkit-text-fill-color: #ffffff;
+    color: #ffffff;
+  }
+
+  .login-page .login-head,
+  .login-page:has(.mode-login) .login-head,
+  .login-page:has(.mode-signup) .login-head { margin-bottom: 26px; }
+
+  .login-page .login-card .tb-label,
+  .login-page:has(.mode-login) .login-card .tb-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-3);
+    margin-bottom: 8px;
+  }
+
+  .login-page .login-card input,
+  .login-page:has(.mode-login) .login-card input,
+  .login-page:has(.mode-signup) .login-card input {
+    height: 58px;
+    font-size: 16px;
+    border-radius: 16px;
+    background: var(--field);
+    border-color: transparent;
+    color: var(--fg);
+  }
+  .login-page .login-card input::placeholder { color: var(--placeholder); }
+  .login-page .login-card input:hover { background: var(--field-hover); }
+  .login-page .login-card input:focus {
+    background: var(--field-focus);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.20);
+  }
+
+  .login-page .login-card .PrimaryButton,
+  .login-page .login-card button[type='submit'],
+  .login-page:has(.mode-login) .login-card button[type='submit'],
+  .login-page:has(.mode-signup) .login-card button[type='submit'] {
+    height: 58px;
+    font-size: 16px;
+    border-radius: 16px;
+  }
+
+  .login-page .signup-fields,
+  .login-page:has(.mode-login) .signup-fields,
+  .login-page:has(.mode-signup) .signup-fields {
+    margin-top: 26px;
+    display: grid;
+    gap: 18px;
+  }
+  .login-page .signup-fields > * + *,
+  .login-page:has(.mode-login) .signup-fields > * + * { margin-top: 0; }
+  .login-page .signup-fields .grid,
+  .login-page:has(.mode-login) .signup-fields .grid { gap: 18px; }
+
+  .login-page .login-form form > .flex.items-center.justify-center:first-child {
+    justify-content: space-evenly;
+  }
+  .login-page .login-form .mx-9 { margin-inline: 0; }
+
+  /* OAuth — full-width labelled rows on the same plate as the fields. */
+  .login-page .login-card .oauth-list { gap: 14px; }
+  .login-page .login-card .oauth-item {
+    height: 58px;
+    font-size: 16px;
+    border-radius: 16px;
+    background: var(--field);
+    border-color: transparent;
+  }
+  .login-page .login-card .oauth-item:hover { background: var(--field-hover); }
+  .login-page .login-card .oauth-item:focus {
+    background: var(--field-focus);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.20);
+  }
+  .login-page .login-card .oauth-ico,
+  .login-page .login-card .oauth-ico svg { width: 24px; height: 24px; }
+
+  .login-page .forgot-link { margin-top: 0; }
+  .login-page .no-account-slot { height: 22px; }
+
+  .login-page .login-terms,
+  .login-page:has(.mode-login) .login-terms,
+  .login-page:has(.mode-signup) .login-terms {
+    margin-top: 32px;
+    padding-top: 26px;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .login-page .wizard-progress,
+  .login-page:has(.mode-login) .wizard-progress,
+  .login-page:has(.mode-signup) .wizard-progress { display: none; }
+  .login-page .wizard-bar,
+  .login-page:has(.mode-login) .wizard-bar,
+  .login-page:has(.mode-signup) .wizard-bar { margin: 0; padding: 0; }
+}
+
+/* ── Tirbeo-native overlays: badges, place chips, trail stats ── */
+@media (min-width: 1280px) {
+  .tb-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(0, 100, 200, 0.16);
+    border: 1px solid rgba(110, 198, 255, 0.45);
+    color: #e4dcfa;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .tb-place {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: 14px;
+    background: rgba(18, 20, 24, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--fg);
+    font-size: 12.5px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .tb-place svg { color: var(--accent-2); }
+
+  .tb-place--top { top: 12px; bottom: auto; }
+
+  .tb-place--top img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .tb-trail {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    background: rgba(18, 20, 24, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--fg);
+    font-size: 12.5px;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .tb-trail svg { color: #ff9f45; }
+
+  .tb-go {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: #0064c8;
+    color: #fff;
+    box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.6);
+  }
+
+  .tb-alt {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(18, 20, 24, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cfd2d8;
+    font-size: 12px;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .tb-alt svg { color: var(--accent-2); }
+
+  .mini-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px 0;
+    color: #b9bcc2;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mini-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mini-stats svg { color: var(--accent-2); }
+
+  .mini-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px 16px 16px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #0064c8;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+}
+
+/* autofill must not punch through the big charcoal signup fields */
+.login-page:has(.mode-signup) input:-webkit-autofill, .login-page:has(.mode-login) input:-webkit-autofill,
+.login-page:has(.mode-signup) input:-webkit-autofill:hover, .login-page:has(.mode-login) input:-webkit-autofill:hover,
+.login-page:has(.mode-signup) input:-webkit-autofill:active , .login-page:has(.mode-login) input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
+  box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
+  -webkit-text-fill-color: var(--fg) !important;
+}
+
+.login-page:has(.mode-signup) input:-webkit-autofill:focus , .login-page:has(.mode-login) input:-webkit-autofill:focus {
+  -webkit-box-shadow:
+    0 0 0 1000px var(--autofill-fill) inset,
+    0 0 0 3px rgba(0, 100, 200, 0.20) !important;
+  box-shadow:
+    0 0 0 1000px var(--autofill-fill) inset,
+    0 0 0 3px rgba(0, 100, 200, 0.20) !important;
+  -webkit-text-fill-color: var(--fg) !important;
+}
+
+/* Short viewports: scale the hero collage and tagline to fit the pane. */
+@media (min-width: 1280px) and (max-height: 900px) {
+  .hero-tagline {
+    font-size: 30px;
+    min-height: 84px;
+    margin-bottom: 20px;
+  }
+
+  .hero-stack {
+    width: 560px;
+  }
+
+  .mini-stats span { white-space: nowrap; }
+}
+
+/* Chips must never wrap or spill on the narrower cards. */
+@media (min-width: 1280px) and (max-height: 900px) {
+  .tb-place,
+  .tb-alt,
+  .tb-trail {
+    max-width: calc(100% - 28px);
+  }
+
+  .tb-place,
+  .tb-alt,
+  .tb-trail {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Tirbeo rail identity — charcoal UI. The side feed uses the same
+   charcoal plates as the signup fields (var(--field) family), hairline
+   borders and a single Tirbeo-blue accent. Calm, professional, no
+   rainbow gradients.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .rail-card {
+    background: #232427;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 22px;
+    box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
+  }
+
+  .rail-post,
+  .rail-chat {
+    background: var(--field);
+  }
+
+  /* single-tone blue rings instead of the IG rainbow */
+  .rail-ring,
+  .story-ring {
+    background: linear-gradient(135deg, #0058b3, #004f9e);
+    padding: 1.5px;
+  }
+
+  .rail-ring img,
+  .story-ring img {
+    border-color: var(--field);
+  }
+
+  .rail-user {
+    color: var(--fg);
+  }
+
+  .rail-sub {
+    color: var(--text-3);
+  }
+
+  .rail-sub--on {
+    color: #5cd98e;
+  }
+
+  .bubble--in {
+    background: var(--field-focus);
+    color: #d6d9de;
+  }
+
+  .bubble--out {
+    background: #0064c8;
+  }
+
+  .rail-post .rail-photo {
+    border-radius: 14px;
+  }
+
+  /* Suggestions card — Connect rows on charcoal */
+  .rail-sugg {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 12px;
+    background: var(--field);
+  }
+
+  .sugg-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--fg);
+  }
+
+  .sugg-see {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #a9cdf5;
+  }
+
+  .sugg-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sugg-row .rail-ring {
+    width: 38px;
+    height: 38px;
+  }
+
+  .connect-btn {
+    flex: none;
+    margin-left: auto;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #0064c8;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.6);
+  }
+
+  .connect-btn--on {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.75);
+    box-shadow: none;
+  }
+
+  .reels-play {
+    background: rgba(35, 36, 39, 0.68);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  .tb-place,
+  .tb-trail,
+  .tb-alt {
+    background: rgba(35, 36, 39, 0.86);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Single-page login — forgot link, stacked OAuth buttons, more-ways.
+   ═══════════════════════════════════════════════════════════════════════ */
 .forgot-row {
   display: flex;
-  justify-content: center;
-  margin-top: 0;
+  justify-content: flex-end;
+  margin-top: -10px;
 }
+
 .forgot-link {
-  padding: 4px 6px;
-  font-size: 14px;
+  padding: 4px 2px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--accent-text);
+  color: #8f8f98;
   transition: color 0.2s ease;
 }
+
 .forgot-link:hover {
-  color: var(--accent-hover);
+  color: #a9cdf5;
 }
+
 .forgot-link:disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
 .more-ways {
-  margin-top: 22px;
+  margin-top: 18px;
   text-align: center;
 }
+
 .more-ways-btn {
   display: inline-block;
-  padding: 6px 10px;
-  color: var(--accent-text);
-  font-size: 14px;
+  padding: 4px 6px;
+  color: #8f8f98;
+  font-size: 14.5px;
   font-weight: 600;
   transition: color 0.2s ease;
 }
+
 .more-ways-btn:hover {
-  color: var(--accent-hover);
+  color: #f2f2f4;
 }
+
 .more-ways-btn:disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
-/* ── Verification / recovery centered header ────────────────────────── */
+/* Verification / recovery screens — shared centered header. Medallion icons
+   and the email pill were removed by design: title, one line, plain email. */
 .otp-head {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
+
 .otp-email {
   margin-top: 10px;
   max-width: 100%;
   overflow-wrap: anywhere;
   color: var(--fg);
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 600;
 }
 
-/* ── "More ways to sign in" — an iOS grouped list of rows ────────────── */
+/* ── More ways to sign in — divider list, no boxes, website theme. ── */
 .mwo-mail {
   color: var(--fg);
   font-weight: 600;
 }
+
 .mwo-change {
   border: 0;
   padding: 0;
   background: none;
   font: inherit;
   font-weight: 700;
-  color: var(--accent-text);
+  color: #a9cdf5;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
   transition: color 150ms ease;
 }
+
 .mwo-change:hover {
-  color: var(--accent-hover);
+  color: #c2dcf7;
 }
+
 .mwo-list {
-  margin-top: 22px;
-  border-top: 1px solid var(--hairline);
+  margin-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
+
 .mwo-line {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 14px;
-  padding: 15px 4px;
+  justify-content: space-between;
+  gap: clamp(10px, 2vw, 16px);
+  padding: 16px clamp(2px, 1vw, 6px);
   border: 0;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   background: none;
   text-align: left;
   cursor: pointer;
   transition: background-color 150ms ease;
 }
+
 .mwo-line:hover:not(:disabled) {
-  background: var(--hover);
+  background: rgba(255, 255, 255, 0.03);
 }
+
+/* Non-interactive info row (e.g. "Sent to" on the magic-link page). */
 .mwo-line--static {
   cursor: default;
 }
+
 .mwo-line--static:hover {
   background: none;
 }
+
 .mwo-line:disabled {
   opacity: 0.45;
   cursor: default;
 }
+
 .mwo-ico {
   flex: none;
   display: grid;
@@ -763,45 +3331,64 @@ input[type='number']::-webkit-inner-spin-button {
   background: var(--field);
   color: var(--text-3);
 }
+
 .mwo-line:hover:not(:disabled) .mwo-ico {
   color: var(--fg);
   border-color: var(--border-hover);
 }
+
 .mwo-line-text {
   min-width: 0;
   flex: 1;
 }
+
 .mwo-line-label {
   display: block;
   font-size: 16px;
   font-weight: 600;
   color: var(--fg);
 }
+
 .mwo-line-sub {
   display: block;
   margin-top: 3px;
   font-size: 13.5px;
-  color: var(--text-3);
+  color: #8f8f98;
 }
+
 .mwo-line-action {
   flex: none;
   font-size: 14px;
   font-weight: 700;
-  color: var(--accent-text);
+  color: #a9cdf5;
   transition: color 150ms ease;
 }
+
 .mwo-line:hover:not(:disabled) .mwo-line-action {
-  color: var(--accent-hover);
+  color: #c2dcf7;
 }
+
 .mwo-spin {
   flex: none;
-  color: var(--accent-text);
+  color: #a9cdf5;
 }
+
 .mwo-list + .form-notice {
   margin-top: 16px;
 }
 
-/* ── Magic-link "check your email" provider chip ────────────────────── */
+
+/* ── Magic-link "Check your email" — inline login step. ── */
+/* Plain white heading: the login card's gradient headline treatment does not
+   belong on a confirmation screen. */
+.login-page .login-card .tb-heading.tb-heading-white {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: var(--fg);
+  color: var(--fg);
+}
+
 .ms-chip {
   display: inline-flex;
   align-items: center;
@@ -810,21 +3397,13 @@ input[type='number']::-webkit-inner-spin-button {
   height: 34px;
   margin-right: 7px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent-text);
+  border: 1px solid rgba(0, 100, 200, 0.35);
+  background: rgba(0, 100, 200, 0.14);
+  color: #a9cdf5;
 }
 
-/* ── "OR CONTINUE WITH" divider — sits in the 20–24px rhythm between the
-   primary action and the OAuth stack, with roomy even hairlines. Login
-   entry only; the signup wizard keeps its tighter space-y-4 rhythm. ──── */
-.mode-login .or-divider {
-  gap: 14px;
-  margin-top: 24px;
-  margin-bottom: 20px;
-}
-
-/* ── OAuth list — full-width "Continue with…" rows, Apple-styled ──────── */
+/* ── OAuth — full-width "Continue with…" rows, painted like the card's
+   own controls: --field plate, hairline border, same radius rhythm. ── */
 .oauth-list {
   display: flex;
   flex-direction: column;
@@ -835,18 +3414,19 @@ input[type='number']::-webkit-inner-spin-button {
   align-items: center;
   gap: 12px;
   width: 100%;
-  height: 50px;
-  padding: 0 16px;
+  height: 58px;
+  padding: 0 18px;
+  flex: none;
   border: 1px solid var(--hairline);
-  border-radius: 13px;
+  border-radius: 16px;
   background: var(--field);
   color: var(--fg);
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
   text-align: left;
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms var(--ease-apple);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms var(--ease-enter);
 }
 .oauth-item:hover {
   background: var(--field-hover);
@@ -856,9 +3436,14 @@ input[type='number']::-webkit-inner-spin-button {
   transform: scale(0.99);
   background: var(--field-focus);
 }
+.oauth-item:focus-visible {
+  outline: none;
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 .oauth-item:disabled {
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 .oauth-ico {
   flex: none;
@@ -884,165 +3469,219 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--text-4);
 }
 
-/* ── Signup step 2 — "Tell us about you" ────────────────────────────── */
-.step2-lede {
-  margin: 0 0 4px;
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-3);
-}
+/* ═══════════════════════════════════════════════════════════════════════
+   Below the PC split (<1280px) there is ONE fluid rule set — no per-device
+   bands. Everything uses the same fixed sizes as the PC pane; only the
+   width cap and gutters adapt via min()/flex.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1279px) {
+  .login-card {
+    --u: 16px;
+    width: min(680px, 100%);
+    margin: auto;
+    padding: 24px;
+  }
 
-.avatar-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 2px 0;
-}
-.avatar-plate {
-  position: relative;
-  width: 132px;
-  height: 132px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 50%;
-  border: 2px dashed var(--divider);
-  background: var(--field);
-}
-.avatar-plate > img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.avatar-ph {
-  width: 46px;
-  height: 46px;
-  color: var(--text-4);
-  opacity: 0.6;
-}
-.avatar-cta {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 12px;
-  border: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 62%);
-  cursor: pointer;
-}
-.avatar-cta > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background 150ms ease;
-}
-.avatar-cta:hover > span {
-  background: rgba(0, 0, 0, 0.75);
-}
-.avatar-x {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.65);
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-.avatar-x:hover {
-  background: rgba(0, 0, 0, 0.85);
-}
-.avatar-cap {
-  margin: 0;
-  text-align: center;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-.avatar-cap span {
-  display: block;
-  margin-top: 2px;
-  font-size: 12.5px;
-  font-weight: 400;
-  color: var(--text-4);
-}
+  .login-card[data-wide='true'] {
+    width: min(680px, 100%);
+  }
 
-/* Collapsible optional work block — calm, hairline-separated, no heavy plate. */
-.work-box {
-  border-top: 1px solid var(--hairline);
-  border-radius: 0;
-  background: none;
-  margin-top: 4px;
-}
-.work-box summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 2px;
-  cursor: pointer;
-  list-style: none;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-4);
-}
-.work-box summary::-webkit-details-marker {
-  display: none;
-}
-.work-box summary em {
-  margin-left: 8px;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--text-4);
-}
-.work-box summary svg {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  color: var(--text-4);
-  transition: transform 180ms var(--ease-enter);
-}
-.work-box[open] summary svg {
-  transform: rotate(180deg);
-}
-.work-body {
-  display: grid;
-  gap: 12px;
-  padding: 2px 2px 6px;
-}
-@media (min-width: 560px) {
-  .work-body {
-    grid-template-columns: 1fr 1fr;
+  .login-card .tb-heading {
+    font-size: 40px;
+    letter-spacing: -0.032em;
+    line-height: 1.1;
+  }
+
+  .login-card .tb-sub {
+    font-size: 16.5px;
+  }
+
+  .login-head {
+    margin-bottom: 0.4em;
+  }
+
+  /* Fields and buttons share the PC plate size at every width. */
+  .login-card input,
+  .login-card select {
+    height: 58px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
+
+  .login-card button[type='submit'] {
+    height: 58px;
+    border-radius: 16px;
+  }
+
+  /* OAuth rows — same plate size as the fields at every width. */
+  .oauth-list {
+    gap: 12px;
+  }
+  .oauth-item {
+    height: 58px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
+
+  .signup-fields {
+    margin-top: 1.6em;
+    display: grid;
+    gap: 18px;
+  }
+
+  .no-account-slot {
+    height: auto;
+    min-height: 26px;
+    margin-top: -6px;
+    padding: 0 4px;
+  }
+
+  .login-terms {
+    margin-top: 1.9em;
+    padding-top: 1.6em;
   }
 }
 
-/* Date of birth — one grouped row of three selects (Instagram sign-up style). */
+/* Keep the login fan composition identical at every desktop width:
+   it scales down proportionally instead of shifting or clipping. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .login-page:has(.mode-login) .story-fan { transform: translateY(-50%) scale(0.52); }
+  .login-page:has(.mode-login) .pc-side { width: clamp(220px, 18vw, 270px); }
+}
+
+@media (min-width: 1440px) and (max-width: 1599px) {
+  .login-page:has(.mode-login) .story-fan { transform: translateY(-50%) scale(0.62); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Final premium polish — depth, glow and micro-interactions.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Primary actions: flat accent fill, lift on hover — depth from NEUTRAL
+   shadows only. No gradients, no coloured glows (per design rule). */
+.login-card button[type='submit']:not(:disabled),
+.primary-btn:not(:disabled),
+.signup-submit:not(:disabled) {
+  background-image: none;
+  background-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.login-card button[type='submit']:disabled,
+.primary-btn:disabled,
+.signup-submit:disabled {
+  background-image: none;
+  box-shadow: none;
+  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.login-card button[type='submit']:hover:not(:disabled),
+.primary-btn:hover:not(:disabled),
+.signup-submit:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.login-card button[type='submit']:active:not(:disabled),
+.primary-btn:active:not(:disabled),
+.signup-submit:active:not(:disabled) {
+  transform: translateY(0);
+  background-color: var(--accent-press);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Inputs: smooth focus ring. */
+.login-card input,
+.login-card select,
+.login-card textarea {
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+/* Side feature cards: richer depth. */
+.fan-card,
+.pc-side .rail-card,
+.scroll-rail .rail-card {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Footer links: gentle hover. */
+.legal-bar a,
+.legal-bar button {
+  transition: color 0.2s ease;
+}
+
+.legal-bar a:hover,
+.legal-bar button:hover {
+  color: var(--fg);
+}
+
+/* Dark scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* ═══════════════ Mobile & small screens: compact everything ═══════════════ */
+@media (max-width: 639px) {
+  .login-card {
+    --u: 12.5px;
+    padding: 1.15em 1.1em 1.5em;
+  }
+
+  .tb-heading {
+    font-size: 1.72em;
+    letter-spacing: -0.026em;
+  }
+
+  .login-head { margin-bottom: 0.6em; }
+
+  .login-card input,
+  .login-card select,
+  .login-card textarea {
+    height: 44px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+
+  .login-card button[type='submit'],
+  .primary-btn,
+  .signup-submit {
+    height: 46px;
+    font-size: 14px;
+    border-radius: 15px;
+  }
+
+  .oauth-item { height: 46px; font-size: 14px; border-radius: 15px; padding: 0 14px; }
+  .oauth-ico, .oauth-ico svg { width: 20px; height: 20px; }
+  .create-pill { height: 48px; font-size: 14px; }
+  .wizard-rail { margin-bottom: 1em; }
+  .legal-bar { gap: 0.9em 1.2em; font-size: 12.5px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Additions for current markup the photo-era sheet never had.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Date of birth — three selects composing one ISO value, painted like the
+   card's own 58px plates. The chevron is drawn, not the native one. */
 .dob-group {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 .dob-cell {
   position: relative;
@@ -1051,949 +3690,236 @@ input[type='number']::-webkit-inner-spin-button {
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
-  height: 50px;
-  padding: 0 30px 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  height: 58px;
+  padding: 0 34px 0 18px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
   background: var(--field);
   color: var(--fg);
   font: inherit;
   font-size: 15px;
   cursor: pointer;
   outline: none;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
 }
 .dob-cell select:hover {
   background: var(--field-hover);
 }
 .dob-cell select:focus {
-  border-color: var(--accent-hover);
   background: var(--field-focus);
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .dob-cell select:invalid,
 .dob-cell select.placeholder {
   color: var(--placeholder);
 }
 .dob-cell select option {
-  background: var(--card);
-  color: var(--fg);
+  background: #14161a;
+  color: #ffffff;
 }
 .dob-cell svg {
   pointer-events: none;
   position: absolute;
   top: 50%;
-  right: 10px;
+  right: 12px;
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
   color: var(--text-4);
 }
-
-/* ── No-account notice — reserved-height line under the email field ──── */
-.no-account-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  margin-top: 10px;
-}
-.no-account-slot:empty {
-  display: none;
-}
-.no-account-note {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--danger-text);
-  animation: fade-in 180ms var(--ease-enter) both;
-}
-.no-account-note button {
-  border: 0;
-  padding: 0;
-  background: none;
-  font: inherit;
-  font-weight: 800;
-  color: var(--danger-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.no-account-note button:hover {
-  color: var(--danger);
+@media (max-width: 639px) {
+  .dob-group {
+    gap: 8px;
+  }
+  .dob-cell select {
+    height: 44px;
+    font-size: 14px;
+    border-radius: 14px;
+    padding: 0 28px 0 12px;
+  }
 }
 
-/* Inline error/success line — replaces toasts on the login screens. */
-.form-notice {
-  margin-top: 12px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  animation: fade-in 180ms var(--ease-enter) both;
-}
-.form-notice-error {
-  color: var(--danger-text);
-}
-.form-notice-success {
-  color: var(--success-text);
-}
-
-/* ── Signup field group ─────────────────────────────────────────────── */
-.signup-fields {
-  display: grid;
-  gap: 16px;
-  margin-top: 4px;
-}
-
-/* Signup reads as onboarding: a left-aligned heading stack rather than the
-   centered login title. The wizard caption above it is the kicker. */
-.mode-signup .tb-heading,
-.mode-signup .tb-sub {
-  text-align: left;
-}
-.mode-signup .login-head {
+/* "OR CONTINUE WITH" divider — sits in the card's 20–24px rhythm between
+   the primary action and the OAuth stack. Login entry only; the signup
+   wizard keeps its tighter rhythm. */
+.mode-login .or-divider {
+  gap: 14px;
+  margin-top: 24px;
   margin-bottom: 20px;
 }
-.step-subhead {
-  margin: 0 0 4px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-3);
-  text-align: left;
-}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Toast — frosted pill floating near the bottom.
-   ═══════════════════════════════════════════════════════════════════════ */
-.tb-toast {
-  position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  translate: -50% 0;
-  width: fit-content;
-  max-width: min(420px, calc(100vw - 32px));
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 13px 18px;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
-  background: var(--glass-2);
-  box-shadow: var(--shadow-pop);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  font-size: 15px;
-  color: var(--fg);
-  will-change: transform, opacity;
-}
-.tb-toast--success { border-color: color-mix(in srgb, var(--success) 40%, transparent); }
-.tb-toast--success > span:first-child { color: var(--success-text); }
-.tb-toast--error { border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
-.tb-toast--error > span:first-child { color: var(--danger-text); }
-.tb-toast--info > span:first-child { color: var(--accent-text); }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Legal bar — muted link row over a language/copyright row, in the flow.
-   ═══════════════════════════════════════════════════════════════════════ */
-.legal-bar {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding-top: 22px;
-  font-size: 12.5px;
-  color: var(--text-4);
-  user-select: none;
-}
-.legal-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: clamp(12px, 2vw, 22px);
-}
-.legal-links button,
-.legal-links a {
-  background: none;
-  border: 0;
-  padding: 2px 0;
-  font: inherit;
-  color: var(--text-4);
-  text-decoration: none;
-  transition: color 150ms ease;
-}
-.legal-links button:hover,
-.legal-links a:hover {
-  color: var(--text-2);
-}
-.legal-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Keyframes — only what the app actually animates.
-   ═══════════════════════════════════════════════════════════════════════ */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-  body,
-  body * {
-    transition-duration: 0s;
-  }
-}
-
-/* ── Small screens ──────────────────────────────────────────────────── */
-@media (max-width: 400px) {
-  .login-card {
-    width: 100%;
-  }
-  .tb-heading {
-    font-size: 23px;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Side showcase — the restored rich collage + scrolling feed rails that
-   flank the auth card on wide screens (≥1280px), restyled to the Apple
-   language: 14–20px rounded plates, 1px var(--hairline) rings,
-   var(--shadow-card) depth, glass chips with saturate(180%) blur(20px),
-   and accent blue reserved for interactive-looking pills (Follow, play).
-   Decorative: pointer-events none, aria-hidden. Widths clamp between the
-   centered card and the viewport edges so nothing overlaps at 1280–1366.
-   ═══════════════════════════════════════════════════════════════════════ */
-.sc-hero,
-.sc-side {
+/* The on-canvas wordmark — two ink cuts, one shown per scheme. */
+.brand-mark {
   display: none;
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1;
-  pointer-events: none;
+}
+:root[data-theme="light"] .brand-mark:first-child {
+  display: block;
+}
+:root[data-theme="dark"] .brand-mark:last-child {
+  display: block;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LIGHT MODE — the same photograph under a lifted scrim, the same glass
+   architecture poured white: dark ink, black-alpha washes, hairlines and
+   hover mirrors, identical blues. Specificity is deliberately one
+   attribute above every era rule, so these win at all widths.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Backdrop — wash out toward daylight; the photo still reads through. */
+:root[data-theme="light"] .login-page::before {
+  background:
+    radial-gradient(
+      circle 760px at 50% 40%,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(180deg, rgba(244, 247, 250, 0.16) 0%, rgba(233, 238, 245, 0.36) 100%),
+    url('/background.jpg') center / cover no-repeat;
+  filter: saturate(1.06) brightness(1.02);
+}
+
+/* The form plate — white glass; light comes from above, so the inset
+   highlight is bright and the pooling shadow is soft and cool. */
+:root[data-theme="light"] .login-card {
+  border-color: rgba(18, 19, 22, 0.08);
+  box-shadow:
+    0 28px 90px rgba(22, 28, 40, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 70px rgba(120, 140, 170, 0.12);
+}
+
+/* Centered card title — the desktop block pins it to #ffffff for the dark
+   plate; light mode reads the token instead. */
+:root[data-theme="light"] .login-page .login-card .tb-heading {
+  -webkit-text-fill-color: var(--fg);
+  color: var(--fg);
+}
+
+/* Floating sheets / banners. */
+:root[data-theme="light"] .glass,
+:root[data-theme="light"] .glass-soft {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18px 36px -12px rgba(22, 28, 40, 0.22),
+    0 1px 3px rgba(22, 28, 40, 0.08);
+}
+:root[data-theme="light"] .glass::before,
+:root[data-theme="light"] .glass-soft::before,
+:root[data-theme="light"] .sheen::before {
+  background: linear-gradient(90deg, transparent, rgba(18, 19, 22, 0.1), transparent);
+}
+
+/* Divider-list ("more ways") and muted link literals. */
+:root[data-theme="light"] .more-ways-btn:hover {
+  color: var(--fg);
+}
+:root[data-theme="light"] .mwo-change,
+:root[data-theme="light"] .mwo-line-action,
+:root[data-theme="light"] .mwo-spin,
+:root[data-theme="light"] .ms-chip {
+  color: #00509f;
+}
+:root[data-theme="light"] .mwo-change:hover,
+:root[data-theme="light"] .mwo-line:hover:not(:disabled) .mwo-line-action {
+  color: #003f7e;
+}
+:root[data-theme="light"] .mwo-list,
+:root[data-theme="light"] .mwo-line {
+  border-color: rgba(18, 19, 22, 0.1);
+}
+:root[data-theme="light"] .mwo-line:hover:not(:disabled) {
+  background: rgba(18, 19, 22, 0.04);
+}
+:root[data-theme="light"] .ms-chip {
+  border-color: rgba(0, 100, 200, 0.3);
+  background: rgba(0, 100, 200, 0.1);
+}
+
+/* Native select popups want an opaque menu. */
+:root[data-theme="light"] .dob-cell select option {
+  background: #ffffff;
+  color: #17171a;
+}
+
+/* Side art — the charcoal plates flip to white; photo overlays (story
+   bars, bubbles-on-photos) stay light-on-image in both schemes. */
+:root[data-theme="light"] .rail-card {
+  background: #ffffff;
+  border-color: rgba(18, 19, 22, 0.08);
+  box-shadow: 0 18px 40px -24px rgba(22, 28, 40, 0.45);
+}
+:root[data-theme="light"] .rail-post,
+:root[data-theme="light"] .rail-chat,
+:root[data-theme="light"] .rail-sugg {
+  background: #ffffff;
+}
+:root[data-theme="light"] .bubble--in {
+  color: #2c2f36;
+}
+:root[data-theme="light"] .sugg-see {
+  color: #00509f;
+}
+:root[data-theme="light"] .rail-sub--on {
+  color: #14833f;
+}
+:root[data-theme="light"] .connect-btn--on {
+  background: rgba(18, 19, 22, 0.06);
+  border-color: rgba(18, 19, 22, 0.16);
+  color: rgba(18, 19, 22, 0.62);
+}
+:root[data-theme="light"] .fan-card,
+:root[data-theme="light"] .pc-side .rail-card,
+:root[data-theme="light"] .scroll-rail .rail-card {
+  box-shadow: 0 18px 44px rgba(22, 28, 40, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Scrollbars — white-alpha thumbs vanish on a daylight page. */
+:root[data-theme="light"] * {
+  scrollbar-color: rgba(18, 19, 22, 0.2) transparent;
+}
+:root[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(18, 19, 22, 0.2);
+}
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(18, 19, 22, 0.32);
+}
+
+/* Footer — the split-era sheet pinned .legal-bar to the viewport bottom
+   (left-pane furniture). With the centered card the OAuth stack makes the
+   plate taller than the viewport, and a fixed bar cuts through it. Put it
+   back in flow: pinned to the bottom while the card fits, below the card
+   when it scrolls. */
 @media (min-width: 1280px) {
-  .sc-hero {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    left: clamp(24px, 3.2vw, 64px);
-    width: clamp(280px, 23.5vw, 360px);
-  }
-  .sc-side {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    right: clamp(24px, 3.2vw, 64px);
-    width: clamp(296px, 25.5vw, 400px);
-    height: min(86vh, 820px);
+  .login-page .legal-bar {
+    position: static;
+    translate: none;
+    left: auto;
+    width: 100%;
+    max-width: none;
+    padding-top: 18px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    white-space: normal;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--text-4);
   }
 }
 
-/* ── Left: tagline + staggered portrait plates + mini feed post ──────── */
-.sc-tagline {
-  margin: 0;
-  font-size: clamp(22px, 1.9vw, 28px);
-  font-weight: 700;
-  letter-spacing: -0.022em;
-  line-height: 1.15;
-  color: var(--fg);
+/* Phones get the form and nothing else — the fixed wordmark would sit on
+   top of the wizard's Back row. */
+@media (max-width: 640px) {
+  .page-brand {
+    display: none;
+  }
 }
 
-.sc-collage {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding-top: 8px;
-  margin-bottom: 205px; /* reserve the mini-post overhang */
-}
-.sc-photo {
-  position: relative;
-  margin: 0;
-  flex: 1;
-  aspect-ratio: 9 / 17;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow-card);
-  background: var(--card);
-}
-.sc-photo > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.sc-photo--l { transform: rotate(-3deg) translateY(10px); z-index: 2; }
-.sc-photo--c { transform: rotate(1.5deg) translateY(-4px); z-index: 3; }
-.sc-photo--r { transform: rotate(4deg) translateY(16px); z-index: 1; }
-
-/* Glass location chip + Tirbeo compass badge */
-.sc-chip {
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 10px;
-  font-size: 10.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  max-width: calc(100% - 16px);
-  color: #fff;
-  background: var(--glass);
-  border: 1px solid rgb(255 255 255 / 14%);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-}
-.sc-chip span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.sc-chip svg { color: var(--accent-text); flex: none; }
-.sc-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #fff;
-  background: var(--glass);
-  border: 1px solid rgb(255 255 255 / 14%);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-}
-.sc-badge svg { color: var(--accent-text); }
-
-/* Mini feed-post card overlapping the collage — the app preview */
-.sc-mini-post {
-  position: absolute;
-  left: -4px;
-  bottom: -196px;
-  z-index: 5;
-  width: 80%;
-  margin: 0;
-  padding: 10px 12px 11px;
-  border-radius: 18px;
-  background: var(--glass-2);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  rotate: -1deg;
-}
-.mp-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.mp-id {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-.mp-user {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12.5px;
-  font-weight: 650;
-  color: var(--fg);
-  white-space: nowrap;
-}
-.mp-place {
-  font-size: 11px;
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mp-time {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text-4);
-  flex: none;
-}
-.mp-shot {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-}
-.mp-shot > img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-.mp-acts {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.mp-act {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-3);
-}
-.mp-act svg { color: var(--text-2); }
-.mp-act--on svg,
-.mp-act--on { color: var(--fg); }
-.mp-act--on svg { color: var(--danger); }
-.mp-cap {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.mp-cap b { color: var(--fg); font-weight: 650; margin-right: 5px; }
-
-/* ── Story ring avatar (shared atom) ──────────────────────────────────── */
-.sc-ring {
-  flex: none;
-  display: inline-block;
-  width: var(--ring-size, 28px);
-  height: var(--ring-size, 28px);
-  padding: 2px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-}
-.sc-ring img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--card);
-}
-.sc-mini-post .sc-ring { --ring-size: 32px; }
-.sc-mini-post .sc-ring img { border-color: var(--glass-2); }
-.sc-tick { width: 12px; height: 12px; flex: none; }
-
-/* ── Right column: story fan (login) ─────────────────────────────────── */
-.sc-fan {
-  position: relative;
-  flex: none;
-  height: 238px;
-}
-.fan {
-  position: absolute;
-  margin: 0;
-  width: 118px;
-  aspect-ratio: 9 / 16;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-}
-.fan > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.fan--l { left: 8%; top: 42px; transform: rotate(-7deg) scale(0.88); z-index: 1; }
-.fan--r { right: 8%; top: 42px; transform: rotate(7deg) scale(0.88); z-index: 1; }
-.fan--c {
-  left: 50%;
-  top: 0;
-  width: 132px;
-  transform: translateX(-50%);
-  z-index: 2;
-  box-shadow: var(--shadow-pop);
-  animation: fan-bob 7s ease-in-out infinite;
-}
-@keyframes fan-bob {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -8px; }
-}
-.fan-head {
-  position: absolute;
-  top: 16px;
-  left: 10px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  --ring-size: 26px;
-}
-.fan-head .sc-ring img { border-color: rgb(0 0 0 / 35%); }
-.fan-head .rc-user { color: #fff; text-shadow: 0 1px 6px rgb(0 0 0 / 55%); }
-.fan-foot {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-}
-.fan-reply {
-  flex: 1;
-  height: 26px;
-  border: 1.5px solid rgb(255 255 255 / 75%);
-  border-radius: 999px;
-  background: rgb(0 0 0 / 18%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* story progress bars (fan cards + rail story cards) */
-.rc-bars {
-  position: absolute;
-  top: 8px;
-  left: 10px;
-  right: 10px;
-  z-index: 3;
-  display: flex;
-  gap: 4px;
-}
-.rc-bars i {
-  flex: 1;
-  height: 3px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 32%);
-}
-.rc-bars i.on { background: #fff; }
-
-/* ── Right column: marquee rails ─────────────────────────────────────── */
-.sc-rail {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
-  mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
-}
-.sc-rails {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: 12px;
-}
-.sc-rails .sc-rail { width: 50%; }
-/* The signup rails are half the column — let the cards fill their rail so
-   text keeps room instead of ellipsizing to nothing. */
-.sc-rails .rc-post { width: 96%; }
-.sc-rails .rc-chat { width: 92%; margin-left: 0; }
-.sc-rails .rc-sugg { width: 98%; margin-left: 0; }
-.sc-rails .rc-photo { width: 84%; margin-left: 6%; }
-.sc-rails .rc-story { width: 78%; margin-left: 0; }
-.sc-rails .rc-reels { width: 76%; margin-left: 16%; }
-.sc-rails .rc-sugg .sc-follow { padding: 4px 9px; font-size: 10.5px; }
-.sc-rails .rc-sugg .rc-user { max-width: 96px; }
-.sc-rails .rc-sugg .rc-sub { max-width: 96px; }
-
-.sc-rail__track {
-  display: flex;
-  flex-direction: column;
-  will-change: transform;
-  animation: sc-rail-up 50s linear infinite;
-}
-.sc-rail__track[data-dir="down"] {
-  animation-name: sc-rail-down;
-}
-.sc-rail__seq {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding-bottom: 14px;
-}
-@keyframes sc-rail-up {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-50%); }
-}
-@keyframes sc-rail-down {
-  from { transform: translateY(-50%); }
-  to   { transform: translateY(0); }
-}
-
-/* ── Rail cards — six feed flavors on one plate recipe ───────────────── */
-.rc {
-  position: relative;
-  margin: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-}
-.rc-fill {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  height: auto;
-  object-fit: cover;
-}
-.rc-id {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.rc-user {
-  display: block;
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 130px;
-}
-.rc-user .sc-tick { display: inline-block; vertical-align: -1px; }
-.rc-sub {
-  font-size: 10.5px;
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.rc-sub--on { color: var(--success-text); }
-.rc-time {
-  margin-left: auto;
-  flex: none;
-  font-size: 10.5px;
-  color: var(--text-4);
-}
-
-/* gradient scrim strips over full-bleed photos */
-.rc-over {
-  position: absolute;
-  left: 0;
-  right: 0;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 22px 10px 10px;
-}
-.rc-over--top {
-  top: 0;
-  padding: 18px 10px 30px;
-  background: linear-gradient(180deg, rgb(0 0 0 / 45%), transparent);
-}
-.rc-over--bottom {
-  bottom: 0;
-  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 62%));
-}
-.rc-over .rc-user { color: #fff; }
-.rc-over .rc-sub { color: rgb(255 255 255 / 78%); }
-.rc-over .sc-ring img { border-color: rgb(0 0 0 / 35%); }
-
-/* photo card */
-.rc-photo { width: 68%; margin-left: 8%; }
-
-/* story card */
-.rc-story { width: 56%; margin-left: 4%; }
-
-/* reels card — accent play button */
-.rc-reels { width: 54%; margin-left: 32%; }
-.rc-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  color: var(--accent-fg);
-  background: var(--accent);
-  box-shadow: 0 8px 20px -6px rgb(0 0 0 / 45%);
-}
-.rc-likes {
-  margin-left: auto;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-}
-
-/* DM chat card */
-.rc-chat {
-  width: 84%;
-  margin-left: 4%;
-  padding: 10px 11px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.rc-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.rc-more { flex: none; margin-left: auto; color: var(--text-4); }
-.rc-bubble {
-  max-width: 86%;
-  padding: 6px 10px;
-  border-radius: 12px;
-  font-size: 11.5px;
-  line-height: 1.35;
-}
-.rc-bubble--in {
-  align-self: flex-start;
-  border-bottom-left-radius: 5px;
-  background: var(--surface-2);
-  color: var(--fg);
-}
-.rc-bubble--out {
-  align-self: flex-end;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border-bottom-right-radius: 5px;
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.rc-ticks { flex: none; opacity: 0.8; }
-.rc-typing {
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 4px;
-  padding: 9px 11px;
-}
-.rc-typing i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text-4);
-  animation: sc-typing 1.2s ease-in-out infinite;
-}
-.rc-typing i:nth-child(2) { animation-delay: 0.18s; }
-.rc-typing i:nth-child(3) { animation-delay: 0.36s; }
-@keyframes sc-typing {
-  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-2px); }
-}
-
-/* suggestion card — Follow pills */
-.rc-sugg {
-  width: 92%;
-  margin-left: 2%;
-  padding: 10px 11px 4px;
-}
-.rc-sugg-title {
-  padding: 0 2px 6px;
-  font-size: 10.5px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-4);
-}
-.rc-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 2px;
-  border-top: 1px solid var(--hairline);
-}
-.rc-row:first-of-type { border-top: 0; }
-.rc-sugg .sc-follow { padding: 5px 10px; font-size: 11px; }
-.rc-sugg .rc-user { max-width: 88px; }
-.rc-sugg .rc-sub { max-width: 88px; }
-
-/* feed post card */
-.rc-post {
-  width: 86%;
-  padding: 10px 11px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.rc-post .rc-img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 11;
-  height: auto;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid var(--hairline);
-}
-.rc-acts {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.rc-act { display: inline-flex; color: var(--text-2); }
-.rc-heart { color: var(--danger); }
-.rc-count {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-}
-.rc-cap {
-  margin: 0;
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: var(--text-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.rc-cap b { color: var(--fg); font-weight: 650; margin-right: 5px; }
-
-/* ── Right column (signup): mini profile + mini music grouped cards ──── */
-.sc-card {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  margin: 0;
-  flex: none;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow-card);
-}
-.sc-id {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-.sc-id strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13.5px;
-  font-weight: 650;
-  color: var(--fg);
-  white-space: nowrap;
-  overflow: hidden;
-}
-.sc-id small {
-  font-size: 11.5px;
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sc-avatar {
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  overflow: hidden;
-}
-.sc-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.sc-avatar--ring {
-  padding: 2.5px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-}
-.sc-avatar--ring img { border-radius: 50%; border: 2px solid var(--card); }
-.sc-art {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-}
-.sc-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.sc-follow {
-  flex: none;
-  padding: 6px 13px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--accent-fg);
-  background: var(--accent);
-}
-.sc-play {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  color: var(--accent-fg);
-  background: var(--accent);
-}
-.sc-progress {
-  display: block;
-  height: 3px;
-  margin-top: 4px;
-  border-radius: 999px;
-  background: var(--track);
-  overflow: hidden;
-}
-.sc-progress i {
-  display: block;
-  height: 100%;
-  width: 42%;
-  border-radius: inherit;
-  background: var(--accent);
-  animation: sc-music-run 12s linear infinite;
-}
-@keyframes sc-music-run {
-  from { width: 8%; }
-  to   { width: 94%; }
-}
-
-/* ── Login entry — the greeting is the hero ───────────────────────────
-   A very large, tight, left-aligned welcome over a quiet subline, then
-   the form. Reads like a real app's first screen, not a dialog. */
-.mode-login .tb-heading {
-  font-size: clamp(40px, 5vw, 54px);
-  font-weight: 800;
-  line-height: 1.03;
-  letter-spacing: -0.032em;
-  text-align: left;
-}
-.mode-login .tb-sub {
-  margin-top: 10px;
-  font-size: 16px;
-  text-align: left;
-}
-.mode-login .login-head {
-  margin-bottom: 34px;
+/* Phones: hide the fixed wordmark — the brand-mark ink-swap rules above
+   out-specify a bare `.page-brand`, so match their specificity here. */
+@media (max-width: 640px) {
+  :root[data-theme] .page-brand.brand-mark:first-child,
+  :root[data-theme] .page-brand.brand-mark:last-child {
+    display: none;
+  }
 }

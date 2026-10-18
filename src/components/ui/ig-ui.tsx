@@ -63,15 +63,15 @@ type ButtonSize = 'sm' | 'md' | 'lg';
  * and stepping to accent-press on tap — the .login-cta recipe.
  */
 const BUTTON_BASE =
-  'relative inline-flex w-full select-none items-center justify-center gap-2 ' +
-  'rounded-xl font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
-  'transition-[background-color,box-shadow,transform,opacity] duration-150 ' +
+  'relative inline-flex w-full select-none items-center justify-center gap-2 overflow-hidden ' +
+  'rounded-[18px] font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
+  'transition-[background-color,color,border-color,opacity,transform,box-shadow] duration-150 ' +
   'disabled:pointer-events-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
-  sm: 'h-10 px-4 text-[14px] gap-1.5',
-  md: 'h-[48px] px-5 text-[15px] gap-2',
-  lg: 'h-[52px] px-6 text-[16px] gap-2',
+  sm: 'h-12 px-4 text-[14px]',
+  md: 'h-12 px-5 text-[15px]',
+  lg: 'h-[56px] px-6 text-[15px]',
 };
 
 /** Primary — the one action fill: solid accent, white label, flat (no glow).
@@ -183,13 +183,10 @@ export function FormNotice({ notice }: { notice?: { msg: string; tone: 'error' |
  * minimum. Identical to myprofile's CONTROL.
  */
 const FIELD_LINE =
-  'w-full border border-border bg-field px-4 text-[16px] text-fg outline-none ' +
-  'placeholder:text-placeholder ' +
+  'w-full rounded-2xl border border-transparent bg-field px-4 text-[16px] text-fg ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ' +
-  'hover:bg-field-hover ' +
-  'focus:border-accent-hover focus:bg-field-focus ' +
-  'focus:shadow-[0_0_0_3px_var(--accent-soft-ring)] focus:outline-none ' +
-  'disabled:opacity-50';
+  'placeholder:text-placeholder hover:bg-field-hover ' +
+  'focus:border-[#0058b3] focus:bg-field-focus focus:shadow-[0_0_0_3px_rgba(0,100,200,0.22)]';
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
@@ -217,7 +214,7 @@ export const Field = React.forwardRef<HTMLInputElement, {
           id={fieldId}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-          className={cn(FIELD_LINE, 'h-[50px] rounded-xl', trailing && 'pr-12', error && '!border-danger', className)}
+          className={cn(FIELD_LINE, 'h-12', trailing && 'pr-12', error && '!border-danger', className)}
           {...inputProps}
         />
         {trailing ? (
@@ -342,7 +339,7 @@ export function SelectField({
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={cn(FIELD_LINE, 'h-12 rounded-full cursor-pointer appearance-none pr-11 [&>option]:bg-card')}
+          className={cn(FIELD_LINE, 'h-12 cursor-pointer appearance-none pr-11 [&>option]:bg-card')}
         >
           {options.map((o) => (
             <option key={o.value} value={o.value}>
@@ -350,7 +347,7 @@ export function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-4" />
+        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-[#8b909a]" />
       </div>
     </div>
   );
@@ -564,7 +561,7 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn('flex gap-1 rounded-full border border-border bg-surface p-1.5', className)}>
+    <div role="radiogroup" aria-label={label} className={cn('flex gap-1.5 rounded-2xl border border-border bg-field p-1.5', className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -575,11 +572,8 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'flex-1 rounded-full text-center font-semibold whitespace-nowrap h-9 text-[14px]',
-              'transition-all duration-150',
-              active
-                ? 'bg-accent-soft text-accent-text'
-                : 'bg-transparent text-muted hover:bg-hover hover:text-fg',
+              'flex-1 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors duration-150',
+              active ? 'bg-border-strong text-fg shadow-[0_1px_3px_rgba(0,0,0,0.4)]' : 'text-text-3 hover:bg-hover hover:text-fg',
             )}
           >
             {o.label}
@@ -613,7 +607,7 @@ export function Block({
 /** Grouped list — a hairline box, rows split by a fainter one. */
 export function Group({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
+    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card', className)}>
       {children}
     </div>
   );
@@ -649,8 +643,7 @@ export function Row({
       {chevron !== false && onClick ? <ChevronRight className="size-[22px] shrink-0 text-text-4" /> : null}
     </>
   );
-  const cls =
-    'flex min-h-[3.5rem] w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-hover active:bg-field-focus';
+  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-hover';
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>
@@ -673,7 +666,7 @@ export function CardToggle({
   onChange: (c: boolean) => void;
 }) {
   return (
-    <div className="flex min-h-[3.5rem] items-center gap-4 px-4 py-3.5">
+    <div className="flex items-center gap-3.5 px-4 py-3.5">
       <span className="min-w-0 flex-1">
         <span className="block text-[16px] leading-snug text-fg">{label}</span>
         {sub ? <span className="mt-1 block text-[14px] leading-snug text-text-3">{sub}</span> : null}
@@ -710,7 +703,8 @@ export const OAUTH: { id: OAuthProvider; name: string; fill: string; hover: stri
 
 /**
  * Full-width "Continue with…" rows — provider glyph on the left, label, and a
- * subtle chevron. Apple-styled: 13px radius, --field plate, hairline border.
+ * subtle chevron. Painted in the photo-era control style: 58px plate, 16px
+ * radius, --field fill, hairline border (see .oauth-list in index.css).
  * Stacked list, one per provider. Replaces the old tiny circular icon row.
  */
 export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
