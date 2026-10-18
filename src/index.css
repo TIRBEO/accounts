@@ -588,9 +588,9 @@ input[type='number']::-webkit-inner-spin-button {
       rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.32) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.58) 100%),
     url('/background.jpg') center / cover no-repeat;
-  filter: saturate(1.12) brightness(0.94);
+  filter: saturate(1.12) brightness(0.8);
 }
 
 
@@ -617,9 +617,7 @@ input[type='number']::-webkit-inner-spin-button {
   }
 }
 
-/* The form column — a glass plate over the photograph. The dark plate is what
-   makes the blur read as glass rather than as a grey wash: the content behind
-   tints it, but never lightens it. */
+/* The form column — no plate: the fields sit directly on the page. */
 .login-card {
   --u: min(
     clamp(13px, 0.45vw + 10.6px, 18px),
@@ -634,15 +632,6 @@ input[type='number']::-webkit-inner-spin-button {
   padding: 1.8em 1.5em 2.2em;
   font-size: var(--u);
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 24px;
-  background: var(--card);
-  box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 70px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
 }
 
 /* Wider frame for the settings-style screens (2FA, passkeys, callback). */
@@ -1476,8 +1465,7 @@ input[type='number']::-webkit-inner-spin-button {
     width: auto;
   }
 
-  /* The card stays a floating glass plate on the desktop split too — the form
-     pane is the photograph, not a surface. */
+  /* No plate on the desktop split either — plain column. */
   .login-card {
     --u: 15px;
     position: relative;
@@ -1489,12 +1477,6 @@ input[type='number']::-webkit-inner-spin-button {
     margin: 0;
     padding: 56px 48px;
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 24px;
-    background: var(--card);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
   }
 
   .login-card[data-wide='true'] {
@@ -1962,10 +1944,11 @@ input[type='number']::-webkit-inner-spin-button {
   }
 }
 
-/* ═══ Signup: scrolling photo rails · Login: fanned story cluster ═══ */
-.scroll-rail,
-.story-fan,
-.pc-side {
+/* ═══ Auth side art — two quiet columns of static cards (≥1280px) ═══
+   Nothing scrolls, overlaps or animates: a post + chat pair on login, a
+   suggestions + story pair on signup. Below 1280px the columns are hidden
+   and the page is just the form. */
+.sc-col {
   display: none;
 }
 
@@ -1983,423 +1966,114 @@ input[type='number']::-webkit-inner-spin-button {
     border-left: 0;
   }
 
-
-  /* ── Signup: two rails of mixed story/photo/post cards, scrolling ── */
-  .login-page:has(.mode-signup) .scroll-rail {
-    display: block;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    width: 25vw;
-    overflow: hidden;
-    z-index: 1;
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
-    mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
-  }
-
-  .scroll-rail--left { left: 0; }
-  .scroll-rail--right { right: 0; }
-
-  .scroll-rail .rail-card {
-    pointer-events: auto;
-  }
-
-  /* Premium ambient state: dimmed until hovered — then the rail pauses
-     and the card wakes to its true colors with a soft lift. */
-  .scroll-rail .rail-card {
-    opacity: 0.72;
-    filter: saturate(0.6) brightness(0.82);
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-    transition: opacity 0.35s ease, filter 0.35s ease;
-  }
-
-  .scroll-rail .rail-card:hover {
-    opacity: 1;
-    filter: none;
-  }
-
-  .scroll-rail .rail-card img {
-    border-radius: 14px;
-  }
-
-  .scroll-rail .rail-act:focus-visible,
-  .scroll-rail .connect-btn:focus-visible {
-    outline: 2px solid var(--accent-hover);
-    outline-offset: 2px;
-  }
-
-  /* varied card sizes so the rails read like a real feature mix */
-  .scroll-rail__track { align-items: flex-start; }
-  .rv-post { width: 100%; }
-  .rv-photo { width: 86%; margin-left: 6%; }
-  .rv-story { width: 68%; margin-left: 2%; }
-  .rv-reels { width: 70%; margin-left: 16%; }
-  .rv-chat { width: 92%; margin-left: 4%; }
-  .rv-sugg { width: 100%; margin-left: 2%; }
-
-  .scroll-rail .rail-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 2px 12px 10px;
-  }
-
-  .scroll-rail .rail-act {
-    display: inline-grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: none;
-    color: #aeb4bf;
-    cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease, scale 0.18s ease;
-  }
-
-  .scroll-rail .rail-act:hover {
-    color: var(--fg);
-    background: rgba(255, 255, 255, 0.08);
-    scale: 1.12;
-  }
-
-  .scroll-rail .rail-act--on {
-    color: #ff5a4e;
-  }
-
-  .scroll-rail .rail-count {
-    flex: 1;
-    font-size: 12.5px;
-    color: var(--text-4);
-  }
-
-  .scroll-rail .connect-btn {
-    border: 0;
-    padding: 6px 14px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #fff;
-    background: var(--accent);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.18s ease, scale 0.18s ease;
-  }
-
-  .scroll-rail .connect-btn:hover {
-    background: var(--accent-hover);
-    scale: 1.05;
-  }
-
-  .scroll-rail .connect-btn--on {
-    color: #aeb4bf;
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .scroll-rail__track {
+  .sc-col {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    will-change: transform;
-  }
-
-  .scroll-rail--left .scroll-rail__track { animation: rail-up 46s linear infinite; }
-  .scroll-rail--right .scroll-rail__track { animation: rail-down 52s linear infinite; }
-
-  @keyframes rail-up {
-    from { transform: translateY(0); }
-    to { transform: translateY(-50%); }
-  }
-
-  @keyframes rail-down {
-    from { transform: translateY(-50%); }
-    to { transform: translateY(0); }
-  }
-
-  .rail-strip {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 9px 11px;
-  }
-
-  .rail-photo-card {
-    position: relative;
-  }
-
-  .rail-strip--over {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 26px 12px 10px;
-    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72));
-  }
-
-  .rail-strip--over .rail-user {
-    color: #fff;
-  }
-
-  .rail-story-bars {
-    position: absolute;
-    top: 9px;
-    left: 11px;
-    right: 11px;
-    display: flex;
-    gap: 4px;
-  }
-
-  .rail-story-bars i {
-    flex: 1;
-    height: 3px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.35);
-  }
-
-  .rail-story-bars i.on { background: #fff; }
-
-  /* fan + post */
-  /* ── Login: story fan on the left, live-comments post on the right ── */
-  .login-page:has(.mode-login) .story-fan {
-    display: block;
-    position: fixed;
-    left: clamp(-24px, 0.1vw, 4px);
-    top: 50%;
-    transform: translateY(-50%) scale(0.85);
-    transform-origin: left center;
-    width: 640px;
-    height: 580px;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.95;
-  }
-
-  .login-page:has(.mode-login) .pc-side {
-    display: block;
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    right: clamp(16px, 3vw, 56px);
-    width: clamp(250px, 20vw, 370px);
+    width: min(340px, 21vw);
     z-index: 1;
     pointer-events: none;
-    opacity: 0.95;
   }
 
-  .pc-comments {
-    height: 120px;
-    overflow: hidden;
-    padding-top: 8px;
-    -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 80%, transparent);
-    mask-image: linear-gradient(180deg, transparent, #000 22%, #000 80%, transparent);
-  }
+  .sc-col--left { left: max(36px, 4.5vw); }
+  .sc-col--right { right: max(36px, 4.5vw); }
 
-  .pc-track {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    animation: pc-up 16s linear infinite;
-  }
-
-  .pc-track p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.45;
-    color: #aeb4bf;
-  }
-
-  .pc-track p b {
-    margin-right: 5px;
-    color: var(--fg);
-  }
-
-  @keyframes pc-up {
-    from { transform: translateY(0); }
-    to { transform: translateY(-50%); }
-  }
-
-  .fan-card {
-    position: absolute;
-    margin: 0;
-    width: 232px;
-    aspect-ratio: 9 / 16;
-    border-radius: 22px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-    background: #000;
-  }
-
-  .fan-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .fan-card--left { left: 0; top: 70px; transform: rotate(-8deg) scale(0.86); }
-  .fan-card--right { right: 0; top: 70px; transform: rotate(8deg) scale(0.86); }
-  .fan-card--center {
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    width: 276px;
-    z-index: 2;
-  }
-
-  .fan-bars {
-    position: absolute;
-    top: 10px;
-    left: 12px;
-    right: 12px;
-    display: flex;
-    gap: 4px;
-  }
-
-  .fan-bars i {
-    flex: 1;
-    height: 3px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  .fan-bars i.on { background: #fff; }
-
-  .fan-foot {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    color: #fff;
-  }
-
-  .fan-reply {
-    flex: 1;
-    height: 30px;
-    border: 1.5px solid rgba(255, 255, 255, 0.85);
-    border-radius: 999px;
-  }
-
-
-  .fan-love {
-    position: absolute;
-    left: 22px;
-    top: 240px;
-    z-index: 3;
-    color: #ff2e63;
-  }
-
-
-
-
-  @keyframes fanbob {
-    0%, 100% { translate: 0 0; }
-    50% { translate: 0 -10px; }
-  }
+  /* ── Card anatomy (shared by all four cards) ── */
   .rail-card {
     position: relative;
     margin: 0;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #000;
+    padding: 14px;
+    border-radius: 22px;
   }
 
   .rail-photo {
     display: block;
     width: 100%;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 4 / 4.2;
     object-fit: cover;
+    border-radius: 14px;
+    margin: 12px 0;
   }
 
-  /* ── Feed-style rail cards: posts, DM chats, stories ── */
-  .rail-post,
-  .rail-chat {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    background: rgba(18, 20, 24, 0.85);
-  }
-
-  .rail-post .rail-photo {
-    aspect-ratio: 4 / 3;
-    border-radius: 12px;
+  .rail-story .rail-photo {
+    aspect-ratio: 3 / 3.8;
+    margin-bottom: 12px;
   }
 
   .rail-head {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
   }
 
   .rail-ring {
     flex: none;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    padding: 2px;
-    background: linear-gradient(135deg, #0058b3, #0064c8 60%, #a9cdf5);
+    display: inline-flex;
   }
 
   .rail-ring img {
-    display: block;
     width: 100%;
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #12141a;
+    border: 2.5px solid var(--card);
   }
 
   .rail-head-txt {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    gap: 2px;
   }
 
   .rail-user {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
-    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .rail-tick {
     width: 12px;
     height: 12px;
+    flex: none;
   }
 
   .rail-sub {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .rail-sub--on {
-    color: #35d07a;
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .rail-time {
     margin-left: auto;
+    flex: none;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-3);
   }
 
   .rail-actions {
     display: flex;
     align-items: center;
-    gap: 14px;
-    color: rgba(255, 255, 255, 0.75);
+    gap: 12px;
+    margin-top: 2px;
   }
 
   .rail-act {
     display: inline-flex;
+    color: var(--text-3);
   }
 
   .rail-act--on {
@@ -2410,14 +2084,14 @@ input[type='number']::-webkit-inner-spin-button {
     margin-left: auto;
     font-size: 11.5px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--text-3);
   }
 
   .rail-caption {
-    margin: 0;
+    margin: 8px 0 0;
     font-size: 12px;
     line-height: 1.45;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--text-3);
   }
 
   .rail-caption b {
@@ -2426,10 +2100,12 @@ input[type='number']::-webkit-inner-spin-button {
     margin-right: 5px;
   }
 
+  /* DM chat */
   .chat-body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-top: 12px;
   }
 
   .bubble {
@@ -2442,8 +2118,6 @@ input[type='number']::-webkit-inner-spin-button {
 
   .bubble--in {
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.85);
     border-bottom-left-radius: 5px;
   }
 
@@ -2452,7 +2126,6 @@ input[type='number']::-webkit-inner-spin-button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #0064c8;
     color: #fff;
     border-bottom-right-radius: 5px;
   }
@@ -2462,252 +2135,19 @@ input[type='number']::-webkit-inner-spin-button {
     opacity: 0.85;
   }
 
-  .bubble--typing {
-    display: inline-flex;
-    gap: 4px;
-    padding: 11px 13px;
-  }
-
-  .bubble--typing i {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.55);
-    animation: chat-typing 1.2s ease-in-out infinite;
-  }
-
-  .bubble--typing i:nth-child(2) {
-    animation-delay: 0.18s;
-  }
-
-  .bubble--typing i:nth-child(3) {
-    animation-delay: 0.36s;
-  }
-
-  .rail-story .rail-photo,
-  .rail-reels .rail-photo {
-    aspect-ratio: 3 / 4;
-  }
-
-  /* story viewer chrome: segmented progress, header, reply bar */
-  .rail-story::before,
-  .rail-reels::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 26%, transparent 62%, rgba(0, 0, 0, 0.62) 100%);
-    pointer-events: none;
-  }
-
-  .story-bars {
-    position: absolute;
-    top: 10px;
-    left: 12px;
-    right: 12px;
-    z-index: 3;
-    display: flex;
-    gap: 4px;
-  }
-
-  .story-bars i {
-    flex: 1;
-    height: 2.5px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.32);
-  }
-
-  .story-bars i.on {
-    background: #fff;
-  }
-
-  .story-head {
-    position: absolute;
-    top: 24px;
-    left: 12px;
-    right: 12px;
-    z-index: 3;
+  /* Suggestions + story strip */
+  .sugg-row {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
+    margin-top: 12px;
   }
 
-  .story-head .rail-user,
-  .story-head .rail-sub {
-    color: #fff;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-  }
-
-  .story-head .rail-sub {
-    opacity: 0.75;
-  }
-
-  .story-more-ic {
-    margin-left: auto;
-    color: #fff;
-    opacity: 0.85;
-  }
-
-  .story-cta {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    right: 12px;
-    z-index: 3;
+  .rail-strip {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 9px 14px;
-    border-radius: 999px;
-    background: rgba(35, 36, 39, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-  }
-
-  .story-cta svg {
-    flex: none;
-    color: #a9cdf5;
-  }
-
-  .story-ring {
-    position: static;
-    flex: none;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    padding: 2px;
-    background: conic-gradient(from 210deg, #0058b3, #0064c8, #a9cdf5, #004f9e, #0058b3);
-  }
-
-  .story-ring img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #12141a;
-  }
-
-  .rail-reels .reels-live {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 3;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    border-radius: 8px;
-    background: #d61f3f;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .reels-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 3;
-    transform: translate(-50%, -50%);
-    display: grid;
-    place-items: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: rgba(18, 20, 24, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    color: #fff;
-    padding-left: 3px;
-  }
-
-  .reels-rail {
-    position: absolute;
-    right: 10px;
-    bottom: 74px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 13px;
-    color: #fff;
-  }
-
-  .reels-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
-  }
-
-  .reels-btn b {
-    font-size: 10px;
-    font-weight: 700;
-  }
-
-  .reels-btn--on {
-    color: #ff7a45;
-  }
-
-  .reels-foot {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    right: 44px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .reels-foot .rail-user {
-    font-size: 12.5px;
-    color: #fff;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-  }
-
-  .reels-avatar {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1.5px solid rgba(255, 255, 255, 0.7);
-  }
-
-  .reels-cap {
-    margin: 0;
-    font-size: 11.5px;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-  }
-
-  .reels-music {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10.5px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  @keyframes chat-typing {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-    30% { transform: translateY(-3px); opacity: 1; }
+    gap: 10px;
+    min-width: 0;
   }
 
   .login-page .login-card {
@@ -2747,7 +2187,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* ── Desktop form (≥1280) — ONE consistent scale for login + signup.
-   Glass plate, centered column, same rhythm as the tablet band. ── */
+   Centered column, no plate, same rhythm as the tablet band. ── */
 @media (min-width: 1280px) {
   .login-page .login-card,
   .login-page:has(.mode-signup) .login-card,
@@ -2759,12 +2199,6 @@ input[type='number']::-webkit-inner-spin-button {
     padding: 32px 28px;
     text-align: left;
     z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 24px;
-    background: var(--card);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 70px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
   }
 
   .login-page .login-card .tb-heading,
@@ -2809,7 +2243,6 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page .login-card input:focus {
     background: var(--field-focus);
     border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.20);
   }
 
   .login-page .login-card .PrimaryButton,
@@ -2851,7 +2284,6 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page .login-card .oauth-item:focus {
     background: var(--field-focus);
     border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(0, 100, 200, 0.20);
   }
   .login-page .login-card .oauth-ico,
   .login-page .login-card .oauth-ico svg { width: 24px; height: 24px; }
@@ -3177,11 +2609,6 @@ input[type='number']::-webkit-inner-spin-button {
     border: 1px solid rgba(255, 255, 255, 0.16);
     color: rgba(255, 255, 255, 0.75);
     box-shadow: none;
-  }
-
-  .reels-play {
-    background: rgba(35, 36, 39, 0.68);
-    border-color: rgba(255, 255, 255, 0.22);
   }
 
   .tb-place,
@@ -3542,15 +2969,11 @@ input[type='number']::-webkit-inner-spin-button {
   }
 }
 
-/* Keep the login fan composition identical at every desktop width:
-   it scales down proportionally instead of shifting or clipping. */
+/* The columns tighten (never clip) on narrower desktops. */
 @media (min-width: 1280px) and (max-width: 1439px) {
-  .login-page:has(.mode-login) .story-fan { transform: translateY(-50%) scale(0.52); }
-  .login-page:has(.mode-login) .pc-side { width: clamp(220px, 18vw, 270px); }
-}
-
-@media (min-width: 1440px) and (max-width: 1599px) {
-  .login-page:has(.mode-login) .story-fan { transform: translateY(-50%) scale(0.62); }
+  .sc-col { width: min(280px, 19vw); }
+  .sc-col--left { left: 24px; }
+  .sc-col--right { right: 24px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -3600,9 +3023,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* Side feature cards: richer depth. */
-.fan-card,
-.pc-side .rail-card,
-.scroll-rail .rail-card {
+.sc-col .rail-card {
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
@@ -3775,19 +3196,9 @@ input[type='number']::-webkit-inner-spin-button {
       rgba(255, 255, 255, 0.08) 0%,
       rgba(255, 255, 255, 0) 70%
     ),
-    linear-gradient(180deg, rgba(244, 247, 250, 0.16) 0%, rgba(233, 238, 245, 0.36) 100%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.62) 0%, rgba(238, 243, 249, 0.76) 100%),
     url('/background.jpg') center / cover no-repeat;
-  filter: saturate(1.06) brightness(1.02);
-}
-
-/* The form plate — white glass; light comes from above, so the inset
-   highlight is bright and the pooling shadow is soft and cool. */
-:root[data-theme="light"] .login-card {
-  border-color: rgba(18, 19, 22, 0.08);
-  box-shadow:
-    0 28px 90px rgba(22, 28, 40, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 0 70px rgba(120, 140, 170, 0.12);
+  filter: saturate(1.06) brightness(1.12);
 }
 
 /* Centered card title — the desktop block pins it to #ffffff for the dark
@@ -3869,9 +3280,7 @@ input[type='number']::-webkit-inner-spin-button {
   border-color: rgba(18, 19, 22, 0.16);
   color: rgba(18, 19, 22, 0.62);
 }
-:root[data-theme="light"] .fan-card,
-:root[data-theme="light"] .pc-side .rail-card,
-:root[data-theme="light"] .scroll-rail .rail-card {
+:root[data-theme="light"] .sc-col .rail-card {
   box-shadow: 0 18px 44px rgba(22, 28, 40, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
