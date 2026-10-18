@@ -849,19 +849,20 @@ input[type='number']::-webkit-inner-spin-button {
 .tb-toast--info > span:first-child { color: var(--accent); }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Legal bar — muted link row + language/copyright row. Below 1280 it is a
-   static footer at the end of the column (never overlapping the card);
-   the desktop queries pin it to the bottom of the art pane.
+   Legal bar — the tirbeo.com footer: © left, quiet links right, one
+   hairline above. Stacks centred on phones.
    ═══════════════════════════════════════════════════════════════════════ */
 .legal-bar {
   margin-top: auto;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px 24px;
   width: 100%;
-  padding-top: 18px;
-  font-size: 12.5px;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider);
+  font-size: 13px;
   color: var(--text-4);
   user-select: none;
 }
@@ -869,8 +870,7 @@ input[type='number']::-webkit-inner-spin-button {
 .legal-links {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  column-gap: clamp(12px, 2vw, 22px);
+  column-gap: 16px;
 }
 
 .legal-links button,

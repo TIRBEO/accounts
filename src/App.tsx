@@ -313,30 +313,23 @@ export default function App() {
       <main id="main-content" className="contents">
         {content}
       </main>
-      {/* Instagram-style footer: a muted link row over a language/copyright row. */}
+      {/* Same footer as tirbeo.com: © on the left, quiet links on the right,
+          over a single hairline. */}
       <footer className="legal-bar">
+        <p className="legal-meta">
+          <span>© 2026 Tirbeo</span>
+        </p>
         <nav className="legal-links" aria-label="Footer">
           <button type="button" onClick={() => setModalType('terms')}>
             Terms of Service
           </button>
-          <button type="button" onClick={() => setModalType('privacy')}>
+          <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer">
             Privacy Policy
-          </button>
-          <a href="https://tirbeo.com" target="_blank" rel="noreferrer">
-            About
           </a>
-          <a href="https://tirbeo.com/help" target="_blank" rel="noreferrer">
-            Help
-          </a>
-          <a href="https://tirbeo.com" target="_blank" rel="noreferrer">
-            Popular
+          <a href="https://tirbeo.com/accessibility" target="_blank" rel="noreferrer">
+            Accessibility Statement
           </a>
         </nav>
-        <p className="legal-meta">
-          <span>English</span>
-          <span aria-hidden="true">·</span>
-          <span>© 2026 Tirbeo</span>
-        </p>
       </footer>
       <TermsModal isOpen={!!modalType} type={modalType} onClose={() => setModalType(null)} />
       {toastNode}

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Field, PrimaryButton, OAuthRow, OrDivider } from '../../ui/ig-ui';
+import { Field, PrimaryButton, OAuthRow } from '../../ui/ig-ui';
 import { validateEmail } from '../../../lib/validations';
 
 export const SignupStep1: React.FC<{
@@ -70,14 +70,13 @@ export const SignupStep1: React.FC<{
 
   return (
     <form className="space-y-3 text-left" onSubmit={onSubmit} noValidate>
-      {/* Continue-with… OAuth, stacked full-width rows — the fastest path in. */}
+      {/* Continue-with… OAuth, then straight into the email form — no
+          divider competing for attention between the two. */}
       <OAuthRow disabled={isSubmitting} />
-
-      <OrDivider label="or sign up with email" />
 
       {/* Labeled fields — the main site's recipe: small semibold label
           above a solid rounded plate. */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Field
           type="text"
           label="First name"
