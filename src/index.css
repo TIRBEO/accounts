@@ -654,6 +654,16 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--fg);
 }
 
+/* Wizard steps: title + subtitle sit left with real breathing room, and the
+   secondary line stays normal weight — the heading is the loud one. */
+.login-card:has(.wizard-rail) .login-head {
+  padding-left: 1em;
+}
+.login-card:has(.wizard-rail) .login-head .tb-heading,
+.login-card:has(.wizard-rail) .login-head .tb-sub {
+  text-align: left;
+}
+
 /* The form column — separated from the head by a soft gap. */
 .login-form {
   display: flex;
@@ -1167,7 +1177,7 @@ input[type='number']::-webkit-inner-spin-button {
     color: var(--fg);
   }
 
-  .login-card .tb-sub { font-size: 15px; }
+  .login-card .tb-sub { font-size: 17px; }
 
   .login-head { margin-bottom: 12px; }
 
@@ -1542,7 +1552,7 @@ input[type='number']::-webkit-inner-spin-button {
   }
 
   .login-card .tb-sub {
-    font-size: 15.5px;
+    font-size: 17px;
   }
 
   .login-head {
