@@ -2143,10 +2143,10 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page:has(.mode-signup) .login-card,
   .login-page:has(.mode-login) .login-card {
     --u: 16px;
-    width: min(680px, 92%);
-    max-width: 680px;
+    width: min(780px, 92%);
+    max-width: 780px;
     margin: 0 auto;
-    padding: 32px 28px;
+    padding: 40px 36px;
     text-align: left;
     z-index: 2;
   }
@@ -2854,13 +2854,13 @@ input[type='number']::-webkit-inner-spin-button {
 @media (max-width: 1279px) {
   .login-card {
     --u: 16px;
-    width: min(680px, 100%);
+    width: min(720px, 100%);
     margin: auto;
-    padding: 24px;
+    padding: 28px;
   }
 
   .login-card[data-wide='true'] {
-    width: min(680px, 100%);
+    width: min(720px, 100%);
   }
 
   .login-card .tb-heading {
