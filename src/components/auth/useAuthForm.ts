@@ -113,17 +113,12 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const limitsSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLimitsSyncRef = useRef<number>(0);
 
-  const fetchLimits = useCallback(async (forceInit = false) => {
+  const fetchLimits = useCallback(async () => {
     try {
       const base = API_BASE_URL;
-      if (forceInit) {
-        await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ action: 'init' }),
-        }).catch((err) => trackError('limits:init', err));
-      }
+      // Read only. Seeding the server's limit rows is an admin concern — the
+      // old POST {action:'init'} from here was rejected as unauthenticated for
+      // every guest, so it only ever added a 401 to the logs.
       const res = await fetch(`${base.replace(/\/$/, '')}/api/auth/limits`, { credentials: 'include' });
       if (res.status === 401) return;
       if (res.ok) {
@@ -142,7 +137,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     const now = Date.now();
     if (now - lastLimitsSyncRef.current < LIMITS_SYNC_MS) return;
     lastLimitsSyncRef.current = now;
-    fetchLimits(true);
+    fetchLimits();
     limitsSyncTimerRef.current = setTimeout(() => { lastLimitsSyncRef.current = 0; }, LIMITS_SYNC_MS);
   }, [fetchLimits]);
 
