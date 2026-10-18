@@ -737,7 +737,7 @@ export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
 /** Divider with a centred label. */
 export function OrDivider({ label = 'or' }: { label?: string }) {
   return (
-    <div className="flex items-center gap-3" role="separator">
+    <div className="or-divider flex items-center gap-3" role="separator">
       <span className="h-px flex-1 bg-divider" />
       <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-4">
         {label}
