@@ -1655,3 +1655,22 @@ input[type='number']::-webkit-inner-spin-button {
   border-radius: 0;
   background: none;
 }
+
+/* ── Login entry — the greeting is the hero ───────────────────────────
+   A very large, tight, left-aligned welcome over a quiet subline, then
+   the form. Reads like a real app's first screen, not a dialog. */
+.mode-login .tb-heading {
+  font-size: clamp(40px, 5vw, 54px);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.032em;
+  text-align: left;
+}
+.mode-login .tb-sub {
+  margin-top: 10px;
+  font-size: 16px;
+  text-align: left;
+}
+.mode-login .login-head {
+  margin-bottom: 34px;
+}

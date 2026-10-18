@@ -1057,7 +1057,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       onBack={canGoBack ? goBack : undefined}
       className={mode === 'signup' ? 'mode-signup' : 'mode-login'}
       title={mode === 'signup' ? signupCopy.title : isLoginEntry ? 'Welcome to Tirbeo' : undefined}
-      subtitle={mode === 'signup' ? signupCopy.sub : undefined}
+      subtitle={mode === 'signup' ? signupCopy.sub : isLoginEntry ? 'Sign in and see what everyone is sharing today.' : undefined}
       kicker={undefined}
       footer={
         <>

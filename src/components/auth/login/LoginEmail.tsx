@@ -86,11 +86,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
 
   return (
     <form onSubmit={onSubmit}>
-      <OAuthRow disabled={isSubmitting} />
-
       <div className="signup-fields">
-        <OrDivider label="or" />
-
         <div className="space-y-5 text-left">
           <Field
            
@@ -168,6 +164,9 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           More ways to sign in
         </button>
       </div>
+
+      <OrDivider label="or continue with" />
+      <OAuthRow disabled={isSubmitting} />
     </form>
   );
 };
