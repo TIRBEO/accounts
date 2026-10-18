@@ -417,8 +417,10 @@ select:-webkit-autofill {
 }
 .tb-sub {
   font-size: 0.98em;
-  line-height: 1.6;
-  color: var(--text-3);
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--fg);
   text-align: center;
   text-wrap: balance;
 }
