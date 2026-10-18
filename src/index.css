@@ -1923,7 +1923,7 @@ input[type='number']::-webkit-inner-spin-button {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    width: min(340px, 21vw);
+    width: min(280px, 18vw);
     z-index: 1;
     pointer-events: none;
   }
@@ -2143,10 +2143,10 @@ input[type='number']::-webkit-inner-spin-button {
   .login-page:has(.mode-signup) .login-card,
   .login-page:has(.mode-login) .login-card {
     --u: 16px;
-    width: min(780px, 92%);
-    max-width: 780px;
+    width: min(720px, 92%);
+    max-width: 720px;
     margin: 0 auto;
-    padding: 40px 36px;
+    padding: 36px 32px;
     text-align: left;
     z-index: 2;
   }
