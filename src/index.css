@@ -1321,8 +1321,15 @@ input[type='number']::-webkit-inner-spin-button {
   max-width: 100%;
   overflow-wrap: anywhere;
   color: var(--fg);
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 600;
+}
+
+/* Code boxes — deliberately big plates, overriding the 48px field rule. */
+.login-card .otp-box {
+  height: 64px;
+  border-radius: 14px;
+  font-size: 26px;
 }
 
 /* ── More ways to sign in — divider list, no boxes, website theme. ── */
@@ -1695,6 +1702,7 @@ input[type='number']::-webkit-inner-spin-button {
   }
 
   .oauth-item { height: 44px; font-size: 13px; border-radius: 12px; padding: 0 8px; gap: 6px; }
+  .login-card .otp-box { height: 50px; font-size: 20px; border-radius: 12px; }
   .create-pill { height: 48px; font-size: 14px; }
   .wizard-rail { margin-bottom: 1em; }
   .legal-bar { gap: 0.9em 1.2em; font-size: 12.5px; }

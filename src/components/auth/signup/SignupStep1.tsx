@@ -75,12 +75,12 @@ export const SignupStep1: React.FC<{
 
       <OrDivider label="or sign up with email" />
 
-      {/* Placeholder-only plates — same recipe as the login form, grouped. */}
+      {/* Labeled fields — the main site's recipe: small semibold label
+          above a solid rounded plate. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
           type="text"
-          placeholder="First name"
-          aria-label="First name"
+          label="First name"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           onBlur={() => handleBlur('firstName')}
@@ -90,8 +90,7 @@ export const SignupStep1: React.FC<{
         />
         <Field
           type="text"
-          placeholder="Last name"
-          aria-label="Last name"
+          label="Last name"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           onBlur={() => handleBlur('lastName')}
@@ -104,8 +103,7 @@ export const SignupStep1: React.FC<{
       {/* Email */}
       <Field
         type="email"
-        placeholder="Email"
-        aria-label="Email"
+        label="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         onBlur={() => handleBlur('email')}
@@ -118,8 +116,7 @@ export const SignupStep1: React.FC<{
       {/* Username */}
       <Field
         type="text"
-        placeholder="Username"
-        aria-label="Username"
+        label="Username"
         value={username}
         onChange={(e) => {
           const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');

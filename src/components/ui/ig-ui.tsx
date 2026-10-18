@@ -436,7 +436,7 @@ export function OtpBoxes({
   };
 
   return (
-    <div className="flex w-full justify-between gap-1.5" role="group" aria-label={label}>
+    <div className="flex w-full justify-between gap-2.5" role="group" aria-label={label}>
       {Array.from({ length }).map((_, i) => (
         <input
           key={i}
@@ -470,7 +470,7 @@ export function OtpBoxes({
             refs.current[Math.min(text.length, length - 1)]?.focus();
           }}
           className={cn(
-            'h-14 min-w-0 flex-1 rounded-2xl border border-transparent bg-field text-center text-[21px] font-semibold text-fg',
+            'otp-box h-14 min-w-0 flex-1 rounded-2xl border border-transparent bg-field text-center text-[21px] font-semibold text-fg',
             'transition-[border-color,background-color,box-shadow] duration-150',
             error
               ? 'border-danger bg-hover'

@@ -1225,13 +1225,19 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             isSubmitting={isSubmitting}
             setLoginStep={setLoginStep}
             onSubmit={handleLoginSubmit}
-            onForgot={() => {
+            onForgot={async () => {
+              /* An address with no account has nothing to recover — check
+                 before leaving the login screen, not after. */
+              if (!(await assertAccountExists())) return;
               setErrors({});
               setTouched({});
               setLoginNotice(null);
               setLoginStep('forgot');
             }}
-            onMoreOptions={() => {
+            onMoreOptions={async () => {
+              /* Same gate for the code / magic-link / reset list: a
+                 non-existent email never gets this far. */
+              if (!(await assertAccountExists())) return;
               setLoginNotice(null);
               setLoginStep('more-options');
             }}
