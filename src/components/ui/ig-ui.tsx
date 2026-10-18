@@ -74,7 +74,9 @@ const BUTTON_SIZE: Record<ButtonSize, string> = {
   lg: 'h-[52px] px-6 text-[16px] gap-2',
 };
 
-/** Primary — the one action fill: royal blue, white label, accent glow. */
+/** Primary — the one action fill: solid accent, white label, flat (no glow).
+    Disabled follows the iOS convention: a muted grey plate with a dimmed
+    label, never a darkened blue. */
 export function PrimaryButton({
   children,
   loading = false,
@@ -94,10 +96,10 @@ export function PrimaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'bg-accent text-accent-fg shadow-accent',
-        'hover:bg-accent-hover hover:-translate-y-px hover:shadow-accent-lg',
+        'bg-accent text-accent-fg shadow-[0_1px_2px_rgb(0_0_0/0.2)]',
+        'hover:bg-accent-hover',
         'active:bg-accent-press active:translate-y-0 active:scale-[0.995]',
-        'disabled:opacity-45 disabled:shadow-none disabled:translate-y-0',
+        'disabled:bg-btn-disabled-bg disabled:text-btn-disabled-fg disabled:shadow-none disabled:translate-y-0',
         className,
       )}
     >
@@ -701,32 +703,32 @@ export function CardToggle({
 /* ── OAuth ────────────────────────────────────────────────────────────── */
 
 export const OAUTH: { id: OAuthProvider; name: string; fill: string; hover: string; icon: ReactNode }[] = [
-  { id: 'google', name: 'Google', fill: '#4285F6', hover: '#3179E3', icon: <GoogleIcon className="size-[32px] w-[32px]" /> },
-  { id: 'github', name: 'GitHub', fill: '#24292F', hover: '#15191D', icon: <GitHubIcon className="size-[32px] w-[32px] text-fg" /> },
-  { id: 'discord', name: 'Discord', fill: '#5865F2', hover: '#4752C4', icon: <DiscordIcon className="size-[32px] w-[32px] text-[#5865F2]" /> },
+  { id: 'google', name: 'Google', fill: '#4285F6', hover: '#3179E3', icon: <GoogleIcon className="size-[22px]" /> },
+  { id: 'github', name: 'GitHub', fill: '#24292F', hover: '#15191D', icon: <GitHubIcon className="size-[22px] text-fg" /> },
+  { id: 'discord', name: 'Discord', fill: '#5865F2', hover: '#4752C4', icon: <DiscordIcon className="size-[22px] text-[#5865F2]" /> },
 ];
 
 /**
- * Bare brand icons in a row, separated by thin vertical dividers — no tiles, no
- * fills. Subtle hover plate only.
+ * Full-width "Continue with…" rows — provider glyph on the left, label, and a
+ * subtle chevron. Apple-styled: 13px radius, --field plate, hairline border.
+ * Stacked list, one per provider. Replaces the old tiny circular icon row.
  */
 export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
   return (
-    <div className="oauth-row">
-      {OAUTH.map((p, i) => (
-        <React.Fragment key={p.id}>
-          {i > 0 && <span aria-hidden className="oauth-sep" />}
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => startOAuth(p.id)}
-            aria-label={`Continue with ${p.name}`}
-            title={`Continue with ${p.name}`}
-            className="oauth-btn"
-          >
-            {p.icon}
-          </button>
-        </React.Fragment>
+    <div className="oauth-list">
+      {OAUTH.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          disabled={disabled}
+          onClick={() => startOAuth(p.id)}
+          aria-label={`Continue with ${p.name}`}
+          className="oauth-item"
+        >
+          <span className="oauth-ico" aria-hidden="true">{p.icon}</span>
+          <span className="oauth-label">Continue with {p.name}</span>
+          <ChevronRight className="oauth-chev size-[18px]" aria-hidden="true" />
+        </button>
       ))}
     </div>
   );

@@ -393,9 +393,13 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
         .then((res) => {
           if (res.ok && res.data?.exists) {
             setLoginProfile({ email, exists: true, photoUrl: res.data.photoUrl, name: res.data.name, hasRecoveryEmail: !!res.data.hasRecoveryEmail, recoveryEmail: res.data.recoveryEmail });
-          } else {
+          } else if (res.ok && res.data && res.data.exists === false) {
+            // A confirmed "no" from the server — this is authoritative and may
+            // gate the forgot/reset path.
             setLoginProfile({ email, exists: false });
           }
+          // else: the check could not run (network/5xx). Leave the profile as-is
+          // (fail OPEN) so a flaky check never locks a real user out.
         })
         .catch((err) => trackError('login:profile-prefetch', err));
     }, 350);

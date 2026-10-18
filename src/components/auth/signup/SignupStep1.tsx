@@ -69,13 +69,13 @@ export const SignupStep1: React.FC<{
   }
 
   return (
-    <form className="space-y-3 text-left" onSubmit={onSubmit}>
+    <form className="space-y-4 text-left" onSubmit={onSubmit} noValidate>
+      {/* Continue-with… OAuth, stacked full-width rows — the fastest path in. */}
       <OAuthRow disabled={isSubmitting} />
 
-      <div className="signup-fields">
-      <OrDivider label="or" />
+      <OrDivider label="or sign up with email" />
 
-      {/* Placeholder-only plates — same recipe as the login form. */}
+      {/* Placeholder-only plates — same recipe as the login form, grouped. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
           type="text"
@@ -104,7 +104,6 @@ export const SignupStep1: React.FC<{
       {/* Email */}
       <Field
         type="email"
-       
         placeholder="Email"
         aria-label="Email"
         value={email}
@@ -119,7 +118,6 @@ export const SignupStep1: React.FC<{
       {/* Username */}
       <Field
         type="text"
-       
         placeholder="Username"
         aria-label="Username"
         value={username}
@@ -150,10 +148,9 @@ export const SignupStep1: React.FC<{
         </div>
       )}
 
-      <PrimaryButton type="submit" disabled={!step1Complete} loading={isSubmitting} className="mt-4">
+      <PrimaryButton type="submit" disabled={!step1Complete} loading={isSubmitting} className="mt-1">
         Next
       </PrimaryButton>
-      </div>
     </form>
   );
 };

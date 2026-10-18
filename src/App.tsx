@@ -306,7 +306,7 @@ export default function App() {
   const page = (content: ReactNode) => (
     <div className="login-page">
       <BrandMark className="page-brand" onCanvas />
-      <Showcase />
+      <Showcase variant={routePath.startsWith('/signup') ? 'signup' : 'login'} />
       <RealtimeBanner />
       <SplitLoader active={showLoader} />
       {/* display:contents lets the .login-card inside become a direct flex

@@ -209,6 +209,45 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     return true;
   };
 
+  /* An address with no account must not be able to reach the forgot/reset
+     flow. Returns false (and shows the inline error) only on a CONFIRMED
+     "no account" from the server; a failed check fails OPEN so a flaky
+     endpoint never locks out a real user. */
+  const MISSING_COPY = 'No Tirbeo account found for this email.';
+  const assertAccountExists = async (): Promise<boolean> => {
+    if (validateEmail(email)) return true;
+    if (loginProfile && loginProfile.email === email) {
+      if (loginProfile.exists === false) {
+        setErrors({ email: MISSING_COPY });
+        setTouched({ email: true });
+        haptic('error');
+        return false;
+      }
+      return true;
+    }
+    const res = await checkEmailExists(email);
+    if (res.ok && res.data) {
+      const exists = !!res.data.exists;
+      setLoginProfile({
+        email,
+        exists,
+        photoUrl: res.data.photoUrl,
+        name: res.data.name,
+        hasRecoveryEmail: !!res.data.hasRecoveryEmail,
+        recoveryEmail: res.data.recoveryEmail,
+      });
+      if (!exists) {
+        setErrors({ email: MISSING_COPY });
+        setTouched({ email: true });
+        haptic('error');
+        return false;
+      }
+      return true;
+    }
+    // Could not reach the server → fail OPEN, allow the normal flow.
+    return true;
+  };
+
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -377,15 +416,22 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
   };
 
-  /* Passkey autofill: no button anymore — on first paint we silently ask the
-     browser for a passkey (conditional mediation). Users with one registered
-     get the native prompt on load/reload and can sign in straight away;
-     everyone else sees nothing. */
+  /* Passkey autofill: no button anymore — we ask the browser for a passkey
+     (conditional mediation) so people with one registered get the native prompt
+     straight away. But firing it on EVERY page load/refresh nags: someone who
+     dismissed it gets it handed again on the next reload. Gate it to once per
+     browser session via sessionStorage — the flag is set the moment we ask, so
+     a dismiss does not re-arm it next refresh, and a real sign-in navigates
+     away anyway. */
   const autoPasskeyFired = React.useRef(false);
   React.useEffect(() => {
     if (autoPasskeyFired.current) return;
     autoPasskeyFired.current = true;
+    let alreadyPrompted = false;
+    try { alreadyPrompted = sessionStorage.getItem('tirbeo:passkey-prompted') === '1'; } catch {}
+    if (alreadyPrompted) return;
     const t = setTimeout(() => {
+      try { sessionStorage.setItem('tirbeo:passkey-prompted', '1'); } catch {}
       void handlePasskeySignIn({ auto: true });
     }, 900);
     return () => clearTimeout(t);
@@ -512,9 +558,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           /* No account for this address. Stay exactly where we are and say so
              under the field: the next move is the visitor's to make, and the
              email stays on screen so they can retype it after a typo. The
-             sign-up route is offered as text, not taken for them. */
-          setErrors({});
-          setTouched({ email: false });
+             sign-up route is offered as text, not taken for them. This confirmed
+             "no" also gates the forgot/reset path. */
+          setErrors({ email: MISSING_COPY });
+          setTouched({ email: true });
           haptic('error');
           setNoAccountEmail(email);
           setIsSubmitting(false);
@@ -725,6 +772,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   const handleDirectLoginRequest = async (method: 'code' | 'magic-link') => {
     setLoginNotice(null);
+    if (!(await assertAccountExists())) return;
     const key = method === 'code' ? 'login-otp' : 'magic-link';
     const sendFn = method === 'code'
       ? () => requestLoginOtp(email)
@@ -775,6 +823,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       notice('Please enter your email first');
       return;
     }
+    /* A reset only makes sense against a real account. If the server says the
+       address does not exist, stop here with a clear inline error rather than
+       reaching the captcha/reset step for an email that has nothing to reset. */
+    if (!(await assertAccountExists())) return;
     const key = method === 'recovery' ? 'recovery' : 'otp';
     const result = await sendWithRateLimit(key, () => requestPasswordReset(email, method), { cooldownKey: key });
     if (result.ok) {
@@ -970,10 +1022,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
      per step. Login's step count is unknowable up front — an OTP challenge
      only sometimes appears — so its steps keep their own headings. */
   const SIGNUP_STEPS = [
-    { title: 'Create your account', label: 'Your details' },
-    { title: 'Tell us about you', label: 'About you' },
-    { title: 'Verify your email', label: 'Verify email' },
-    { title: 'Secure your account', label: 'Set password' },
+    { title: 'Create your account', label: 'Your details', sub: 'Tell us who you are so friends can find you.' },
+    { title: 'Tell us about you', label: 'About you', sub: 'Add a photo and your birthday to finish your profile.' },
+    { title: 'Verify your email', label: 'Verify email', sub: "We sent a 6-digit code to confirm it's really you." },
+    { title: 'Secure your account', label: 'Set password', sub: 'Pick a strong password you will remember.' },
   ] as const;
 
   const signupCopy = SIGNUP_STEPS[signupStep - 1];
@@ -1005,7 +1057,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       onBack={canGoBack ? goBack : undefined}
       className={mode === 'signup' ? 'mode-signup' : 'mode-login'}
       title={mode === 'signup' ? signupCopy.title : isLoginEntry ? 'Welcome to Tirbeo' : undefined}
-      subtitle={undefined}
+      subtitle={mode === 'signup' ? signupCopy.sub : undefined}
       kicker={undefined}
       footer={
         <>

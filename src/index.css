@@ -69,6 +69,11 @@
   --field-hover: #454549;
   --field-focus: #4b4b4f;
 
+  /* iOS disabled primary: a muted grey fill with a dimmed label — never a
+     darkened blue, which reads as a broken accent rather than "not yet". */
+  --btn-disabled-bg: #3a3a3c;
+  --btn-disabled-fg: #8e8e93;
+
   --hairline: #38383a;
   --glass: rgba(28, 28, 30, 0.85);
   --glass-2: rgba(28, 28, 30, 0.94);
@@ -142,6 +147,11 @@
   --field-hover: #f2f2f7;
   --field-focus: #ececf1;
 
+  /* iOS disabled primary: a muted grey fill with a dimmed label — never a
+     darkened blue, which reads as a broken accent rather than "not yet". */
+  --btn-disabled-bg: #e8e8ee;
+  --btn-disabled-fg: #a1a1aa;
+
   --hairline: #c6c6c8;
   --glass: rgba(255, 255, 255, 0.86);
   --glass-2: rgba(255, 255, 255, 0.95);
@@ -210,6 +220,8 @@
 
   --color-btn-line: var(--btn-line);
   --color-btn-line-hover: var(--btn-line-hover);
+  --color-btn-disabled-bg: var(--btn-disabled-bg);
+  --color-btn-disabled-fg: var(--btn-disabled-fg);
 
   --color-glass: var(--glass);
   --color-glass-2: var(--glass-2);
@@ -219,8 +231,10 @@
   --font-display: var(--stack-sans);
   --font-mono: var(--stack-mono);
 
-  --shadow-accent: 0 10px 22px -8px var(--accent-glow);
-  --shadow-accent-lg: 0 14px 28px -8px var(--accent-glow);
+  /* Primary buttons are flat: a solid accent fill with at most a hair of
+     neutral depth underneath. No coloured glow anywhere. */
+  --shadow-accent: 0 1px 2px rgb(0 0 0 / 0.2);
+  --shadow-accent-lg: 0 1px 2px rgb(0 0 0 / 0.2);
   --shadow-card: var(--shadow-card);
   --shadow-pop: var(--shadow-pop);
   --shadow-sheet: var(--shadow-sheet);
@@ -558,19 +572,27 @@ input[type='number']::-webkit-inner-spin-button {
 .wizard-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 15px 8px 11px;
-  border: 1px solid var(--border);
+  gap: 2px;
+  margin-left: -6px;
+  padding: 8px 12px 8px 6px;
+  border: 0;
   border-radius: 999px;
-  background: var(--surface);
-  font-size: 14px;
+  background: none;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-2);
-  transition: background 150ms ease, color 150ms ease;
+  letter-spacing: -0.01em;
+  color: var(--accent-text);
+  transition: color 150ms ease, opacity 150ms ease;
+}
+.wizard-back svg {
+  width: 17px;
+  height: 17px;
 }
 .wizard-back:hover {
-  background: var(--surface-hover);
-  color: var(--fg);
+  color: var(--accent-hover);
+}
+.wizard-back:active {
+  opacity: 0.6;
 }
 .wizard-track {
   flex: 1;
@@ -611,7 +633,7 @@ input[type='number']::-webkit-inner-spin-button {
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--accent-fg);
-  box-shadow: 0 10px 22px -8px var(--accent-glow);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
   transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 .create-pill:hover {
@@ -793,53 +815,64 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--accent-text);
 }
 
-/* ── OAuth row — circular brand buttons ─────────────────────────────── */
-.oauth-row {
+/* ── OAuth list — full-width "Continue with…" rows, Apple-styled ──────── */
+.oauth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oauth-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: clamp(14px, 4vw, 22px);
-  padding: 8px 0 4px;
+  gap: 12px;
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 13px;
+  background: var(--field);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms var(--ease-apple);
 }
-.oauth-btn {
+.oauth-item:hover {
+  background: var(--field-hover);
+  border-color: var(--border-hover);
+}
+.oauth-item:active {
+  transform: scale(0.99);
+  background: var(--field-focus);
+}
+.oauth-item:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.oauth-ico {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 22px;
+  height: 22px;
+}
+.oauth-ico svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.oauth-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oauth-chev {
   flex: none;
-  border: 1px solid var(--hairline);
-  padding: 0;
-  border-radius: 50%;
-  background: var(--field);
-  opacity: 0.92;
-  transition: background-color 150ms ease, border-color 150ms ease,
-    transform 150ms var(--ease-apple);
-}
-.oauth-btn:hover {
-  opacity: 1;
-  border-color: var(--border-hover);
-  background: var(--field-hover);
-  transform: scale(1.05);
-}
-.oauth-btn:active {
-  transform: scale(0.96);
-}
-.oauth-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.oauth-btn:disabled {
-  pointer-events: none;
-  opacity: 0.4;
-}
-.oauth-btn svg {
-  width: 26px;
-  height: 26px;
-}
-.oauth-sep {
-  width: 1px;
-  height: 28px;
-  background: var(--hairline);
+  color: var(--text-4);
 }
 
 /* ── Signup step 2 — "Tell us about you" ────────────────────────────── */
@@ -942,38 +975,43 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--text-4);
 }
 
-/* Collapsible optional work block. */
+/* Collapsible optional work block — calm, hairline-separated, no heavy plate. */
 .work-box {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  border-top: 1px solid var(--hairline);
+  border-radius: 0;
+  background: none;
+  margin-top: 4px;
 }
 .work-box summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 12px 2px;
   cursor: pointer;
   list-style: none;
-  font-size: 14.5px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-2);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-4);
 }
 .work-box summary::-webkit-details-marker {
   display: none;
 }
 .work-box summary em {
   margin-left: 8px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-4);
 }
 .work-box summary svg {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: var(--text-4);
   transition: transform 180ms var(--ease-enter);
 }
@@ -982,13 +1020,64 @@ input[type='number']::-webkit-inner-spin-button {
 }
 .work-body {
   display: grid;
-  gap: 14px;
-  padding: 2px 16px 16px;
+  gap: 12px;
+  padding: 2px 2px 6px;
 }
-@media (min-width: 640px) {
+@media (min-width: 560px) {
   .work-body {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Date of birth — one grouped row of three selects (Instagram sign-up style). */
+.dob-group {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+}
+.dob-cell {
+  position: relative;
+}
+.dob-cell select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 50px;
+  padding: 0 30px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.dob-cell select:hover {
+  background: var(--field-hover);
+}
+.dob-cell select:focus {
+  border-color: var(--accent-hover);
+  background: var(--field-focus);
+}
+.dob-cell select:invalid,
+.dob-cell select.placeholder {
+  color: var(--placeholder);
+}
+.dob-cell select option {
+  background: var(--card);
+  color: var(--fg);
+}
+.dob-cell svg {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-4);
 }
 
 /* ── No-account notice — reserved-height line under the email field ──── */
@@ -1043,6 +1132,23 @@ input[type='number']::-webkit-inner-spin-button {
   display: grid;
   gap: 16px;
   margin-top: 4px;
+}
+
+/* Signup reads as onboarding: a left-aligned heading stack rather than the
+   centered login title. The wizard caption above it is the kicker. */
+.mode-signup .tb-heading,
+.mode-signup .tb-sub {
+  text-align: left;
+}
+.mode-signup .login-head {
+  margin-bottom: 20px;
+}
+.step-subhead {
+  margin: 0 0 4px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-align: left;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1152,10 +1258,6 @@ input[type='number']::-webkit-inner-spin-button {
   }
   .tb-heading {
     font-size: 23px;
-  }
-  .oauth-btn {
-    width: 48px;
-    height: 48px;
   }
 }
 
@@ -1333,4 +1435,223 @@ input[type='number']::-webkit-inner-spin-button {
   width: 38%;
   border-radius: 2px;
   background: var(--accent);
+}
+
+/* ── Showcase: story rings (login) ──────────────────────────────────── */
+.sc-stories {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sc-story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 62px;
+}
+.sc-ring {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  padding: 3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 210deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 55%, var(--warn)) 35%,
+    color-mix(in srgb, var(--accent) 40%, #ff5aa0) 65%,
+    var(--accent)
+  );
+}
+.sc-ring img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.sc-ring--seen {
+  background: var(--hairline);
+}
+.sc-story small {
+  max-width: 62px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Showcase: reels-style tall card (login) ────────────────────────── */
+.sc-reel {
+  position: relative;
+  margin: 0;
+  width: 168px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+}
+.sc-reel img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  height: auto;
+  object-fit: cover;
+}
+.sc-reel-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 26px 12px 12px;
+  background: linear-gradient(to top, rgb(0 0 0 / 62%), transparent);
+}
+.sc-reel-body span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+}
+.sc-reel-play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 22%);
+  color: #fff;
+}
+
+/* ── Showcase: feed post card (signup) ──────────────────────────────── */
+.sc-post {
+  margin: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+}
+.sc-post-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+}
+.sc-post-head .sc-avatar {
+  width: 34px;
+  height: 34px;
+}
+.sc-post-head strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.sc-post-head small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.sc-post img.sc-post-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  height: auto;
+  object-fit: cover;
+}
+.sc-post-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 13px 4px;
+  color: var(--fg);
+}
+.sc-post-actions svg {
+  color: var(--text-2);
+}
+.sc-post-actions .liked {
+  color: var(--danger);
+}
+.sc-post-likes {
+  padding: 0 13px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.sc-post-cap {
+  padding: 0 13px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+
+/* ── Showcase: chat bubbles mini-card (signup) ──────────────────────── */
+.sc-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 17px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+}
+.sc-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.sc-bubble {
+  max-width: 78%;
+  padding: 7px 12px;
+  border-radius: 15px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.sc-bubble--in {
+  align-self: flex-start;
+  border-bottom-left-radius: 6px;
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.sc-bubble--out {
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ── Showcase: suggestions row (signup) ─────────────────────────────── */
+.sc-suggest {
+  margin: 0;
+  border-radius: 17px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.sc-suggest-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+.sc-suggest .sc-card {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  box-shadow: none;
+  border-radius: 0;
+  background: none;
 }

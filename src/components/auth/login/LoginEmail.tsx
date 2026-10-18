@@ -57,6 +57,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
   errors,
   touched,
   handleBlur,
+  loginProfile,
   isSubmitting,
   onSubmit,
   onForgot,
@@ -71,6 +72,17 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
   const showPasswordError = touched.password && errors.password;
   const showNoAccount = !!noAccountEmail && noAccountEmail === email;
   const emailOk = email.includes("@");
+  /* A confirmed "no account" from the prefetch/lookup — authoritative, so the
+     forgot/more-options/submit paths short-circuit and the field carries the
+     clear message. */
+  const emailMissing =
+    !!loginProfile && loginProfile.email === email.trim() && loginProfile.exists === false;
+  const missingCopy = 'No Tirbeo account found for this email.';
+
+  const guard = (fn: () => void) => () => {
+    if (emailMissing) return;
+    fn();
+  };
 
   return (
     <form onSubmit={onSubmit}>
@@ -89,7 +101,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
             onBlur={() => handleBlur("email")}
             placeholder="you@example.com"
             autoComplete="email"
-            error={showEmailError ? errors.email : undefined}
+            error={showEmailError ? errors.email : emailMissing ? missingCopy : undefined}
           />
 
           <PasswordField
@@ -110,8 +122,8 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
               type="button"
               className="forgot-link"
              
-              onClick={onForgot}
-              disabled={isSubmitting}
+              onClick={guard(onForgot)}
+              disabled={isSubmitting || emailMissing}
             >
               Forgot password?
             </button>
@@ -137,7 +149,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           <PrimaryButton
             type="submit"
             loading={isSubmitting}
-            disabled={!emailOk || !password || captchaPending}
+            disabled={!emailOk || !password || captchaPending || emailMissing}
            
           >
             Log in
@@ -150,8 +162,8 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           type="button"
           className="more-ways-btn"
          
-          onClick={onMoreOptions}
-          disabled={isSubmitting}
+          onClick={guard(onMoreOptions)}
+          disabled={isSubmitting || emailMissing}
         >
           More ways to sign in
         </button>
