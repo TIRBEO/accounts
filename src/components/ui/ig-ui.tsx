@@ -730,7 +730,7 @@ export function OrDivider({ label = 'or' }: { label?: string }) {
   return (
     <div className="or-divider flex items-center gap-3" role="separator">
       <span className="h-px flex-1 bg-divider" />
-      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-4">
+      <span className="text-[12px] font-medium tracking-[0.01em] text-text-3">
         {label}
       </span>
       <span className="h-px flex-1 bg-divider" />
@@ -801,31 +801,30 @@ export function AuthShell({
       {(step || onBack) ? (
         <div className="wizard-rail">
           <div className="wizard-row">
+            <div
+              className="wizard-segs"
+              role="progressbar"
+              aria-valuenow={step?.index}
+              aria-valuemin={1}
+              aria-valuemax={step?.total}
+              aria-label={step?.label ? `${step.label} — step ${step?.index} of ${step?.total}` : undefined}
+            >
+              {Array.from({ length: step?.total ?? 0 }, (_, i) => (
+                <i key={i} className={cn('wizard-seg', i < (step?.index ?? 0) && 'is-done')} />
+              ))}
+            </div>
+            <p className="wizard-steps">
+              {step ? <>Step {step.index} of {step.total}</> : <span aria-hidden />}
+            </p>
             {onBack ? (
               <button type="button" onClick={onBack} className="wizard-back">
-                <svg viewBox="0 0 16 16" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 16 16" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10 3.5 5.5 8 10 12.5" />
                 </svg>
                 Back
               </button>
             ) : null}
-            {step ? (
-              <div
-                className="wizard-track"
-                role="progressbar"
-                aria-valuenow={step.index}
-                aria-valuemin={1}
-                aria-valuemax={step.total}
-              >
-                <i style={{ width: `${(step.index / step.total) * 100}%` }} />
-              </div>
-            ) : null}
           </div>
-          {step ? (
-            <p className="wizard-caption">
-              {step.label ? `${step.label} · ` : ''}{step.index} of {step.total}
-            </p>
-          ) : null}
         </div>
       ) : null}
       <header className="login-head">

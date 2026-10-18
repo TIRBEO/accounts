@@ -602,64 +602,76 @@ input[type='number']::-webkit-inner-spin-button {
 .page-brand:hover { opacity: 1; }
 
 /* Wizard chrome — Back / step counter row and the progress track. */
-/* Minimal wizard chrome — one hairline track + small caption. */
+/* Wizard chrome — segmented step indicator: pills + counter + Back. */
 .wizard-rail {
   width: 100%;
-  margin-bottom: 1.2em;
+  margin-bottom: 1.6em;
 }
 
 .wizard-row {
   display: flex;
   align-items: center;
-  gap: 0.9em;
+  gap: 1em;
+}
+
+.wizard-segs {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.wizard-seg {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  transition: background 320ms ease;
+}
+
+.wizard-seg.is-done {
+  background: var(--accent);
+}
+
+.wizard-steps {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }
 
 .wizard-back {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.35em;
-  padding: 0.35em 0.8em 0.35em 0.55em;
+  gap: 0.3em;
+  padding: 0.3em 0.7em 0.3em 0.5em;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface);
+  background: transparent;
   font-family: inherit;
-  font-size: 0.88em;
+  font-size: 0.82em;
   font-weight: 600;
   color: var(--text-2);
   transition:
     background 150ms ease,
-    color 150ms ease;
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .wizard-back:hover {
   background: var(--surface-hover);
+  border-color: var(--border-strong);
   color: var(--fg);
 }
 
-.wizard-track {
-  flex: 1;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--surface-3);
-  overflow: hidden;
-}
-
-.wizard-track > i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-  transition: width 420ms var(--ease-enter);
-}
-
-.wizard-caption {
-  margin: 0.7em 0 0;
-  text-align: center;
-  font-size: 0.72em;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-4);
+/* A wizard step reads as a page, not a splash: title and subtitle align
+   left under the indicator instead of centering. */
+.login-card:has(.wizard-rail) .tb-heading,
+.login-card:has(.wizard-rail) .tb-sub {
+  text-align: left;
 }
 
 /* The form column — separated from the head by a soft gap. */
