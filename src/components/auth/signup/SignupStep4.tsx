@@ -24,7 +24,6 @@ interface SignupStep4Props {
   setErrors: (e: Record<string, string | undefined>) => void;
   isSubmitting: boolean;
   step4Complete: boolean;
-  onOpenTerms: () => void;
   onSubmit: (e: React.FormEvent) => void;
   /** Cloudflare Turnstile widget, or null when no challenge is pending. */
   captcha?: React.ReactNode;
@@ -57,7 +56,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
   email, password, setPassword, confirmPassword, setConfirmPassword,
   showPassword, setShowPassword, showConfirm, setShowConfirm, consentTerms, setConsentTerms,
   consentPrivacy, setConsentPrivacy, errors, touched, handleBlur,
-  setErrors, isSubmitting, step4Complete, onOpenTerms, onSubmit, captcha, captchaPending,
+  setErrors, isSubmitting, step4Complete, onSubmit, captcha, captchaPending,
 }) => {
   const showPasswordError = touched.password && errors.password;
   const showConfirmError = touched.confirmPassword && errors.confirmPassword;
@@ -123,13 +122,15 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           label={
             <>
               I agree to the{' '}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onOpenTerms(); }}
+              <a
+                href="https://tirbeo.com/terms"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="text-text-2 underline decoration-text-4 underline-offset-2 hover:text-fg"
               >
                 Terms of Service
-              </button>{' '}
+              </a>{' '}
               and{' '}
               <a
                 href="https://tirbeo.com/privacy"

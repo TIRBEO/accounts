@@ -5,7 +5,6 @@ import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 const AuthCard = lazy(() => import('./components/auth/AuthCard').then((m) => ({ default: m.AuthCard })));
 import { SessionGate } from './components/auth/SessionGate';
 import { CallbackView } from './components/CallbackView';
-import { TermsModal } from './components/TermsModal';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
@@ -78,7 +77,6 @@ export default function App() {
     // loader never sits on top of them.
     isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
   );
-  const [termsOpen, setTermsOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const lastIdRef = useRef<string | null>(null);
@@ -324,22 +322,21 @@ export default function App() {
             <a href="https://tirbeo.com" target="_blank" rel="noreferrer">
               About
             </a>
-            <button type="button" onClick={() => setTermsOpen(true)}>
+            <a href="https://tirbeo.com/terms" target="_blank" rel="noreferrer">
               Terms of Service
-            </button>
+            </a>
             <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer">
               Privacy Policy
             </a>
             <a href="https://tirbeo.com/accessibility" target="_blank" rel="noreferrer">
               Accessibility Statement
             </a>
-            <a href="https://tirbeo.com/teams" target="_blank" rel="noreferrer">
+            <a href="https://tirbeo.com/contact" target="_blank" rel="noreferrer">
               Help &amp; Contact
             </a>
           </nav>
         </div>
       </footer>
-      <TermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
       {toastNode}
     </div>
   );
@@ -354,7 +351,7 @@ export default function App() {
           : page(
               <SessionGate onShowToast={showToast}>
                 <Suspense fallback={null}>
-                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenTerms={() => setTermsOpen(true)} onShowToast={showToast} />
+                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onShowToast={showToast} />
                 </Suspense>
               </SessionGate>,
             )}

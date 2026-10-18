@@ -58,7 +58,6 @@ import { LoginRecovery } from './login/LoginRecovery';
 
 interface AuthCardProps {
   onSuccessAuth: (email: string, provider: string) => void;
-  onOpenTerms: () => void;
   onShowToast: (msg: string) => void;
 }
 
@@ -66,7 +65,6 @@ type SignupStep = 1 | 2 | 3 | 4;
 
 export const AuthCard: React.FC<AuthCardProps> = ({
   onSuccessAuth,
-  onOpenTerms,
   onShowToast,
 }) => {
   const form = useAuthForm(onShowToast);
@@ -1192,7 +1190,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setErrors={setErrors}
             isSubmitting={isSubmitting}
             step4Complete={step4Complete}
-            onOpenTerms={onOpenTerms}
             onSubmit={handleSignupSubmit}
             captcha={
               captchaSiteKey ? (
