@@ -417,10 +417,8 @@ select:-webkit-autofill {
 }
 .tb-sub {
   font-size: 0.98em;
-  line-height: 1.45;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--fg);
+  line-height: 1.6;
+  color: var(--text-3);
   text-align: center;
   text-wrap: balance;
 }
@@ -654,13 +652,6 @@ input[type='number']::-webkit-inner-spin-button {
 
 .wizard-back:hover {
   color: var(--fg);
-}
-
-/* A wizard step reads as a page, not a splash: title and subtitle align
-   left under the indicator instead of centering. */
-.login-card:has(.wizard-rail) .tb-heading,
-.login-card:has(.wizard-rail) .tb-sub {
-  text-align: left;
 }
 
 /* The form column — separated from the head by a soft gap. */
