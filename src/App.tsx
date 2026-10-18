@@ -7,6 +7,7 @@ import { SessionGate } from './components/auth/SessionGate';
 import { CallbackView } from './components/CallbackView';
 import { TermsModal } from './components/TermsModal';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
+import { Showcase } from './components/auth/Showcase';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
 import { BrandMark } from './components/ui/ig-ui';
@@ -305,6 +306,7 @@ export default function App() {
   const page = (content: ReactNode) => (
     <div className="login-page">
       <BrandMark className="page-brand" onCanvas />
+      <Showcase />
       <RealtimeBanner />
       <SplitLoader active={showLoader} />
       {/* display:contents lets the .login-card inside become a direct flex
