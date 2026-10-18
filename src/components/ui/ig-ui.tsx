@@ -813,9 +813,6 @@ export function AuthShell({
                 <i key={i} className={cn('wizard-seg', i < (step?.index ?? 0) && 'is-done')} />
               ))}
             </div>
-            <p className="wizard-steps">
-              {step ? <>Step {step.index} of {step.total}</> : <span aria-hidden />}
-            </p>
             {onBack ? (
               <button type="button" onClick={onBack} className="wizard-back">
                 <svg viewBox="0 0 16 16" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
