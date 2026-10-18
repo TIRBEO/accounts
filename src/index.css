@@ -854,11 +854,6 @@ input[type='number']::-webkit-inner-spin-button {
    ═══════════════════════════════════════════════════════════════════════ */
 .legal-bar {
   margin-top: auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
   width: 100%;
   padding-top: 16px;
   border-top: 1px solid var(--divider);
@@ -867,10 +862,22 @@ input[type='number']::-webkit-inner-spin-button {
   user-select: none;
 }
 
+/* The bar spans the page; its content stops at a readable column. */
+.legal-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+}
+
 .legal-links {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 16px;
+  justify-content: flex-end;
+  column-gap: 18px;
 }
 
 .legal-links button,
@@ -1707,7 +1714,9 @@ input[type='number']::-webkit-inner-spin-button {
   .login-card .otp-box { height: 50px; font-size: 20px; border-radius: 12px; }
   .create-pill { height: 48px; font-size: 14px; }
   .wizard-rail { margin-bottom: 1em; }
-  .legal-bar { gap: 0.9em 1.2em; font-size: 12.5px; }
+  .legal-bar { font-size: 12.5px; }
+  .legal-inner { flex-direction: column; gap: 10px; }
+  .legal-links { justify-content: center; gap: 0.9em 1.2em; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

@@ -1,20 +1,17 @@
 import React, { useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, FileText } from "lucide-react";
+import { X, FileText } from "lucide-react";
 import { PrimaryButton } from "./ui/ig-ui";
 
 interface TermsModalProps {
   isOpen: boolean;
-  type: "terms" | "privacy" | null;
   onClose: () => void;
 }
 
 export const TermsModal: React.FC<TermsModalProps> = ({
   isOpen,
-  type,
   onClose,
 }) => {
-  const isTerms = type === "terms";
 
   // Prevent background scrolling while the modal is open.
   useEffect(() => {
@@ -39,7 +36,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && type && (
+      {isOpen && (
         <motion.div
           className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
@@ -72,11 +69,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4 sm:px-6">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-field text-text-3">
-                  {isTerms ? (
-                    <FileText className="size-[18px]" />
-                  ) : (
-                    <ShieldCheck className="size-[18px]" />
-                  )}
+                  <FileText className="size-[18px]" />
                 </div>
 
                 <div className="min-w-0">
@@ -84,7 +77,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
                     id="legal-modal-title"
                     className="truncate text-[22px] text-fg"
                   >
-                    {isTerms ? "Terms of Service" : "Privacy Policy"}
+                    Terms of Service
                   </h2>
                   <p className="text-[15px] text-text-4">Tirbeo</p>
                 </div>
@@ -103,9 +96,8 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             {/* Content */}
             <main className="min-h-0 max-h-[60vh] flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
               <div className="space-y-4 text-[18px] leading-relaxed text-text-2">
-                {isTerms ? (
-                  <>
-                    <p>
+                <>
+                  <p>
                       Welcome to Tirbeo. By creating an account or accessing
                       our platform, you agree to comply with and be bound by
                       the following Terms of Service.
@@ -129,34 +121,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
                       at our discretion if you violate any terms or engage in
                       harmful activities.
                     </LegalSection>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      At Tirbeo, we take your privacy seriously. This Privacy
-                      Policy describes how we collect, use, and protect your
-                      personal information.
-                    </p>
-
-                    <LegalSection title="1. Information Collection">
-                      We collect information you provide directly to us, such
-                      as your email address when signing up or signing in via
-                      third-party OAuth providers (Google, GitHub, Discord).
-                    </LegalSection>
-
-                    <LegalSection title="2. Data Security">
-                      We implement robust end-to-end encryption and
-                      administrative security measures to protect your account
-                      data against unauthorized access or disclosure.
-                    </LegalSection>
-
-                    <LegalSection title="3. Third-Party Services">
-                      We do not sell your personal data. Authentication
-                      partners only receive necessary parameters to verify your
-                      identity securely.
-                    </LegalSection>
-                  </>
-                )}
+                </>
               </div>
             </main>
 

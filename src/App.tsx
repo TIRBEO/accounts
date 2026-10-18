@@ -78,7 +78,7 @@ export default function App() {
     // loader never sits on top of them.
     isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
   );
-  const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const lastIdRef = useRef<string | null>(null);
@@ -313,25 +313,33 @@ export default function App() {
       <main id="main-content" className="contents">
         {content}
       </main>
-      {/* Same footer as tirbeo.com: © on the left, quiet links on the right,
-          over a single hairline. */}
+      {/* Same footer as tirbeo.com, kept to a readable column: © left, the
+          full legal + help set right, over a single hairline. */}
       <footer className="legal-bar">
-        <p className="legal-meta">
-          <span>© 2026 Tirbeo</span>
-        </p>
-        <nav className="legal-links" aria-label="Footer">
-          <button type="button" onClick={() => setModalType('terms')}>
-            Terms of Service
-          </button>
-          <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer">
-            Privacy Policy
-          </a>
-          <a href="https://tirbeo.com/accessibility" target="_blank" rel="noreferrer">
-            Accessibility Statement
-          </a>
-        </nav>
+        <div className="legal-inner">
+          <p className="legal-meta">
+            <span>© 2026 Tirbeo</span>
+          </p>
+          <nav className="legal-links" aria-label="Footer">
+            <a href="https://tirbeo.com" target="_blank" rel="noreferrer">
+              About
+            </a>
+            <button type="button" onClick={() => setTermsOpen(true)}>
+              Terms of Service
+            </button>
+            <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer">
+              Privacy Policy
+            </a>
+            <a href="https://tirbeo.com/accessibility" target="_blank" rel="noreferrer">
+              Accessibility Statement
+            </a>
+            <a href="https://tirbeo.com/teams" target="_blank" rel="noreferrer">
+              Help &amp; Contact
+            </a>
+          </nav>
+        </div>
       </footer>
-      <TermsModal isOpen={!!modalType} type={modalType} onClose={() => setModalType(null)} />
+      <TermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
       {toastNode}
     </div>
   );
@@ -346,7 +354,7 @@ export default function App() {
           : page(
               <SessionGate onShowToast={showToast}>
                 <Suspense fallback={null}>
-                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenLegalModal={(t) => setModalType(t)} onShowToast={showToast} />
+                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onOpenTerms={() => setTermsOpen(true)} onShowToast={showToast} />
                 </Suspense>
               </SessionGate>,
             )}
