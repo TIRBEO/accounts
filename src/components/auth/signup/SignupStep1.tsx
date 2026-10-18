@@ -51,7 +51,7 @@ export const SignupStep1: React.FC<{
       // Signing up still goes through, and the server is what decides.
       emailHint = <span className="text-text-4">Couldn't check right now — you can continue</span>;
     } else if (emailCheckStatus === 'available' && !validateEmail(email)) {
-      emailHint = <span className="text-[var(--tb-success)]">Email is available</span>;
+      emailHint = <span className="text-success-text">Email is available</span>;
     }
   }
 
@@ -60,7 +60,7 @@ export const SignupStep1: React.FC<{
     if (usernameStatus === 'checking') {
       usernameHint = <span className="text-text-4">{usernameMessage || 'Checking availability...'}</span>;
     } else if (usernameStatus === 'available') {
-      usernameHint = <span className="text-[var(--tb-success)]">{usernameMessage}</span>;
+      usernameHint = <span className="text-success-text">{usernameMessage}</span>;
     } else if (usernameStatus === 'taken') {
       usernameHint = <span className="text-danger-text">{usernameMessage}</span>;
     } else if (usernameStatus === 'error') {

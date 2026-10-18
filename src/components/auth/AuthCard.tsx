@@ -989,8 +989,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const wizard = mode === 'signup' ? { index: signupStep, total: 4, label: signupCopy.label } : undefined;
   const canGoBack = mode === 'signup' && signupStep > 1;
 
-  /* GSAP transitions — panel slides up + fades in on every step/mode change;
-     side features fade in when the mode swaps. No loaders, just motion. */
+  /* GSAP transition — the panel slides up + fades in on every step/mode
+     change. No loaders, just motion. */
   const panelRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (!panelRef.current) return;
@@ -998,14 +998,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       { opacity: 0, y: 18 },
       { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', clearProps: 'transform' });
   }, [panelKey]);
-  React.useEffect(() => {
-    document.querySelectorAll('.scroll-rail, .story-fan, .pc-side').forEach((node) => {
-      const el = node as HTMLElement;
-      if (!el.getClientRects().length) return;
-      const target = parseFloat(getComputedStyle(el).opacity) || 1;
-      gsap.fromTo(el, { opacity: 0 }, { opacity: target, duration: 0.7, ease: 'power2.out', clearProps: 'opacity' });
-    });
-  }, [mode]);
 
   return (
     <AuthShell

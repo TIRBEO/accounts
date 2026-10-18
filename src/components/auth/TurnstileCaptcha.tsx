@@ -61,7 +61,7 @@ export const TurnstileCaptcha: React.FC<TurnstileCaptchaProps> = ({
         if (cancelled || !window.turnstile || widgetIdRef.current) return;
         widgetIdRef.current = window.turnstile.render(el, {
           sitekey: siteKey,
-          theme: 'dark',
+          theme: 'auto',
           size: 'flexible',
           retry: 'auto',
           appearance: 'always',

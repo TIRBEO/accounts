@@ -64,13 +64,13 @@ type ButtonSize = 'sm' | 'md' | 'lg';
  */
 const BUTTON_BASE =
   'relative inline-flex w-full select-none items-center justify-center gap-2 ' +
-  'rounded-full font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
+  'rounded-xl font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
   'transition-[background-color,box-shadow,transform,opacity] duration-150 ' +
   'disabled:pointer-events-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
   sm: 'h-10 px-4 text-[14px] gap-1.5',
-  md: 'h-12 px-5 text-[15px] gap-2',
+  md: 'h-[48px] px-5 text-[15px] gap-2',
   lg: 'h-[52px] px-6 text-[16px] gap-2',
 };
 
@@ -215,7 +215,7 @@ export const Field = React.forwardRef<HTMLInputElement, {
           id={fieldId}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-          className={cn(FIELD_LINE, 'h-12 rounded-full', trailing && 'pr-12', error && '!border-danger', className)}
+          className={cn(FIELD_LINE, 'h-[50px] rounded-xl', trailing && 'pr-12', error && '!border-danger', className)}
           {...inputProps}
         />
         {trailing ? (

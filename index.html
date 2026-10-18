@@ -27,10 +27,10 @@
     <link rel="icon" type="image/png" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Chrome colour follows the device — matches the app canvas palette
-         (dark charcoal #26262a / light #e9eaee). -->
-    <meta name="theme-color" content="#26262a" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#e9eaee" media="(prefers-color-scheme: light)">
+    <!-- Chrome colour follows the resolved palette — matches the Apple canvas
+         (dark #1c1c1e / light #f2f2f7). -->
+    <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
 
     <!-- API preconnect: session check fires on load — warm the connection -->
     <link rel="preconnect" href="https://api.tirbeo.com" crossorigin>
@@ -41,6 +41,13 @@
     <link rel="dns-prefetch" href="https://challenges.cloudflare.com">
     <link rel="dns-prefetch" href="https://ws-mt1.pusher.com">
     <link rel="dns-prefetch" href="https://myprofile.tirbeo.com">
+
+    <!-- Resolve the palette before the first paint so there is no unstyled
+         flash. Key "tirbeo:theme"; must stay identical to THEME_BOOT in
+         src/lib/theme.ts. -->
+    <script>
+      (function(){try{var k="tirbeo:theme";var v=localStorage.getItem(k);var t=(v==="dark"||v==="light"||v==="system")?v:"system";var a=t==="light"||(t==="system"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";document.documentElement.setAttribute("data-theme",a);document.documentElement.style.colorScheme=a;}catch(e){}})();
+    </script>
 
     <script type="module" src="/src/main.tsx"></script>
   </head>
