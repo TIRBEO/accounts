@@ -69,7 +69,7 @@ export const SignupStep1: React.FC<{
   }
 
   return (
-    <form className="space-y-4 text-left" onSubmit={onSubmit} noValidate>
+    <form className="space-y-3 text-left" onSubmit={onSubmit} noValidate>
       {/* Continue-with… OAuth, stacked full-width rows — the fastest path in. */}
       <OAuthRow disabled={isSubmitting} />
 

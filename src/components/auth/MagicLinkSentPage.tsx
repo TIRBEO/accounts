@@ -193,7 +193,7 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
       <AuthShell>
         <div>
           <div className="otp-head">
-            <h1 className="tb-heading tb-heading-white">Check your email</h1>
+            <h1 className="tb-heading">Check your email</h1>
             <p className="tb-sub mt-1.5">
               This page lost the address the link was sent to. Enter it below
               and we&apos;ll send a fresh link — they expire in {LINK_LIFETIME}.
@@ -241,7 +241,7 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
     <AuthShell>
       <div>
         <div className="otp-head">
-          <h1 className="tb-heading tb-heading-white">Check your email</h1>
+          <h1 className="tb-heading">Check your email</h1>
           <p className="tb-sub mt-1.5">
             Your one-time sign-in link expires in {LINK_LIFETIME}. Check your
             spam folder if it hasn&apos;t arrived.

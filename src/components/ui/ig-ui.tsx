@@ -702,10 +702,8 @@ export const OAUTH: { id: OAuthProvider; name: string; fill: string; hover: stri
 ];
 
 /**
- * Full-width "Continue with…" rows — provider glyph on the left, label, and a
- * subtle chevron. Painted in the photo-era control style: 58px plate, 16px
- * radius, --field fill, hairline border (see .oauth-list in index.css).
- * Stacked list, one per provider. Replaces the old tiny circular icon row.
+ * Compact 3-up provider buttons — provider glyph over the provider name,
+ * all three on one row (see .oauth-list in index.css).
  */
 export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
   return (
@@ -720,8 +718,7 @@ export function OAuthRow({ disabled = false }: { disabled?: boolean }) {
           className="oauth-item"
         >
           <span className="oauth-ico" aria-hidden="true">{p.icon}</span>
-          <span className="oauth-label">Continue with {p.name}</span>
-          <ChevronRight className="oauth-chev size-[18px]" aria-hidden="true" />
+          <span className="oauth-label">{p.name}</span>
         </button>
       ))}
     </div>
@@ -767,8 +764,8 @@ export function BrandMark({
   }
   return (
     <>
-      <img {...shared} src="/logo-dark.webp" className={cn('brand-mark w-auto object-contain', glyph, className)} />
-      <img {...shared} src="/logo-white.webp" className={cn('brand-mark w-auto object-contain', glyph, className)} />
+      <img {...shared} src="/logo-dark.webp" className={cn('brand-mark brand-mark--ink w-auto object-contain', glyph, className)} />
+      <img {...shared} src="/logo-white.webp" className={cn('brand-mark brand-mark--paper w-auto object-contain', glyph, className)} />
     </>
   );
 }

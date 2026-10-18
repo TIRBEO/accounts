@@ -87,7 +87,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
   return (
     <form onSubmit={onSubmit}>
       <div className="signup-fields">
-        <div className="space-y-5 text-left">
+        <div className="space-y-3 text-left">
           <Field
            
             aria-label="Email"
