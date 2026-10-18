@@ -47,7 +47,7 @@ export interface ApiResult<T = unknown> {
 }
 
 export interface BlockInfo {
-  kind: 'banned' | 'suspended' | 'deleted';
+  kind: 'banned' | 'suspended' | 'deleted' | 'deletion_pending' | 'deactivated';
   reason?: string | null;
   until?: string | null;
   eventId?: string | null;
@@ -140,6 +140,8 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
  *   banned    → { error:'ACCOUNT_BANNED', banned:true, eventId, message }
  *   suspended → { error:'ACCOUNT_SUSPENDED', suspended:true, eventId, reason, until, message }
  *   deleted   → { error:'ACCOUNT_DELETED', deleted:true, message }
+ *   deletion_pending → { error:'ACCOUNT_DELETION_PENDING', deletionPending:true, eventId, reason, until, message }
+ *   deactivated → { error:'ACCOUNT_DEACTIVATED', deactivated:true, eventId, reason, message }
  */
 function extractBlock(
   status: number,
@@ -148,6 +150,8 @@ function extractBlock(
     banned?: boolean;
     suspended?: boolean;
     deleted?: boolean;
+    deletionPending?: boolean;
+    deactivated?: boolean;
     eventId?: string | null;
     reason?: string | null;
     until?: string | null;
@@ -157,10 +161,14 @@ function extractBlock(
   if ((status !== 401 && status !== 403) || !data) return null;
   if (data.banned) return { kind: 'banned', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
   if (data.suspended) return { kind: 'suspended', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
+  if (data.deletionPending) return { kind: 'deletion_pending', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
+  if (data.deactivated) return { kind: 'deactivated', reason: data.reason, eventId: data.eventId, message: data.message };
   if (data.deleted) return { kind: 'deleted', reason: data.reason, message: data.message };
   const err = (data.error || '').toLowerCase();
   if (err.includes('banned')) return { kind: 'banned', reason: data.reason, message: data.message };
   if (err.includes('suspended')) return { kind: 'suspended', reason: data.reason, until: data.until, message: data.message };
+  if (err.includes('deletion')) return { kind: 'deletion_pending', reason: data.reason, until: data.until, message: data.message };
+  if (err.includes('deactivated')) return { kind: 'deactivated', reason: data.reason, message: data.message };
   if (err.includes('deleted')) return { kind: 'deleted', reason: data.reason, message: data.message };
   return null;
 }
