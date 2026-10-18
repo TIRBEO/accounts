@@ -14,7 +14,15 @@ import {
 import { haptic } from '../../lib/haptics';
 import { captureException } from '../../lib/sentry';
 import { trackEvent, trackError } from '../../lib/telemetry';
+import {
+  needsReauth,
+  offeredMethods,
+  proofError,
+  type ReauthMethod,
+  type ReauthProof,
+} from '../../lib/reauth';
 import { PrimaryButton, SecondaryButton } from '../ui/ig-ui';
+import { ReauthSheet } from './ReauthSheet';
 
 interface PasskeyManagerProps {
   /** Toast sink, same one the rest of the auth UI uses. */
@@ -37,6 +45,9 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [deviceName, setDeviceName] = React.useState('');
   const [adding, setAdding] = React.useState(false);
+  // The passkey awaiting an identity proof, and the doors the server offered.
+  const [reauthPasskey, setReauthPasskey] = React.useState<PasskeySummary | null>(null);
+  const [reauthMethods, setReauthMethods] = React.useState<ReauthMethod[]>(['password', 'code']);
 
   const load = React.useCallback(async () => {
     try {
@@ -94,19 +105,52 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
     if (busy || pendingId) return;
     setPendingId(passkey.id);
     try {
+      // No proof first: an account with a second factor is refused with a 403
+      // REAUTH_REQUIRED, which we turn into a prompt rather than a failure.
       await deletePasskey(passkey.id);
       trackEvent('auth.passkey_removed');
       haptic('success');
       onShowToast('Passkey removed');
       await load();
     } catch (err) {
-      const failure = err instanceof PasskeyError ? err : new PasskeyError('Could not remove that passkey.');
-      trackError('passkey:remove', err);
-      haptic('error');
-      captureException(err);
-      onShowToast(failure.message);
+      const failure = err instanceof PasskeyError ? err : null;
+      if (failure?.result && needsReauth(failure.result)) {
+        setReauthMethods(offeredMethods(failure.result));
+        setReauthPasskey(passkey);
+      } else {
+        trackError('passkey:remove', err);
+        haptic('error');
+        captureException(err);
+        onShowToast(failure?.message || 'Could not remove that passkey.');
+      }
     } finally {
       setPendingId(null);
+    }
+  };
+
+  // Called by the sheet with a collected proof. Only removes when the server
+  // accepts it; a wrong/expired/rate-limited proof stays open with the line the
+  // server sent, so the owner can correct it.
+  const proveReauth = async (proof: ReauthProof): Promise<{ ok: boolean; error?: string }> => {
+    const target = reauthPasskey;
+    if (!target) return { ok: false, error: 'Nothing to remove.' };
+    setBusy(true);
+    try {
+      await deletePasskey(target.id, proof);
+      trackEvent('auth.passkey_removed');
+      haptic('success');
+      onShowToast('Passkey removed');
+      await load();
+      return { ok: true };
+    } catch (err) {
+      const failure = err instanceof PasskeyError ? err : null;
+      if (failure?.result) return { ok: false, error: proofError(failure.result) };
+      trackError('passkey:remove', err);
+      captureException(err);
+      haptic('error');
+      return { ok: false, error: failure?.message || 'Could not remove that passkey.' };
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -215,6 +259,19 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       >
         Refresh list
       </SecondaryButton>
+
+      <ReauthSheet
+        open={reauthPasskey !== null}
+        methods={reauthMethods}
+        title="Confirm it’s you"
+        description={
+          reauthPasskey
+            ? `Removing “${reauthPasskey.deviceName || 'this passkey'}” is a security change, so verify your identity first.`
+            : 'Removing a passkey is a security change, so verify your identity first.'
+        }
+        onProve={proveReauth}
+        onClose={() => setReauthPasskey(null)}
+      />
     </section>
   );
 }

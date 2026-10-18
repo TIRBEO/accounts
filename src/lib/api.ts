@@ -215,12 +215,20 @@ export async function apiPost<T = Record<string, unknown>>(
 async function requestJson<T>(
   path: string,
   method: 'GET' | 'DELETE',
+  opts?: { body?: unknown },
 ): Promise<{ status: number; data: T | null }> {
   const csrf = getCsrfToken();
+  // A DELETE can carry a JSON body — sensitive actions (e.g. removing a passkey)
+  // read an identity proof from it. GET never has one.
+  const hasBody = !!opts && opts.body !== undefined;
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: { ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
+    headers: {
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    },
     credentials: 'include',
+    ...(hasBody ? { body: JSON.stringify(opts!.body) } : {}),
   });
 
   let data: T | null = null;
@@ -243,9 +251,12 @@ export async function apiGet<T = Record<string, unknown>>(path: string): Promise
   }
 }
 
-export async function apiDelete<T = Record<string, unknown>>(path: string): Promise<ApiResult<T>> {
+export async function apiDelete<T = Record<string, unknown>>(
+  path: string,
+  opts?: { body?: unknown },
+): Promise<ApiResult<T>> {
   try {
-    const { status, data } = await requestJson<T>(path, 'DELETE');
+    const { status, data } = await requestJson<T>(path, 'DELETE', opts);
     const raw = data as (Record<string, unknown> & { error?: string }) | null;
     const error = withEventRef(sanitizeApiError(status, raw?.error), raw);
     return { ok: status >= 200 && status < 300, status, data, error, block: extractBlock(status, raw) };
@@ -529,6 +540,38 @@ export async function confirmPasswordReset(resetToken: string, newPassword: stri
   return apiPost<{ message?: string }>('/api/auth/password-reset/confirm', { resetToken, newPassword });
 }
 
+// ── Recovery-email code LOGIN (recovery-login/request|verify) ──────────────
+// A code is mailed to the account's verified RECOVERY (secondary) address; on
+// success the user is signed into their primary account — chained through 2FA
+// when it is enabled (the verify reply carries `requiresMfa` + a tempToken).
+
+export interface RecoveryLoginRequestData {
+  ok?: boolean;
+  /** Masked recovery address the code went to, e.g. `ab****@gmail.com`. */
+  masked?: string;
+  message?: string;
+  retryAfterMs?: number;
+  exceeded?: string;
+  remaining?: Record<string, RemainingInfo>;
+}
+
+export interface RecoveryLoginVerifyData {
+  id?: string;
+  email?: string;
+  token?: string;
+  /** 2FA is on: a tempToken + authenticator/backup code is still required. */
+  requiresMfa?: boolean;
+  tempToken?: string;
+}
+
+export async function recoveryLoginRequest(email: string): Promise<ApiResult<RecoveryLoginRequestData>> {
+  return apiPost<RecoveryLoginRequestData>('/api/auth/recovery-login/request', { email });
+}
+
+export async function recoveryLoginVerify(email: string, code: string): Promise<ApiResult<RecoveryLoginVerifyData>> {
+  return apiPost<RecoveryLoginVerifyData>('/api/auth/recovery-login/verify', { email, code });
+}
+
 // ═══ MAGIC LINK ═══
 
 export interface MagicLinkRequestResult {
@@ -605,6 +648,17 @@ export interface MagicLinkVerifyResult {
   email?: string;
   error?: string;
   block?: BlockInfo | null;
+  /**
+   * The link is valid but belongs to a DIFFERENT account than the one already
+   * signed in. The server answers 200 `{ requiresLogout: true, currentEmail,
+   * magicEmail }` instead of silently swapping the session. The caller must log
+   * the current session out and resume verification of the same link.
+   */
+  requiresLogout?: boolean;
+  currentEmail?: string | null;
+  magicEmail?: string | null;
+  /** Where the emailed link asked to land (server allowlist-validated) — was dropped before. */
+  redirectTo?: string | null;
 }
 
 /**
@@ -613,14 +667,31 @@ export interface MagicLinkVerifyResult {
  * (and other apps) pick up automatically on their next /api request.
  */
 export async function verifyMagicLink(token: string): Promise<MagicLinkVerifyResult> {
-  const result = await apiPost<{ email?: string }>('/api/auth/magic-link/verify', { token });
+  const result = await apiPost<{
+    email?: string;
+    requiresLogout?: boolean;
+    currentEmail?: string | null;
+    magicEmail?: string | null;
+    redirect_to?: string | null;
+  }>('/api/auth/magic-link/verify', { token });
   if (result.block) {
     return { ok: false, block: result.block, error: result.block.message || result.error };
+  }
+  // Account switch: the link is for someone else. Report it so the caller can
+  // sign out and resume — this is not a failure of the link itself.
+  if (result.ok && result.data?.requiresLogout) {
+    return {
+      ok: false,
+      requiresLogout: true,
+      currentEmail: result.data.currentEmail ?? null,
+      magicEmail: result.data.magicEmail ?? null,
+      error: 'That sign-in link is for a different account.',
+    };
   }
   if (!result.ok || !result.data?.email) {
     return { ok: false, error: readableError(result, 'This magic link is invalid or has expired.') };
   }
-  return { ok: true, email: result.data.email };
+  return { ok: true, email: result.data.email, redirectTo: result.data.redirect_to ?? null };
 }
 
 // ═══ SESSION CHECK ═══
@@ -703,40 +774,116 @@ export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
 
 // ═══ PROFILE UPDATE ═══
 
+/** Decode a `data:` image URL into a Blob for multipart upload. A bare string
+    (not a data URL) is wrapped as jpeg so the caller never has to pre-convert. */
+function dataUrlToBlob(input: string): Blob {
+  const m = input.match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return new Blob([input], { type: 'image/jpeg' });
+  const mime = m[1];
+  const raw = atob(m[2]);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 /**
- * Upload an avatar via the API's media endpoint (cookie-authed).
- * Returns the public URL of the uploaded file.
+ * Upload the account avatar (cookie-authed). POSTs multipart to the real
+ * endpoint `/api/profile/avatar`, which validates the image and persists
+ * `userProfile.photoUrl` itself — there is no separate update-profile call to
+ * make. Accepts a File/Blob or a `data:` URL string.
+ *
+ * Requires a live session: an anonymous POST is refused (401), which is exactly
+ * why the signup flow either uploads while its fresh cookie is still valid or
+ * defers to `flushPendingAvatar` on the next authenticated load.
  */
-export async function uploadAvatarViaApi(file: File | Blob): Promise<{ url: string | null; error?: string }> {
+export async function uploadAvatarViaApi(
+  input: File | Blob | string,
+): Promise<{ url: string | null; error?: string }> {
   try {
-    const csrf = document.cookie
-      .split('; ')
-      .find((c) => c.startsWith('__csrf='))
-      ?.split('=')[1] || '';
+    const csrf = getCsrfToken();
+    const blob = typeof input === 'string' ? dataUrlToBlob(input) : input;
     const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(`${API_BASE_URL}/api/media/upload`, {
+    // The handler reads the file from `avatar` (or `file`) — use the primary name.
+    formData.append('avatar', blob, 'avatar');
+    const res = await fetch(`${API_BASE_URL}/api/profile/avatar`, {
       method: 'POST',
-      headers: {
-        ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
-      },
+      headers: { ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
       credentials: 'include',
       body: formData,
     });
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      return { url: null, error: (data as any)?.error || 'Upload failed' };
+      return { url: null, error: (data as { error?: string }).error || 'Upload failed' };
     }
-    const data = await res.json();
-    return { url: (data as any)?.url || null };
+    const url = (data as { photoUrl?: string }).photoUrl ?? null;
+    return url ? { url } : { url: null, error: 'Upload failed' };
   } catch {
     return { url: null, error: 'Upload failed' };
   }
 }
 
+// ── Pending avatar (deferred until a session exists) ──────────────────────
+// A photo picked during signup cannot be uploaded until there is a session
+// cookie. If the immediate post-signup upload fails, the data URL is parked in
+// sessionStorage (tab-scoped, dies with the tab, never localStorage) keyed by
+// the address, and `flushPendingAvatar` retries it on the next authenticated
+// moment. Never fakes success: the UI only reports the photo as set once the
+// endpoint confirms it.
+const PENDING_AVATAR_PREFIX = 'tirbeo.pendingAvatar:';
+
+export function savePendingAvatar(email: string, dataUrl: string): void {
+  try { sessionStorage.setItem(PENDING_AVATAR_PREFIX + email.toLowerCase(), dataUrl); } catch { /* storage disabled */ }
+}
+
+export function clearPendingAvatar(email: string): void {
+  try { sessionStorage.removeItem(PENDING_AVATAR_PREFIX + email.toLowerCase()); } catch { /* nothing to clean */ }
+}
+
+function listPendingAvatarEmails(): string[] {
+  const out: string[] = [];
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(PENDING_AVATAR_PREFIX)) out.push(k.slice(PENDING_AVATAR_PREFIX.length));
+    }
+  } catch { /* storage disabled */ }
+  return out;
+}
+
+/**
+ * Best-effort flush of any parked avatar, called when a session is confirmed.
+ * With an `email` it targets that one pending photo; without it, every parked
+ * address is retried. A parked photo stays parked if there is no session or the
+ * upload fails, so the next authenticated load tries again. Returns whether a
+ * photo was uploaded, and whether one was even attempted (so callers can decide
+ * whether to nag).
+ */
+export async function flushPendingAvatar(email?: string): Promise<{ uploaded: boolean; attempted: boolean; error?: string }> {
+  const emails = (email ? [email.toLowerCase()] : listPendingAvatarEmails()).filter((e) => {
+    try { return !!sessionStorage.getItem(PENDING_AVATAR_PREFIX + e); } catch { return false; }
+  });
+  if (!emails.length) return { uploaded: false, attempted: false };
+
+  const session = await getCurrentUser();
+  if (!session.ok || !session.data) return { uploaded: false, attempted: false }; // no session — leave it parked
+
+  let lastErr: string | undefined;
+  for (const addr of emails) {
+    let dataUrl: string | null = null;
+    try { dataUrl = sessionStorage.getItem(PENDING_AVATAR_PREFIX + addr); } catch { /* ignore */ }
+    if (!dataUrl) continue;
+    const { url, error } = await uploadAvatarViaApi(dataUrl);
+    if (url) {
+      clearPendingAvatar(addr);
+      return { uploaded: true, attempted: true };
+    }
+    lastErr = error;
+  }
+  return { uploaded: false, attempted: true, error: lastErr };
+}
+
 /**
  * Update the current user's profile (cookie-authed, requires the CSRF header).
- * Used to attach an uploaded avatar URL to the account.
  */
 export async function updateProfile(patch: Record<string, unknown>): Promise<ApiResult<CurrentUserData>> {
   try {

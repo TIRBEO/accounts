@@ -106,9 +106,9 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
     setError(''); setMerging(true);
     const result = mergeMode === 'transfer' ? await apiPost<{ ok: boolean }>('/api/integrations/merge', { merge_token: mergeToken, action: 'merge' }) : await apiPost<{ ok: boolean; redirect_to: string }>('/api/auth/oauth/merge', { token: mergeToken });
     if (!result.ok) { const msg = result.error || 'Could not complete the merge. Please sign in again.'; setError(msg); onToast?.(msg, 'error'); setMerging(false); return; }
-    window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps?connected=${provider}` : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || DEFAULT_DASHBOARD_URL);
+    window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/settings/connected-apps?connected=${provider}` : sanitizeTarget((result.data as { redirect_to?: string })?.redirect_to || DEFAULT_DASHBOARD_URL);
   };
-  const handleMergeCancel = () => { window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/account/connected-apps` : '/'; };
+  const handleMergeCancel = () => { window.location.href = mergeMode === 'transfer' ? `${DEFAULT_DASHBOARD_URL}/settings/connected-apps` : '/'; };
 
   const cardCls = 'relative z-10 w-full';
 

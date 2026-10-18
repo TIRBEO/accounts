@@ -17,6 +17,8 @@
  */
 
 import { apiGet, apiPost, apiDelete } from './api';
+import type { ApiResult } from './api';
+import type { ReauthProof } from './reauth';
 
 // ── Base64url ⇄ ArrayBuffer ────────────────────────────────────────────────
 
@@ -124,6 +126,12 @@ export async function hasPlatformAuthenticator(): Promise<boolean> {
 export class PasskeyError extends Error {
   /** `true` when the user simply dismissed the system prompt — not worth a toast. */
   readonly cancelled: boolean;
+  /**
+   * The raw API result when the failure came from a server response. Lets a
+   * caller detect a `REAUTH_REQUIRED` stop (403) and prompt for an identity
+   * proof, rather than treating it as a hard failure.
+   */
+  result?: ApiResult<unknown>;
 
   constructor(message: string, cancelled = false) {
     super(message);
@@ -252,8 +260,73 @@ export async function authenticatePasskey(): Promise<{ id?: string; email?: stri
   return verify.data ?? {};
 }
 
-export async function deletePasskey(id: string): Promise<{ ok: boolean }> {
-  const res = await apiDelete<{ ok: boolean }>(`/api/auth/passkey/${encodeURIComponent(id)}`);
-  if (!res.ok) throw new PasskeyError(res.error || 'Could not remove that passkey.');
+/**
+ * Produce a fresh identity proof with a passkey (no session change). Runs the
+ * WebAuthn assertion against the *session user* (reauth-options, userVerification
+ * required) and exchanges it for the ≤5-min reauth token the sensitive action
+ * accepts. Throws PasskeyError (cancelled=true when the prompt was dismissed).
+ */
+export async function getReauthToken(): Promise<string> {
+  if (!isPasskeySupported()) throw new PasskeyError('This browser cannot use passkeys.');
+
+  const optionsRes = await apiPost<{ publicKey: any; challengeNonce: string }>(
+    '/api/auth/passkey/reauth-options',
+    {},
+  );
+  if (!optionsRes.ok) {
+    throw new PasskeyError(optionsRes.error || 'Could not start the identity check.');
+  }
+  if (!optionsRes.data?.publicKey || !optionsRes.data.challengeNonce) {
+    throw new PasskeyError('The server did not return passkey options.');
+  }
+
+  let credential: PublicKeyCredential;
+  try {
+    credential = (await navigator.credentials.get({
+      publicKey: decodeRequestOptions(optionsRes.data.publicKey),
+    })) as PublicKeyCredential;
+  } catch (err) {
+    throw toPasskeyError(err, 'Could not use that passkey.');
+  }
+  if (!credential) throw new PasskeyError('No passkey was returned.', true);
+
+  let encoded: ReturnType<typeof encodeAssertion>;
+  try {
+    encoded = encodeAssertion(credential);
+  } catch (err: any) {
+    console.error('[PASSKEY] Could not encode reauth assertion:', err);
+    throw new PasskeyError('This browser returned an incomplete passkey response.');
+  }
+
+  const verify = await apiPost<{ ok: boolean; reauthToken?: string }>('/api/auth/passkey/reauth-verify', {
+    credential: encoded,
+    challengeNonce: optionsRes.data.challengeNonce,
+  });
+  if (!verify.ok) {
+    const err = new PasskeyError(verify.error || 'The server could not verify that passkey.');
+    err.result = verify;
+    throw err;
+  }
+  if (!verify.data?.reauthToken) throw new PasskeyError('The server did not return an identity proof.');
+  return verify.data.reauthToken;
+}
+
+/**
+ * Remove a passkey. Sensitive action: it only succeeds when the DELETE body
+ * carries a fresh identity proof (`password`, `reauthCode`, `code`/TOTP, or a
+ * `reauthToken`). With no proof, an account that HAS a second factor is refused
+ * with a 403 REAUTH_REQUIRED — surfaced on the thrown PasskeyError as `.result`
+ * so the caller can prompt for a proof and retry.
+ */
+export async function deletePasskey(id: string, proof?: ReauthProof): Promise<{ ok: boolean }> {
+  const res = await apiDelete<{ ok: boolean }>(
+    `/api/auth/passkey/${encodeURIComponent(id)}`,
+    proof ? { body: proof } : undefined,
+  );
+  if (!res.ok) {
+    const err = new PasskeyError(res.error || 'Could not remove that passkey.');
+    err.result = res;
+    throw err;
+  }
   return { ok: true };
 }
