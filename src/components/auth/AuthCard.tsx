@@ -4,7 +4,7 @@ import { goBlocked } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
 import { clearSessionTrace } from '../../lib/sessionSync';
-import { AuthShell } from '../ui/ig-ui';
+import { AuthShell, Spinner } from '../ui/ig-ui';
 import { TurnstileCaptcha } from './TurnstileCaptcha';
 import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
 
@@ -41,7 +41,7 @@ import { captureException } from '../../lib/sentry';
 import { trackEvent, trackError, emailDomain } from '../../lib/telemetry';
 import { PasskeyError, authenticatePasskey } from '../../lib/passkeys';
 import { haptic } from '../../lib/haptics';
-import { useAuthForm } from './useAuthForm';
+import { useAuthForm, MISSING_COPY } from './useAuthForm';
 import { SignupStep1 } from './signup/SignupStep1';
 import { SignupStep2 } from './signup/SignupStep2';
 import { SignupStep3 } from './signup/SignupStep3';
@@ -209,7 +209,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
      flow. Returns false (and shows the inline error) only on a CONFIRMED
      "no account" from the server; a failed check fails OPEN so a flaky
      endpoint never locks out a real user. */
-  const MISSING_COPY = 'No Tirbeo account found for this email.';
+  const accountMissing = !!loginProfile && loginProfile.email === email && loginProfile.exists === false;
   const assertAccountExists = async (): Promise<boolean> => {
     if (validateEmail(email)) return true;
     if (loginProfile && loginProfile.email === email) {
@@ -1321,6 +1321,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setEmail={setEmail}
             setLoginProfile={setLoginProfile}
             loginProfile={loginProfile}
+            accountMissing={accountMissing}
             isSubmitting={isSubmitting}
             canSend={canSend}
             remainingSends={remainingSends}
@@ -1358,6 +1359,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             touched={touched}
             handleBlur={handleBlur}
             isSubmitting={isSubmitting}
+            accountMissing={accountMissing}
             onSubmit={handleForgotSubmit}
             onBack={goBack}
             loginNotice={loginNotice}
@@ -1392,7 +1394,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           modal over the current step, and remounting it would drop the canvas
           mid-crop. */}
       {showImageEditor && tempImageUrl && (
-        <React.Suspense fallback={null}>
+        <React.Suspense
+          fallback={
+            /* The crop editor's own chunk is still on its way. A tap that
+               answers with nothing looks like a dead control, so the scrim it
+               will sit under arrives first, with the ring on it. */
+            <div className="fixed inset-0 z-[300] grid place-items-center bg-scrim text-white/70 backdrop-blur-sm" aria-busy="true">
+              <span className="sr-only">Opening the photo editor…</span>
+              <Spinner size={26} />
+            </div>
+          }
+        >
           <ImageCropEditor
             imageUrl={tempImageUrl}
             onCrop={handleCropImage}

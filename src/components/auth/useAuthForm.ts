@@ -10,6 +10,10 @@ const WINDOW_MS = 15 * 60 * 1000;
 const SYNC_DEBOUNCE_MS = 2000;
 const LIMITS_SYNC_MS = 30_000;
 
+/* One sentence, said wherever a CONFIRMED "no account" stops a recovery path.
+ * A check that could not run never produces it — see the prefetch below. */
+export const MISSING_COPY = 'No Tirbeo account found for this email.';
+
 export interface LoginProfile {
   email: string;
   exists: boolean;
@@ -379,8 +383,13 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   }, [signupStep, mode, email]);
 
   // ─── PRE-FETCH LOGIN PROFILE ───
+  /* The three steps that ask for an address share one lookup, so whoever types
+     a Gmail here learns it has no account before pressing a button rather than
+     after. 350ms of quiet keeps a typing pass at one request per address, and
+     checkEmailExists already dedupes in-flight and caches for 30s. */
   useEffect(() => {
-    if (mode !== 'login' || loginStep !== 'email' || validateEmail(email)) return;
+    const prefetched = loginStep === 'email' || loginStep === 'forgot' || loginStep === 'more-options';
+    if (mode !== 'login' || !prefetched || validateEmail(email)) return;
     if (loginProfile?.email === email) return;
 
     const timer = setTimeout(() => {

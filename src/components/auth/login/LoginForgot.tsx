@@ -3,6 +3,7 @@
 import React from 'react';
 import { Field, FormNotice, PrimaryButton } from '../../ui/ig-ui';
 import { validateEmail } from '../../../lib/validations';
+import { MISSING_COPY } from '../useAuthForm';
 
 interface LoginForgotProps {
   email: string;
@@ -11,13 +12,15 @@ interface LoginForgotProps {
   touched: Record<string, boolean>;
   handleBlur: (field: string) => void;
   isSubmitting: boolean;
+  /** A confirmed "no account" from the address lookup, already on file. */
+  accountMissing?: boolean;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
   onBack: () => void;
   loginNotice?: { msg: string; tone: 'error' | 'success' } | null;
 }
 
 export const LoginForgot: React.FC<LoginForgotProps> = ({
-  email, setEmail, errors, touched, handleBlur, isSubmitting, onSubmit, onBack, loginNotice,
+  email, setEmail, errors, touched, handleBlur, isSubmitting, accountMissing, onSubmit, onBack, loginNotice,
 }) => {
   const showEmailError = touched.email && errors.email;
   const [sending, setSending] = React.useState(false);
@@ -52,12 +55,18 @@ export const LoginForgot: React.FC<LoginForgotProps> = ({
           onBlur={() => handleBlur('email')}
           placeholder="you@example.com"
           autoComplete="email"
-          error={showEmailError ? errors.email : undefined}
+          error={accountMissing ? MISSING_COPY : showEmailError ? errors.email : undefined}
         />
 
         <FormNotice notice={loginNotice} />
 
-        <PrimaryButton type="submit" loading={sending || isSubmitting} disabled={!!validateEmail(email)}>
+        {/* The lookup has already answered for this address — a button that
+            would only ask again is a dead end, not a choice. */}
+        <PrimaryButton
+          type="submit"
+          loading={sending || isSubmitting}
+          disabled={!!validateEmail(email) || !!accountMissing}
+        >
           Send reset code
         </PrimaryButton>
         </div>

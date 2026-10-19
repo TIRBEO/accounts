@@ -5,6 +5,7 @@ import { HelpCircle, Link2, LifeBuoy, Mail } from 'lucide-react';
 import { checkEmailExists } from '../../../lib/api';
 import { Field, FormNotice, PrimaryButton, Spinner } from '../../ui/ig-ui';
 import { validateEmail } from '../../../lib/validations';
+import { MISSING_COPY } from '../useAuthForm';
 
 interface LoginProfile {
   email: string;
@@ -20,6 +21,8 @@ interface LoginMoreOptionsProps {
   setEmail: (v: string) => void;
   setLoginProfile: (p: LoginProfile | null) => void;
   loginProfile: LoginProfile | null;
+  /** A confirmed "no account" from the address lookup, already on file. */
+  accountMissing?: boolean;
   isSubmitting: boolean;
   canSend: (method: string) => boolean;
   remainingSends: (method: string) => number;
@@ -59,7 +62,7 @@ const icons: Record<string, React.ReactNode> = {
 };
 
 export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
-  email, setEmail, setLoginProfile, loginProfile, isSubmitting, canSend, remainingSends, getMaxSends, refreshRemaining, getResetAt,
+  email, setEmail, setLoginProfile, loginProfile, accountMissing, isSubmitting, canSend, remainingSends, getMaxSends, refreshRemaining, getResetAt,
   isInCooldown, getCooldownRemaining,
   onRequestCode, onRequestMagicLink, onRequestForgotPassword, onRequestRecoveryEmail, onBack, loginNotice,
 }) => {
@@ -98,7 +101,9 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, emailOk]);
 
-  if (!unlocked || !emailOk) {
+  /* A confirmed "no" sends the list back behind the field: an option that can
+     only ever post to an inbox with no account behind it is not a choice. */
+  if (!unlocked || !emailOk || accountMissing) {
     return (
       <div>
         <div className="otp-head">
@@ -113,7 +118,7 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            if (emailOk) setUnlocked(true);
+            if (emailOk && !accountMissing) setUnlocked(true);
           }}
         >
           <div className="space-y-5 text-left">
@@ -126,9 +131,10 @@ export const LoginMoreOptions: React.FC<LoginMoreOptionsProps> = ({
             placeholder="you@example.com"
             autoComplete="email"
             autoFocus
+            error={accountMissing ? MISSING_COPY : undefined}
           />
 
-          <PrimaryButton type="submit" disabled={!emailOk}>
+          <PrimaryButton type="submit" disabled={!emailOk || !!accountMissing}>
             Continue
           </PrimaryButton>
           </div>
