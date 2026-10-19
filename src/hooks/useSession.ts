@@ -65,6 +65,14 @@ export function useSession() {
       if (prev !== null && prev !== result.data.id) broadcastSession('login');
     } else {
       const wasAuth = lastUserIdRef.current !== null;
+      /* A request that never got an answer is not an answer. status 0 is a
+         network failure and 5xx is the server admitting it could not check —
+         on either, the session is still whatever it was, and the keepalive
+         retries. Treating a dropped request as a sign-out is how a person on a
+         train gets told they were never signed in, and it clears the cookies
+         that were the only proof they were. */
+      const indeterminate = result.status === 0 || result.status >= 500;
+      if (indeterminate && wasAuth) return;
       lastUserIdRef.current = null;
       setState({ user: null, loading: false, isAuthenticated: false });
       clearKeepalive();

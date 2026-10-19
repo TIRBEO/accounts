@@ -754,8 +754,14 @@ export function refreshSession(): Promise<boolean> {
 export async function getCurrentUser(): Promise<ApiResult<CurrentUserData>> {
   // __session is httpOnly and invisible to document.cookie — __csrf is its
   // JS-readable twin (set/cleared/rotated with every session), so gate on it.
+  //
+  // But __csrf lives 15 minutes and __refresh lives 30 days, so a tab that sat
+  // in the background half an hour has no __csrf left while its session is
+  // perfectly good. Answering 401 there reports "signed out" to a person who is
+  // signed in — and the screens behind it then clear the cookies that were the
+  // only proof. Rotate first: a successful refresh re-issues all three.
   if (typeof document !== 'undefined' && !document.cookie.includes('__csrf=')) {
-    return { ok: false, status: 401, data: null };
+    if (!(await refreshSession())) return { ok: false, status: 401, data: null };
   }
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
