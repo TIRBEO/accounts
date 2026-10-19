@@ -202,23 +202,31 @@ const FIELD_LINE =
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
+  /** Sits on the label's line, right-aligned — "Forgot password?". A field's
+      own escape hatch belongs beside it, not on a row of its own below. */
+  labelAction?: ReactNode;
   error?: string;
   hint?: ReactNode;
   containerClassName?: string;
   /** Glyph after the value, on the baseline — a reveal toggle, a unit. */
   trailing?: ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>>(function Field(
-  { label, error, hint, containerClassName, trailing, id, className, ...inputProps },
+  { label, labelAction, error, hint, containerClassName, trailing, id, className, ...inputProps },
   ref,
 ) {
   const autoId = React.useId();
   const fieldId = id || autoId;
   return (
     <div className={containerClassName}>
-      {label ? (
-        <label htmlFor={fieldId} className="tb-label">
-          {label}
-        </label>
+      {label || labelAction ? (
+        <div className="tb-label-row">
+          {label ? (
+            <label htmlFor={fieldId} className="tb-label">
+              {label}
+            </label>
+          ) : <span />}
+          {labelAction || null}
+        </div>
       ) : null}
       <div className="relative">
         <input

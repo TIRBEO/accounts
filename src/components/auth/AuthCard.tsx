@@ -1059,35 +1059,31 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       subtitle={mode === 'signup' ? signupCopy.sub : isLoginEntry ? 'Sign in and see what everyone is sharing today.' : undefined}
       kicker={undefined}
       footer={
-        <>
-          <span className="block text-center text-[15px] text-text-3">
-            {mode === 'signup' ? (
-              <>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => { switchMode('login'); setLoginStep('email'); }}
-                  className={FOOTER_ACTION}
-                >
-                  Log in
-                </button>
-              </>
-            ) : (
-              <>
-                <span className="block text-center text-[15px] text-text-3">
-                  Don&apos;t have an account?
-                </span>
-                <button
-                  type="button"
-                  onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
-                  className="create-pill"
-                >
-                  Create new account
-                </button>
-              </>
-            )}
-          </span>
-        </>
+        /* Both directions are the same object: a text switch. The one fill on
+           the screen belongs to the action the screen is asking for. */
+        mode === 'signup' ? (
+          <>
+            Already have an account?{' '}
+            <button
+              type="button"
+              onClick={() => { switchMode('login'); setLoginStep('email'); }}
+              className={FOOTER_ACTION}
+            >
+              Log in
+            </button>
+          </>
+        ) : (
+          <>
+            New to Tirbeo?{' '}
+            <button
+              type="button"
+              onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
+              className={FOOTER_ACTION}
+            >
+              Create an account
+            </button>
+          </>
+        )
       }
     >
       <div className="w-full">
@@ -1220,7 +1216,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             handleBlur={handleBlur}
             loginProfile={loginProfile}
             isSubmitting={isSubmitting}
-            setLoginStep={setLoginStep}
             onSubmit={handleLoginSubmit}
             onForgot={async () => {
               /* An address with no account has nothing to recover — check
@@ -1238,10 +1233,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               setLoginNotice(null);
               setLoginStep('more-options');
             }}
-            onMagicLink={() => {
-              handleDirectLoginRequest('magic-link');
-            }}
-            onPasskeySignIn={handlePasskeySignIn}
             /* Only mounted once the API has actually demanded a challenge, so
                the common case stays a plain login form. */
             captcha={
@@ -1265,7 +1256,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               switchMode('signup');
               setSignupStep(1 as SignupStep);
             }}
-            passkeyLoading={isPasskeyLoading}
           />
         )}
 

@@ -664,6 +664,41 @@
   color: var(--text-2);
 }
 
+/* The field's own escape hatch sits on the label's line — "Forgot password?"
+   is part of the password field, not a row the form has to carry. */
+.tb-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tb-label-row .tb-label {
+  margin-bottom: 0;
+}
+
+.label-action {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.label-action:hover {
+  color: var(--fg);
+}
+
+.label-action:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .tb-hint {
   margin-top: 6px;
   font-size: 12.5px;
@@ -843,22 +878,17 @@
    Notices, inline errors, empty states
    ═══════════════════════════════════════════════════════════════════════ */
 
-.no-account-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  margin-top: -6px;
-}
-
-.no-account-note {
-  font-size: 14px;
+/* The one line that names a stranger address, with the way out beside it. It
+   renders as a field hint, so it is read out with the input it describes. */
+.field-note-danger {
+  display: inline-block;
+  font-size: 13px;
   font-weight: 600;
   color: var(--danger-text);
   animation: fade-in 180ms var(--ease-enter) both;
 }
 
-.no-account-note button {
+.field-note-danger button {
   border: 0;
   padding: 0;
   background: none;
@@ -870,7 +900,7 @@
   cursor: pointer;
 }
 
-.no-account-note button:hover {
+.field-note-danger button:hover {
   color: var(--danger);
 }
 
@@ -893,32 +923,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Sign-in extras — forgot link, more ways, OAuth, OTP, magic link
    ═══════════════════════════════════════════════════════════════════════ */
-
-.forgot-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -8px;
-}
-
-.forgot-link {
-  padding: 4px 2px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-3);
-  transition: color 150ms ease;
-}
-
-.forgot-link:hover {
-  color: var(--fg);
-}
-
-.forgot-link:disabled {
-  opacity: 0.45;
-  pointer-events: none;
-}
 
 .more-ways {
   margin-top: 20px;
@@ -1183,47 +1187,17 @@
   gap: 14px;
 }
 
-/* Login footer CTA — same plate as PrimaryButton. */
-.create-pill {
-  display: flex;
-  width: 100%;
-  height: 42px;
-  margin-top: 12px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: none;
-  background: var(--accent-solid);
-  font-family: inherit;
-  font-size: 14.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--accent-fg);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 150ms ease, transform 150ms ease;
+/* Everything that is not the screen's one primary action, gathered under it:
+   hairline, three quiet provider pills, one text link. */
+.login-alts {
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+  text-align: center;
 }
 
-.create-pill:hover {
-  background: var(--accent-solid-hover);
-}
-
-.create-pill:active {
-  background: var(--accent-press);
-  transform: scale(0.995);
-}
-
-.create-pill:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.create-pill:disabled {
-  background: var(--btn-disabled-bg);
-  color: var(--btn-disabled-fg);
-  transform: none;
-  cursor: not-allowed;
+.login-alts .or-divider {
+  margin: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

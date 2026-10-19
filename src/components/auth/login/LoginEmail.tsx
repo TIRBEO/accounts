@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-// LoginEmail — single-page sign-in: email + password + recovery links + OAuth.
+// LoginEmail — the whole sign-in screen: two fields, one action, then the
+// alternatives underneath it, quiet.
 import type { LoginStep } from "../../../lib/validations";
 import {
   Field,
@@ -31,13 +32,9 @@ interface LoginEmailProps {
     recoveryEmail?: string | null;
   } | null;
   isSubmitting: boolean;
-  setLoginStep: (step: LoginStep) => void;
   onSubmit: (e: React.FormEvent) => void;
   onForgot: () => void;
   onMoreOptions: () => void;
-  onMagicLink: () => void;
-  onPasskeySignIn: () => void;
-  passkeyLoading?: boolean;
   noAccountEmail?: string | null;
   onCreateAccount?: () => void;
   loginNotice?: { msg: string; tone: "error" | "success" } | null;
@@ -68,16 +65,14 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
   captcha,
   captchaPending,
 }) => {
-  const showEmailError = touched.email && errors.email;
   const showPasswordError = touched.password && errors.password;
-  const showNoAccount = !!noAccountEmail && noAccountEmail === email;
-  const emailOk = email.includes("@");
-  /* A confirmed "no account" from the prefetch/lookup — authoritative, so the
+  /* A confirmed "no account" from the address lookup — authoritative, so the
      forgot/more-options/submit paths short-circuit and the field carries the
-     clear message. */
+     one message about it. */
   const emailMissing =
     !!loginProfile && loginProfile.email === email.trim() && loginProfile.exists === false;
-  const missingCopy = 'No Tirbeo account found for this email.';
+  const offeredSignup = !!noAccountEmail && noAccountEmail === email;
+  const noAccount = emailMissing || offeredSignup;
 
   const guard = (fn: () => void) => () => {
     if (emailMissing) return;
@@ -85,73 +80,71 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
   };
 
   return (
-    <form onSubmit={onSubmit}>
-      <div className="signup-fields">
-        <div className="space-y-3 text-left">
-          <Field
-            label="Email"
-            aria-label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => handleBlur("email")}
-            placeholder="you@example.com"
-            autoComplete="email"
-            error={showEmailError ? errors.email : emailMissing ? missingCopy : undefined}
-          />
+    <form onSubmit={onSubmit} className="signup-fields">
+      <Field
+        label="Email"
+        aria-label="Email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onBlur={() => handleBlur("email")}
+        placeholder="you@example.com"
+        autoComplete="email"
+        /* One line says this, not two: the actionable note replaces the plain
+           field error rather than stacking under it. */
+        error={noAccount ? undefined : (touched.email ? errors.email : undefined)}
+        hint={
+          noAccount ? (
+            <span className="field-note-danger">
+              No account for this email yet —{' '}
+              <button type="button" onClick={onCreateAccount}>
+                create one
+              </button>
+            </span>
+          ) : undefined
+        }
+      />
 
-          <PasswordField
-            label="Password"
-            aria-label="Password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => handleBlur("password")}
-            autoComplete="current-password"
-            shown={showPassword}
-            onToggleShown={() => setShowPassword(!showPassword)}
-            error={showPasswordError ? errors.password : undefined}
-          />
-
-          <div className="forgot-row">
-            <button
-              type="button"
-              className="forgot-link"
-              onClick={guard(onForgot)}
-              disabled={isSubmitting || emailMissing}
-            >
-              Forgot password?
-            </button>
-          </div>
-
-          {/* Slot always occupies its height, so the note appearing never
-              shifts the form below it. */}
-          <div className="no-account-slot" aria-live="polite">
-            {showNoAccount && (
-              <p role="status" className="no-account-note">
-                No account for this email yet —{" "}
-                <button type="button" onClick={onCreateAccount}>
-                  create one
-                </button>
-              </p>
-            )}
-          </div>
-
-          <FormNotice notice={loginNotice} />
-
-          {captcha}
-
-          <PrimaryButton
-            type="submit"
-            loading={isSubmitting}
-            disabled={!emailOk || !password || captchaPending || emailMissing}
+      <PasswordField
+        label="Password"
+        aria-label="Password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        onBlur={() => handleBlur("password")}
+        autoComplete="current-password"
+        shown={showPassword}
+        onToggleShown={() => setShowPassword(!showPassword)}
+        error={showPasswordError ? errors.password : undefined}
+        labelAction={
+          <button
+            type="button"
+            className="label-action"
+            onClick={guard(onForgot)}
+            disabled={isSubmitting || emailMissing}
           >
-            Log in
-          </PrimaryButton>
-        </div>
-      </div>
+            Forgot password?
+          </button>
+        }
+      />
 
-      <div className="more-ways">
+      <FormNotice notice={loginNotice} />
+
+      {captcha}
+
+      <PrimaryButton
+        type="submit"
+        loading={isSubmitting}
+        disabled={!email.includes("@") || !password || captchaPending || emailMissing}
+      >
+        Log in
+      </PrimaryButton>
+
+      {/* Everything that is not the one action sits under it on one quiet
+          block: providers, then the inbox-delivered routes. */}
+      <div className="login-alts">
+        <OrDivider label="or" />
+        <OAuthRow disabled={isSubmitting} />
         <button
           type="button"
           className="more-ways-btn"
@@ -161,9 +154,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           More ways to sign in
         </button>
       </div>
-
-      <OrDivider label="or continue with" />
-      <OAuthRow disabled={isSubmitting} />
     </form>
   );
 };
