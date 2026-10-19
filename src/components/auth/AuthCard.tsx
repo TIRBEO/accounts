@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import gsap from 'gsap';
 import { goBlocked } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
@@ -142,7 +141,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       validateField, handleBlur, validateStep,
       usernameStatus, usernameMessage, usernameSuggestions,
       emailCheckStatus,
-      checkUsername,
     } = form;
 
   /* Inline error/success line for the login screens — replaces toasts. */
@@ -265,7 +263,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         const result = await verifySignupOtp(email, verificationCode);
         if (!result.ok) {
           trackEvent('auth.signup_failed', { metadata: { reason: 'otp_invalid', step: 3 } });
-          onShowToast(result.error || 'Invalid verification code');
+          // Inline, not a toast: the message is about the six boxes on screen and
+          // has to still be there when the person looks back at them.
+          setErrors({ verificationCode: result.error || 'That code did not match. Try again.' });
+          setTouched({ verificationCode: true });
           haptic('error');
           setIsSubmitting(false);
           return;
@@ -1032,23 +1033,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const panelKey = `${mode}:${signupStep}:${loginStep}`;
 
   const isLoginEntry = mode === 'login' && loginStep === 'email';
-  const isSignupEntry = mode === 'signup' && signupStep === 1;
 
   /* Wizard chrome is signup-only — login's step count is unknowable up
      front (an OTP challenge only sometimes appears), so it stays a plain
      panel. */
   const wizard = mode === 'signup' ? { index: signupStep, total: 4, label: signupCopy.label } : undefined;
   const canGoBack = mode === 'signup' && signupStep > 1;
-
-  /* GSAP transition — the panel slides up + fades in on every step/mode
-     change. No loaders, just motion. */
-  const panelRef = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    if (!panelRef.current) return;
-    gsap.fromTo(panelRef.current,
-      { opacity: 0, y: 18 },
-      { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', clearProps: 'transform' });
-  }, [panelKey]);
 
   return (
     <AuthShell
@@ -1087,7 +1077,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       }
     >
       <div className="w-full">
-        <div key={panelKey} ref={panelRef}>
+        <div key={panelKey} className="panel-in">
           {/* ═══ SIGNUP STEP 1 ═══ */}
           {mode === 'signup' && signupStep === 1 && (
           <SignupStep1
@@ -1103,14 +1093,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             errors={errors}
             touched={touched}
             handleBlur={handleBlur}
-            checkUsername={checkUsername}
             usernameStatus={usernameStatus}
             usernameMessage={usernameMessage}
             usernameSuggestions={usernameSuggestions}
             emailCheckStatus={emailCheckStatus}
             isSubmitting={isSubmitting}
             step1Complete={step1Complete}
-            onSwitchToLogin={() => { switchMode('login'); setLoginStep('email'); }}
             onSubmit={handleSignupSubmit}
           />
         )}
@@ -1153,7 +1141,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setVerificationCode={setVerificationCode}
             errors={errors}
             touched={touched}
-            handleBlur={handleBlur}
             isSubmitting={isSubmitting}
             isInCooldown={isInCooldown}
             getCooldownRemaining={getCooldownRemaining}
@@ -1167,7 +1154,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         {mode === 'signup' && signupStep === 4 && (
           <SignupStep4
             key="signup-step-4"
-            email={email}
             password={password}
             setPassword={setPassword}
             confirmPassword={confirmPassword}
@@ -1178,12 +1164,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setShowConfirm={setShowConfirm}
             consentTerms={consentTerms}
             setConsentTerms={setConsentTerms}
-            consentPrivacy={consentPrivacy}
             setConsentPrivacy={setConsentPrivacy}
             errors={errors}
             touched={touched}
             handleBlur={handleBlur}
-            setErrors={setErrors}
             isSubmitting={isSubmitting}
             step4Complete={step4Complete}
             onSubmit={handleSignupSubmit}

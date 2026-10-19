@@ -656,6 +656,22 @@
   margin-top: 12px;
 }
 
+/* A step's own line of prose, under the card title. Most steps need none — the
+   title already says what the screen wants — so this carries only the lines
+   that name real data, like the address a code went to. */
+.tb-lede {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+.tb-lede b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
 .tb-label {
   display: block;
   margin-bottom: 8px;
@@ -708,6 +724,12 @@
 
 .tb-error {
   color: var(--danger-text);
+}
+
+/* The availability check said yes. Quiet on purpose — it confirms, it does not
+   celebrate. */
+.tb-hint-ok {
+  color: var(--success-text);
 }
 
 .tb-wordmark {
@@ -816,6 +838,23 @@
 
 .signup-fields > * + * {
   margin-top: 0;
+}
+
+/* The step panel arriving: one lift and fade on every step change. The panel is
+   remounted by its key, so the animation replays without a script. */
+.panel-in {
+  animation: panel-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Wizard chrome — four quiet pills and a Back affordance. */
@@ -1200,6 +1239,113 @@
   margin: 0;
 }
 
+/* Signup step 1 — the two names share a line where there is room, and the
+   username suggestions take the row below their field. */
+.name-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .name-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.name-suggest {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.name-suggest-pill {
+  min-width: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--field);
+  font-size: 14px;
+  color: var(--text-2);
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.name-suggest-pill:hover {
+  border-color: var(--border-hover);
+  background: var(--hover);
+  color: var(--fg);
+}
+
+/* The code screens' resend line: the action, then what is left of the budget. */
+.resend-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text-4);
+}
+
+.resend-note {
+  color: var(--text-4);
+}
+
+.resend-note.is-limit {
+  color: var(--danger-text);
+}
+
+/* Password strength — four ticks and the word for the level. The colour of the
+   filled ticks is decided here, from the level on the container, so the meter
+   reads as one verdict instead of four separate opinions. */
+.pw-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pw-meter > i {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--track);
+  transition: background-color 200ms ease;
+}
+
+.pw-meter > span {
+  /* Held wide enough for the longest word, so the tick track above it does not
+     resize as the strength changes. */
+  flex: none;
+  min-width: 6em;
+  margin-left: 4px;
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-3);
+}
+
+.pw-meter[data-level="1"] .is-on { background: var(--danger); }
+.pw-meter[data-level="2"] .is-on { background: var(--warn); }
+.pw-meter[data-level="3"] .is-on,
+.pw-meter[data-level="4"] .is-on { background: var(--success); }
+
+/* A document link written inside a sentence — underlined quietly so it reads
+   as part of the line, not as a button. */
+.tb-inline-link {
+  color: var(--text-2);
+  text-decoration: underline;
+  text-decoration-color: var(--text-4);
+  text-underline-offset: 2px;
+}
+
+.tb-inline-link:hover {
+  color: var(--fg);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    Grouped surfaces — the landing's frosted plates and grouped lists
    ═══════════════════════════════════════════════════════════════════════ */
@@ -1246,14 +1392,6 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Signup step 2 — avatar, work details, DOB
    ═══════════════════════════════════════════════════════════════════════ */
-
-.step2-lede {
-  margin: 0;
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-3);
-}
 
 .avatar-pick {
   display: flex;
@@ -1403,6 +1541,12 @@
   display: grid;
   gap: 14px;
   padding: 2px 16px 16px;
+}
+
+/* Setting `display` above overrides the UA's hiding of closed <details> content,
+   so the collapsed state has to be stated, not assumed. */
+.work-box:not([open]) .work-body {
+  display: none;
 }
 
 @media (min-width: 640px) {

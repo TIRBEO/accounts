@@ -5,7 +5,6 @@ import { ConsentCheck, PasswordField, PrimaryButton } from '../../ui/ig-ui';
 import { validatePassword } from '../../../lib/validations';
 
 interface SignupStep4Props {
-  email: string;
   password: string;
   setPassword: (v: string) => void;
   confirmPassword: string;
@@ -16,12 +15,10 @@ interface SignupStep4Props {
   setShowConfirm: (v: boolean) => void;
   consentTerms: boolean;
   setConsentTerms: (v: boolean) => void;
-  consentPrivacy: boolean;
   setConsentPrivacy: (v: boolean) => void;
   errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
   handleBlur: (field: string) => void;
-  setErrors: (e: Record<string, string | undefined>) => void;
   isSubmitting: boolean;
   step4Complete: boolean;
   onSubmit: (e: React.FormEvent) => void;
@@ -31,32 +28,17 @@ interface SignupStep4Props {
   captchaPending?: boolean;
 }
 
-function getStrengthBarClass(level: number): string {
-  switch (level) {
-    case 1: return 'bg-danger';
-    case 2: return 'bg-[var(--warn)]';
-    case 3: return 'bg-[var(--success)]';
-    case 4: return 'bg-success';
-    default: return 'bg-hover';
-  }
-}
+const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Strong', 'Very strong'];
 
-function getStrengthLabel(strength: number): string {
-  switch (strength) {
-    case 0: return '';
-    case 1: return 'Weak';
-    case 2: return 'Fair';
-    case 3: return 'Strong';
-    case 4: return 'Very strong';
-    default: return '';
-  }
-}
+/* The links are written inside the consent label, so a click on one must not
+   also toggle the checkbox it sits in. */
+const keepConsent = (e: React.MouseEvent) => e.stopPropagation();
 
 export const SignupStep4: React.FC<SignupStep4Props> = ({
-  email, password, setPassword, confirmPassword, setConfirmPassword,
+  password, setPassword, confirmPassword, setConfirmPassword,
   showPassword, setShowPassword, showConfirm, setShowConfirm, consentTerms, setConsentTerms,
-  consentPrivacy, setConsentPrivacy, errors, touched, handleBlur,
-  setErrors, isSubmitting, step4Complete, onSubmit, captcha, captchaPending,
+  setConsentPrivacy, errors, touched, handleBlur,
+  isSubmitting, step4Complete, onSubmit, captcha, captchaPending,
 }) => {
   const showPasswordError = touched.password && errors.password;
   const showConfirmError = touched.confirmPassword && errors.confirmPassword;
@@ -64,16 +46,12 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
 
   return (
     <form className="signup-fields" onSubmit={onSubmit}>
-      <div className="space-y-5 text-left">
-      <p className="text-center text-[16px] leading-relaxed text-text-4">
-        Choose a strong password with at least 8 characters. Use a mix of letters, numbers, and symbols for best security.
-      </p>
-
       {/* Password with reveal toggle — the toggle rides inside the well rather
           than hanging off a hand-tuned top offset that breaks when the well
           grows. */}
       <div>
         <PasswordField
+          label="Password"
           aria-label="Password"
           shown={showPassword}
           onToggleShown={() => setShowPassword(!showPassword)}
@@ -85,23 +63,18 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
           error={showPasswordError ? errors.password : undefined}
         />
 
-        {/* Password strength indicator */}
         {password && (
-          <div className="mt-4 flex items-center gap-2">
+          <div className="pw-meter" data-level={strength} role="status">
             {[1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className={`h-1.5 rounded-full flex-1 transition-colors ${level <= strength ? getStrengthBarClass(level) : 'bg-hover'}`}
-              />
+              <i key={level} className={level <= strength ? 'is-on' : undefined} />
             ))}
-            <span className="ml-1 text-[15px] text-text-3">
-              {getStrengthLabel(strength)}
-            </span>
+            <span>{STRENGTH_LABELS[strength]}</span>
           </div>
         )}
       </div>
 
       <PasswordField
+        label="Confirm password"
         aria-label="Confirm password"
         shown={showConfirm}
         onToggleShown={() => setShowConfirm(!showConfirm)}
@@ -113,53 +86,33 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
         error={showConfirmError ? errors.confirmPassword : undefined}
       />
 
-      {/* Terms & Privacy consent */}
-      <div className="space-y-3 pt-1">
-        <ConsentCheck
-          checked={consentTerms}
-          onChange={(next) => { setConsentTerms(next); setConsentPrivacy(next); }}
-          label={
-            <>
-              I agree to the{' '}
-              <a
-                href="https://tirbeo.com/terms"
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-text-2 underline decoration-text-4 underline-offset-2 hover:text-fg"
-              >
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a
-                href="https://tirbeo.com/privacy"
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-text-2 underline decoration-text-4 underline-offset-2 hover:text-fg"
-              >
-                Privacy Policy
-              </a>
-            </>
-          }
-        />
-        {touched.consentTerms && !consentTerms && (
-          <p role="alert" className="text-[16px] leading-snug text-danger-text">
-            You must accept the Terms of Service and Privacy Policy
-          </p>
-        )}
-      </div>
+      <ConsentCheck
+        checked={consentTerms}
+        onChange={(next) => { setConsentTerms(next); setConsentPrivacy(next); }}
+        label={
+          <>
+            I agree to the{' '}
+            <a href="https://tirbeo.com/terms" target="_blank" rel="noreferrer" onClick={keepConsent} className="tb-inline-link">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer" onClick={keepConsent} className="tb-inline-link">
+              Privacy Policy
+            </a>
+          </>
+        }
+      />
+      {touched.consentTerms && !consentTerms && (
+        <p role="alert" className="tb-lede tb-error">
+          You must accept the Terms of Service and Privacy Policy
+        </p>
+      )}
 
       {captcha}
 
-      <PrimaryButton
-        type="submit"
-        disabled={!step4Complete || captchaPending}
-        loading={isSubmitting}
-      >
-        {isSubmitting ? 'Creating account…' : 'Sign up'}
+      <PrimaryButton type="submit" disabled={!step4Complete || captchaPending} loading={isSubmitting}>
+        Sign up
       </PrimaryButton>
-      </div>
     </form>
   );
 };

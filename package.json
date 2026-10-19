@@ -16,7 +16,6 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "@vitejs/plugin-react": "^5.0.4",
-    "gsap": "^3.15.0",
     "lucide-react": "^0.546.0",
     "pusher-js": "^8.6.0",
     "react": "^19.0.1",

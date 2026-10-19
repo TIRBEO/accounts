@@ -9,7 +9,6 @@ interface SignupStep3Props {
   setVerificationCode: (v: string) => void;
   errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
-  handleBlur: (field: string) => void;
   isSubmitting: boolean;
   isInCooldown: (key: string) => boolean;
   getCooldownRemaining: (key: string) => number;
@@ -19,67 +18,43 @@ interface SignupStep3Props {
 }
 
 export const SignupStep3: React.FC<SignupStep3Props> = ({
-  email, verificationCode, setVerificationCode, errors, touched, handleBlur,
+  email, verificationCode, setVerificationCode, errors, touched,
   isSubmitting, isInCooldown, getCooldownRemaining, onResend, onSubmit, remainingSends,
 }) => {
   const showCodeError = touched.verificationCode && errors.verificationCode;
   const codeComplete = verificationCode.length === 6;
   const limitReached = remainingSends('signup-otp') === 0;
 
-  const sendsBadge = (
-    <span
-      className={`rounded-xl px-1.5 py-1 text-[15px] ${
-        limitReached ? 'text-danger-text' : 'text-text-4'
-      }`}
-    >
-      {limitReached ? 'limit reached' : `${remainingSends('signup-otp')} left`}
-    </span>
-  );
-
   return (
     <form className="signup-fields" onSubmit={onSubmit}>
-      <div className="space-y-5 text-left">
-      <div>
-        <p className="text-center text-[16px] leading-relaxed text-text-4">
-          We sent a code to <span className="text-text-3">{email}</span>.
-        </p>
-      </div>
+      <p className="tb-lede">
+        We sent a code to <b>{email}</b>.
+      </p>
 
-      <div>
-        <OtpBoxes
-          label="Verification code"
-          value={verificationCode}
-          onChange={setVerificationCode}
-          error={Boolean(showCodeError)}
-        />
-      </div>
+      <OtpBoxes
+        label="Verification code"
+        value={verificationCode}
+        onChange={setVerificationCode}
+        error={Boolean(showCodeError)}
+      />
 
       {showCodeError && (
-        <p role="alert" className="text-center text-[16px] leading-snug text-danger-text">
-          {errors.verificationCode}
-        </p>
+        <p role="alert" className="tb-lede tb-error">{errors.verificationCode}</p>
       )}
 
-      <div className="text-center">
-        {isInCooldown('signup-otp') ? (
-          <span className="inline-flex items-center justify-center gap-2 text-[16px] text-text-4">
-            Resend in {getCooldownRemaining('signup-otp')}s
-            {sendsBadge}
-          </span>
-        ) : (
-          <span className="inline-flex items-center justify-center gap-3">
-            <TextButton type="button" onClick={onResend}>
-              Resend code
-            </TextButton>
-            {sendsBadge}
-          </span>
-        )}
+      {/* One line: the way to get another code, and how many are left. */}
+      <div className="resend-row">
+        {isInCooldown('signup-otp')
+          ? <span>Resend in {getCooldownRemaining('signup-otp')}s</span>
+          : <TextButton type="button" onClick={onResend}>Resend code</TextButton>}
+        <span className={limitReached ? 'resend-note is-limit' : 'resend-note'}>
+          {limitReached ? 'limit reached' : `${remainingSends('signup-otp')} left`}
+        </span>
       </div>
 
       <PrimaryButton type="submit" disabled={!codeComplete} loading={isSubmitting}>
-        {isSubmitting ? 'Verifying…' : 'Verify & Continue'}
+        Verify &amp; Continue
       </PrimaryButton>
-      </div>
     </form>
   );
 };

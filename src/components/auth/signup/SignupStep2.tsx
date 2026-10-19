@@ -156,7 +156,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
       {/* Gender */}
       <div>
         <SelectField
-          label="Gender *"
+          label="Gender"
           value={gender}
           onChange={(v) => { if (!v) return; setGender(v); handleBlur('gender'); }}
           options={[{ value: '', label: 'Select gender' }, ...GENDER_OPTIONS]}
@@ -168,7 +168,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
 
       {/* Date of birth — three grouped selects composing one ISO value. */}
       <div>
-        <span className="tb-label">Date of birth *</span>
+        <span className="tb-label">Date of birth</span>
         <div className="dob-group">
           <div className="dob-cell">
             <select
@@ -262,7 +262,7 @@ export const SignupStep2: React.FC<SignupStep2Props> = ({
       </details>
 
       <PrimaryButton type="submit" disabled={!step2Complete} loading={isSubmitting}>
-        {isSubmitting ? 'Please wait…' : 'Next'}
+        Next
       </PrimaryButton>
     </form>
   );

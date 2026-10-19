@@ -85,7 +85,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const [jobCompany, setJobCompany] = useState('');
   const [jobPlace, setJobPlace] = useState('');
   const [jobStartedOn, setJobStartedOn] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCodeState] = useState('');
 
   // ─── Profile picture ───
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -316,21 +316,22 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  /* A refusal sits under the boxes it describes, and stops being true the moment
+     one of them holds a different code — so editing the code clears it here, in
+     the one place every caller already goes through. */
+  const setVerificationCode = useCallback((value: string) => {
+    setVerificationCodeState(value);
+    setErrors((prev) => (prev.verificationCode ? { ...prev, verificationCode: undefined } : prev));
+  }, []);
+
   // ─── Username availability state ───
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
   const [usernameMessage, setUsernameMessage] = useState('');
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
-  const usernameCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── Signup email availability state ───
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
   const signupAvailabilityRequestRef = useRef(0);
-
-  useEffect(() => {
-    return () => {
-      if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current);
-    };
-  }, []);
 
   // ─── SEND OTP WHEN ENTERING STEP 3 (with rate limit guard) ───
   const otpAutoSentRef = useRef<string>('');
@@ -508,7 +509,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
 
     setEmailCheckStatus('checking');
     setUsernameStatus('checking');
-    setUsernameMessage('Checking availability...');
+    setUsernameMessage('Checking availability…');
 
     try {
       const [emailResult, usernameResult] = await Promise.all([
@@ -590,53 +591,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   }, [mode, signupStep, email, username, checkSignupAvailability]);
 
   // ─── Check username ───
-  const checkUsername = useCallback(async (value: string) => {
-    if (usernameCheckTimeoutRef.current) clearTimeout(usernameCheckTimeoutRef.current);
-    if (!value || value.length < 3) {
-      setUsernameStatus('idle');
-      setUsernameMessage('');
-      return;
-    }
-    const localError = validateUsername(value);
-    if (localError) {
-      setUsernameStatus('error');
-      setUsernameMessage(localError);
-      return;
-    }
-    setUsernameStatus('checking');
-    setUsernameMessage('Checking availability...');
-    usernameCheckTimeoutRef.current = setTimeout(async () => {
-      try {
-        const result = await checkUsernameExists(value);
-        if (!result.ok) {
-          setUsernameStatus('error');
-          setUsernameMessage('Unable to check availability');
-          setUsernameSuggestions([]);
-          return;
-        }
-        if (result.data?.reserved) {
-          setUsernameStatus('taken');
-          setUsernameMessage('This username is reserved');
-          setUsernameSuggestions(await generateSuggestions(value));
-          return;
-        }
-        if (result.data?.exists) {
-          setUsernameStatus('taken');
-          setUsernameMessage('This username is already taken');
-          setUsernameSuggestions(await generateSuggestions(value));
-          return;
-        }
-        setUsernameStatus('available');
-        setUsernameMessage(`${value} is available`);
-        setUsernameSuggestions([]);
-      } catch (err) {
-        trackError('signup:username-check', err);
-        setUsernameStatus('error');
-        setUsernameMessage('Unable to check availability');
-        setUsernameSuggestions([]);
-      }
-    }, 600);
-  }, [generateSuggestions]);
+  // There is no separate username probe: the debounced availability watcher
+  // above asks for the email and the username together and sets both statuses,
+  // so a second caller could only race it for the same fields.
 
   // ─── REAL-TIME VALIDATION ───
   const validateField = useCallback((field: string, value: string) => {
@@ -959,7 +916,6 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     usernameStatus, setUsernameStatus,
     usernameMessage, setUsernameMessage,
     usernameSuggestions, setUsernameSuggestions,
-    checkUsername,
     // Email
     emailCheckStatus, setEmailCheckStatus,
     // Shared send helper
