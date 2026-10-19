@@ -39,10 +39,11 @@ export interface ApiResult<T = unknown> {
   captchaRequired?: boolean;
   captchaSiteKey?: string | null;
   /**
-   * Structured account-restriction info returned by the API as 401/403 when a
-   * login attempt hits a banned / suspended / deleted / deletion-pending
-   * account. When present the UI should show the dedicated interruption page
-   * instead of a generic "cannot sign in" message.
+   * Set when the account the API just spoke about is closed — banned,
+   * suspended, deleted, deletion-pending or deactivated. A matched credential
+   * arrives on a 200 with a session attached, so this is the signal to hand the
+   * reader to the settings gate (which shows the closure screen) rather than a
+   * generic "cannot sign in" message.
    */
   block?: BlockInfo | null;
 }
@@ -125,7 +126,7 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
     return 'Your account is temporarily suspended. You will be able to sign in again when the suspension ends.';
   }
   if (msg === 'account_deletion_scheduled' || msg.includes('deletion_scheduled')) {
-    return 'Your account is scheduled for deletion. You cannot sign in while deletion is pending.';
+    return 'Your account is scheduled for deletion. Sign in to open it again.';
   }
   if (status === 429 || msg.includes('rate limit') || msg.includes('too many')) {
     return 'Too many attempts. Please wait a moment and try again.';
@@ -137,41 +138,46 @@ function sanitizeApiError(status: number, raw: string | undefined): string | und
 }
 
 /**
- * Decode the API's structured account-restriction payloads (returned as 401/403
- * from login-ish routes) into a UI BlockInfo. Shapes (see apps/api):
- *   banned    → { error:'ACCOUNT_BANNED', banned:true, eventId, message }
- *   suspended → { error:'ACCOUNT_SUSPENDED', suspended:true, eventId, reason, until, message }
- *   deleted   → { error:'ACCOUNT_DELETED', deleted:true, message }
- *   deletion_pending → { error:'ACCOUNT_DELETION_PENDING', deletionPending:true, eventId, reason, until, message }
- *   deactivated → { error:'ACCOUNT_DEACTIVATED', deactivated:true, eventId, reason, message }
+ * Decode the API's structured account-closure payload into a UI BlockInfo.
+ * `features/auth/blockFacts.ts` in apps/api is the only producer, and every
+ * body it writes carries `blocked:true` plus one flag per kind — on a 200 when
+ * the credential matched (the person is signed in and the settings gate
+ * explains the closure), on a 401/403 when it didn't (admin console, CLI, a
+ * probe of a dead session). So the flag is the whole answer: no free-text
+ * error matching, no second vocabulary.
  */
+const CLOSURE_FLAGS: [BlockInfo['kind'], string][] = [
+  ['banned', 'banned'],
+  ['suspended', 'suspended'],
+  ['deletion_pending', 'deletionPending'],
+  ['deactivated', 'deactivated'],
+  ['deleted', 'deleted'],
+];
+
 function extractBlock(
   status: number,
   data: (Record<string, unknown> & {
     error?: string;
-    banned?: boolean;
-    suspended?: boolean;
-    deleted?: boolean;
-    deletionPending?: boolean;
-    deactivated?: boolean;
+    blocked?: boolean;
     eventId?: string | null;
     reason?: string | null;
     until?: string | null;
     message?: string | null;
   }) | null,
 ): BlockInfo | null {
-  if ((status !== 401 && status !== 403) || !data) return null;
-  if (data.banned) return { kind: 'banned', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
-  if (data.suspended) return { kind: 'suspended', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
-  if (data.deletionPending) return { kind: 'deletion_pending', reason: data.reason, until: data.until, eventId: data.eventId, message: data.message };
-  if (data.deactivated) return { kind: 'deactivated', reason: data.reason, eventId: data.eventId, message: data.message };
-  if (data.deleted) return { kind: 'deleted', reason: data.reason, message: data.message };
-  const err = (data.error || '').toLowerCase();
-  if (err.includes('banned')) return { kind: 'banned', reason: data.reason, message: data.message };
-  if (err.includes('suspended')) return { kind: 'suspended', reason: data.reason, until: data.until, message: data.message };
-  if (err.includes('deletion')) return { kind: 'deletion_pending', reason: data.reason, until: data.until, message: data.message };
-  if (err.includes('deactivated')) return { kind: 'deactivated', reason: data.reason, message: data.message };
-  if (err.includes('deleted')) return { kind: 'deleted', reason: data.reason, message: data.message };
+  if (!data) return null;
+  const refusal = status === 401 || status === 403;
+  if (!refusal && data.blocked !== true) return null;
+  for (const [kind, flag] of CLOSURE_FLAGS) {
+    if (data[flag] !== true) continue;
+    return {
+      kind,
+      reason: data.reason,
+      until: kind === 'deleted' ? null : data.until,
+      eventId: data.eventId,
+      message: data.message,
+    };
+  }
   return null;
 }
 

@@ -10,7 +10,7 @@ import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
 import { SiteFooter, SiteHeader } from './components/AppChrome';
 import { getCurrentUser, verifyMagicLink, apiPost } from './lib/api';
-import { getRedirectTarget, redirectBlockedToDashboard } from './lib/redirect';
+import { getRedirectTarget, goBlocked } from './lib/redirect';
 import { subscribeToUser, disconnectRealtime } from './lib/realtime';
 import { broadcastSession, clearSessionTrace, parseSessionMessage } from './lib/sessionSync';
 
@@ -147,7 +147,7 @@ export default function App() {
       if (magicToken) {
         window.history.replaceState({}, '', window.location.pathname);
         const result = await verifyMagicLink(magicToken);
-        if (result.block) { redirectBlockedToDashboard(result.block); return; }
+        if (result.block) { goBlocked(); return; }
         if (result.ok) {
           setAuthState('redirecting');
           showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`);
@@ -159,7 +159,7 @@ export default function App() {
         showToast(result.error || 'This magic link is invalid or has expired.');
       }
       const session = await getCurrentUser();
-      if (session.block) { redirectBlockedToDashboard(session.block); return; }
+      if (session.block) { goBlocked(); return; }
       if (session.ok && session.data) {
         lastIdRef.current = session.data.id;
         setUserId(session.data.id);
@@ -186,7 +186,7 @@ export default function App() {
       if (!force && now - lastCheck < 1000) return; // debounce focus+visibility firing together
       lastCheck = now;
       getCurrentUser().then((s) => {
-        if (s.block) { redirectBlockedToDashboard(s.block); return; }
+        if (s.block) { goBlocked(); return; }
         const authed = !!s.ok && !!s.data;
         const newId = s.data?.id || null;
         if (authed && newId !== lastIdRef.current) {

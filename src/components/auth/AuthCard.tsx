@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import gsap from 'gsap';
-import { redirectBlockedToDashboard } from '../../lib/redirect';
+import { goBlocked } from '../../lib/redirect';
 const ImageCropEditor = React.lazy(() => import('../ImageCropEditor'));
 import { uploadAvatarViaApi } from '../../lib/api';
 import { clearSessionTrace } from '../../lib/sessionSync';
@@ -201,7 +201,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (!result.block) return false;
     haptic('error');
     setIsSubmitting(false);
-    void redirectBlockedToDashboard(result.block);
+    goBlocked();
     return true;
   };
 
@@ -426,11 +426,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     let alreadyPrompted = false;
     try { alreadyPrompted = sessionStorage.getItem('tirbeo:passkey-prompted') === '1'; } catch {}
     if (alreadyPrompted) return;
-    const t = setTimeout(() => {
+    // On the next frame, not after a timer: the browser's own passkey sheet is
+    // the fastest thing here, and a 900 ms hold-out only made the page feel
+    // like it was deciding something.
+    const raf = requestAnimationFrame(() => {
       try { sessionStorage.setItem('tirbeo:passkey-prompted', '1'); } catch {}
       void handlePasskeySignIn({ auto: true });
-    }, 900);
-    return () => clearTimeout(t);
+    });
+    return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
