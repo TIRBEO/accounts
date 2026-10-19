@@ -1239,6 +1239,18 @@
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
+/* Skeleton plate — the fleet's one loading shape (same gradient and speed as
+   myprofile's and social's `.skeleton`). A waiting block carries this class
+   plus its own size/rounding utilities; no radius belongs here, because this
+   unlayered rule would beat every `rounded-*` at the call site. The shimmer
+   stops for reduced motion through the global kill-switch at the bottom of
+   this file. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    Signup step 2 — avatar, work details, DOB
    ═══════════════════════════════════════════════════════════════════════ */
@@ -1723,6 +1735,16 @@ input[type="number"]::-webkit-inner-spin-button {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
   }
 }
 

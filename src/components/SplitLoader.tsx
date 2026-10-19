@@ -3,7 +3,10 @@ import { motion, useReducedMotion } from 'motion/react';
 import { BrandMark } from './ui/ig-ui';
 
 export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
-  const [visible, setVisible] = useState(active);
+  /* Revealed, not immediate: an answer that arrives inside 120ms never paints
+     an overlay at all, so a fast route reads as instant instead of a blur
+     flash. Slow waits still get the full rail. */
+  const [visible, setVisible] = useState(false);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -11,7 +14,8 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
       const t = setTimeout(() => setVisible(false), 320);
       return () => clearTimeout(t);
     }
-    setVisible(true);
+    const t = setTimeout(() => setVisible(true), 120);
+    return () => clearTimeout(t);
   }, [active]);
 
   if (!visible) return null;

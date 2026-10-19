@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 const AuthCard = lazy(() => import('./components/auth/AuthCard').then((m) => ({ default: m.AuthCard })));
 import { SessionGate } from './components/auth/SessionGate';
+import { AuthCardSkeleton } from './components/ui/ig-ui';
 import { CallbackView } from './components/CallbackView';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SplitLoader } from './components/SplitLoader';
@@ -115,7 +116,7 @@ export default function App() {
         const authSpa = (p: string) => p.startsWith('/magic-sent') || p === '/login' || p === '/signup' || p === '/';
         if (authSpa(pathRef.current) && authSpa(prev)) return;
         setPageChanging(true);
-        setTimeout(() => setPageChanging(false), 500);
+        setTimeout(() => setPageChanging(false), 300);
       }
     };
     window.addEventListener('popstate', trigger);
@@ -322,7 +323,7 @@ export default function App() {
           ? page(<MagicLinkSentPage />)
           : page(
               <SessionGate onShowToast={showToast}>
-                <Suspense fallback={null}>
+                <Suspense fallback={<AuthCardSkeleton />}>
                   <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onShowToast={showToast} />
                 </Suspense>
               </SessionGate>,

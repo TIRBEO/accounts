@@ -182,7 +182,12 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
 
       <ul className="mt-4 space-y-2">
         {passkeys === null ? (
-          <li className="text-[14px] text-text-4">Loading passkeys…</li>
+          // Two rows shaped like the finished plates, so the card settles
+          // without a jump when the list lands.
+          <>
+            <li aria-hidden className="skeleton h-[54px] rounded-lg" />
+            <li aria-hidden className="skeleton h-[54px] w-3/4 rounded-lg" />
+          </>
         ) : passkeys.length === 0 ? (
           <li className="text-[14px] text-text-4">No passkeys on this account yet.</li>
         ) : (

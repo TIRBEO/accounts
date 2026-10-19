@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, LogOut } from 'lucide-react';
 import { useSession } from '../../hooks/useSession';
 import { getRedirectTarget } from '../../lib/redirect';
-import { AuthShell, SecondaryButton } from '../ui/ig-ui';
+import { AuthCardSkeleton, AuthShell, SecondaryButton } from '../ui/ig-ui';
 import { RandomAvatar } from '../ui/random-avatar';
 import { PasskeyManager } from './PasskeyManager';
 
@@ -18,7 +18,9 @@ export function SessionGate({ children, onShowToast }: SessionGateProps) {
   const [photoBroken, setPhotoBroken] = useState(false);
 
   if (loading) {
-    return null;
+    // The card that's coming, already plated — a probe in flight is a
+    // waiting card, not a blank canvas.
+    return <AuthCardSkeleton />;
   }
 
   if (isAuthenticated && user) {

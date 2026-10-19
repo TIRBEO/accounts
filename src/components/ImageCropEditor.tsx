@@ -7,7 +7,7 @@ import {
   RotateCw,
   X,
 } from "lucide-react";
-import { RangeSlider } from "./ui/ig-ui";
+import { RangeSlider, Spinner } from "./ui/ig-ui";
 
 interface ImageCropEditorProps {
   imageUrl: string;
@@ -198,8 +198,9 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Cropper */}
         <div className="image-crop-editor-stage relative h-[360px] w-full overflow-hidden bg-black/70">
           {mediaLoading && !mediaError && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/85 text-white/70">
-              <span className="text-[16px]">Loading…</span>
+            <div className="absolute inset-0 z-10 grid place-items-center bg-black/85 text-white/70">
+              <span className="sr-only">Loading photo…</span>
+              <Spinner size={24} />
             </div>
           )}
           {mediaError ? (

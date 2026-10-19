@@ -36,7 +36,7 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
       height={size}
       viewBox="0 0 24 24"
       className={cn('shrink-0', className)}
-      style={{ animation: 'spin 0.75s linear infinite' }}
+      style={{ animation: 'spin 0.7s linear infinite' }}
       aria-hidden="true"
     >
       <circle
@@ -50,6 +50,36 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
         strokeDasharray="26 60"
       />
     </svg>
+  );
+}
+
+/* ── Loading plates ───────────────────────────────────────────────────── */
+
+/** A block of the page that hasn't arrived yet, drawn at its own size:
+    the fleet's shimmer recipe (.skeleton in index.css). Give it the height
+    and rounding the finished content will have so nothing jumps when data
+    lands. */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <span aria-hidden className={cn('skeleton block', className)} />;
+}
+
+/** The shape the auth card will take — a title, a lede, two 48px fields and
+    a 42px pill — so a chunk fetch or a session probe is a waiting card, not
+    a blank canvas. */
+export function AuthCardSkeleton() {
+  return (
+    <div className="login-card" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading…</span>
+      <header className="login-head">
+        <Skeleton className="mx-auto h-[1.15em] w-[62%] rounded-full" />
+        <Skeleton className="mx-auto mt-[0.9em] h-[0.85em] w-[84%] rounded-full" />
+      </header>
+      <div className="login-form space-y-3">
+        <Skeleton className="h-12 rounded-lg" />
+        <Skeleton className="h-12 rounded-lg" />
+        <Skeleton className="mt-1 h-[42px] rounded-full" />
+      </div>
+    </div>
   );
 }
 
