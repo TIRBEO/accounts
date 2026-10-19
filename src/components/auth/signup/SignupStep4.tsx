@@ -75,7 +75,6 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
       <div>
         <PasswordField
           aria-label="Password"
-         
           shown={showPassword}
           onToggleShown={() => setShowPassword(!showPassword)}
           value={password}
@@ -155,7 +154,6 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
 
       <PrimaryButton
         type="submit"
-       
         disabled={!step4Complete || captchaPending}
         loading={isSubmitting}
       >

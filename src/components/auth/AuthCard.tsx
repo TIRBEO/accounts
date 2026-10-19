@@ -1078,7 +1078,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </span>
                 <button
                   type="button"
-                 
                   onClick={() => { switchMode('signup'); setSignupStep(1 as SignupStep); }}
                   className="create-pill"
                 >

@@ -21,7 +21,7 @@ import {
   type ReauthMethod,
   type ReauthProof,
 } from '../../lib/reauth';
-import { PrimaryButton, SecondaryButton } from '../ui/ig-ui';
+import { Field, PrimaryButton, TextButton } from '../ui/ig-ui';
 import { ReauthSheet } from './ReauthSheet';
 
 interface PasskeyManagerProps {
@@ -216,33 +216,29 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
         )}
       </ul>
 
-      <div className="mt-4">
-        <label htmlFor="passkey-device-name" className="tb-label">
-          Name this device
-        </label>
-        <div className="mt-2 flex gap-2">
-          <input
-            id="passkey-device-name"
-            value={deviceName}
-            onChange={(e) => setDeviceName(e.target.value)}
-            placeholder="e.g. MacBook Pro"
-            maxLength={60}
-            className="h-12 min-w-0 flex-1 rounded-xl border border-btn-line bg-field px-3.5 text-[16px] text-fg placeholder:text-placeholder transition-[border-color,box-shadow] duration-150 hover:border-btn-line-hover focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:outline-none"
-          />
-          <PrimaryButton
-            type="button"
-            onClick={handleAdd}
-            loading={adding}
-            disabled={busy}
-            className="h-12 shrink-0 px-4"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Plus size={17} aria-hidden />
-              Add
-            </span>
-          </PrimaryButton>
-        </div>
-      </div>
+      <Field
+        id="passkey-device-name"
+        label="Name this device"
+        containerClassName="mt-4"
+        value={deviceName}
+        onChange={(e) => setDeviceName(e.target.value)}
+        placeholder="e.g. MacBook Pro"
+        maxLength={60}
+      />
+
+      {/* One action per row: the field and its CTA stack, the way every other
+          screen here does it. Side by side, a content-width button next to a
+          stretching input is a width fight the input loses. */}
+      <PrimaryButton
+        type="button"
+        onClick={handleAdd}
+        loading={adding}
+        disabled={busy}
+        className="mt-3"
+      >
+        <Plus size={17} aria-hidden />
+        Add passkey
+      </PrimaryButton>
 
       {passkeys && passkeys.length > 1 ? (
         <p className="mt-3 text-[12px] leading-relaxed text-text-4">
@@ -251,14 +247,9 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
         </p>
       ) : null}
 
-      <SecondaryButton
-        type="button"
-        onClick={load}
-        disabled={busy}
-        className="mt-4 h-11"
-      >
+      <TextButton type="button" onClick={load} disabled={busy} className="mt-3">
         Refresh list
-      </SecondaryButton>
+      </TextButton>
 
       <ReauthSheet
         open={reauthPasskey !== null}

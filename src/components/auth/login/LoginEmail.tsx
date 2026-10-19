@@ -89,7 +89,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
       <div className="signup-fields">
         <div className="space-y-3 text-left">
           <Field
-           
             aria-label="Email"
             type="email"
             value={email}
@@ -102,7 +101,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
 
           <PasswordField
             aria-label="Password"
-           
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -117,7 +115,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
             <button
               type="button"
               className="forgot-link"
-             
               onClick={guard(onForgot)}
               disabled={isSubmitting || emailMissing}
             >
@@ -146,7 +143,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
             type="submit"
             loading={isSubmitting}
             disabled={!emailOk || !password || captchaPending || emailMissing}
-           
           >
             Log in
           </PrimaryButton>
@@ -157,7 +153,6 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
         <button
           type="button"
           className="more-ways-btn"
-         
           onClick={guard(onMoreOptions)}
           disabled={isSubmitting || emailMissing}
         >

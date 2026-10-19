@@ -220,6 +220,11 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-press: var(--accent-press);
+  /* The fill for action buttons. `--accent` is the systemBlue tint used for
+     links and controls; white text on it fails WCAG AA, so every solid CTA —
+     here and on tirbeo.com — uses this darker step instead. */
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-hover: var(--accent-solid-hover);
   --color-ig: var(--ig);
   --color-ig-hover: var(--ig-hover);
   --color-ig-press: var(--ig-press);
@@ -459,8 +464,7 @@ select:-webkit-autofill {
 /* ═══════════════════════════════════════════════════════════════════════
    Surfaces — one frosted-glass treatment, the social login recipe.
    ═══════════════════════════════════════════════════════════════════════ */
-.glass,
-.glass-soft {
+.glass {
   background: rgba(24, 24, 26, 0.92);
   border: 1px solid var(--hairline);
   box-shadow:
@@ -469,25 +473,12 @@ select:-webkit-autofill {
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
-.glass-soft {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.glass::before,
-.glass-soft::before {
+.glass::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-  pointer-events: none;
-}
-.sheen::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   pointer-events: none;
 }
 
@@ -704,57 +695,6 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--text-3);
 }
 
-.login-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75em;
-  width: 100%;
-  height: 3em;
-  margin-top: 1.8em;
-  border: 0;
-  border-radius: 12px;
-  background: var(--accent-solid);
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 1.02em;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.16s ease, transform 0.16s ease;
-}
-
-.login-cta img {
-  height: 1.4em;
-  width: auto;
-  flex: none;
-}
-
-.login-cta:hover {
-  background: var(--accent-solid-hover);
-}
-
-.login-cta:active {
-  background: var(--accent-press);
-  transform: scale(0.995);
-}
-
-.login-cta:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.login-cta:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--placeholder);
-  opacity: 1;
-  box-shadow: none;
-  transform: none;
-  cursor: not-allowed;
-}
-
 .login-terms {
   margin-top: auto;
   padding-bottom: 0.6em;
@@ -797,19 +737,9 @@ input[type='number']::-webkit-inner-spin-button {
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 @keyframes halo {
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.06); }
-}
-
-.tb-shimmer {
-  background: linear-gradient(90deg, #1d1d1f 25%, #28282b 37%, #1d1d1f 63%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
 }
 
 .scrollbar-none {
@@ -975,7 +905,7 @@ input[type='number']::-webkit-inner-spin-button {
   gap: 8px;
   padding: 10px 16px;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(0, 0, 0, 0.55);
   color: #fff;
   font-size: 15px;
@@ -997,7 +927,7 @@ input[type='number']::-webkit-inner-spin-button {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(0, 0, 0, 0.65);
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
@@ -1027,8 +957,8 @@ input[type='number']::-webkit-inner-spin-button {
 /* Collapsible optional work block. */
 .work-box {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+  background: var(--ambient);
 }
 
 .work-box summary {
@@ -1097,7 +1027,7 @@ input[type='number']::-webkit-inner-spin-button {
 .no-account-note {
   font-size: 15px;
   font-weight: 600;
-  color: #ff6b71;
+  color: var(--danger-text);
   animation: fade-in 180ms var(--ease-enter) both;
 }
 
@@ -1107,14 +1037,14 @@ input[type='number']::-webkit-inner-spin-button {
   background: none;
   font: inherit;
   font-weight: 800;
-  color: #ff8e93;
+  color: var(--danger-text);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 
 .no-account-note button:hover {
-  color: #ffb0b4;
+  color: var(--danger);
 }
 
 /* Inline error/success line on login screens — replaces toasts. */
@@ -1127,11 +1057,11 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .form-notice-error {
-  color: #ff6b71;
+  color: var(--danger-text);
 }
 
 .form-notice-success {
-  color: #5dd39e;
+  color: var(--success-text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1146,23 +1076,28 @@ input[type='number']::-webkit-inner-spin-button {
 
 
 
-/* Login footer CTA — same plate as the primary action. */
+/* Login footer CTA — the same plate as PrimaryButton, so the two are one
+   control and only the markup differs. Matches tirbeo.com's button recipe:
+   14px radius, --accent-solid fill, flat, semibold. */
 .create-pill {
   display: flex;
   width: 100%;
-  height: 50px;
+  height: 48px;
   margin-top: 12px;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
   background: var(--accent-solid);
+  font-family: inherit;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  color: #ffffff;
-  transition:
-    background-color 150ms ease;
+  color: var(--accent-fg);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease, transform 150ms ease;
 }
 
 .create-pill:hover {
@@ -1171,6 +1106,19 @@ input[type='number']::-webkit-inner-spin-button {
 
 .create-pill:active {
   background: var(--accent-press);
+  transform: scale(0.995);
+}
+
+.create-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.create-pill:disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-fg);
+  transform: none;
+  cursor: not-allowed;
 }
 
 /* ── Desktop (≥1280) — the same centered column as every other width,
@@ -1205,7 +1153,7 @@ input[type='number']::-webkit-inner-spin-button {
   .login-card textarea {
     height: 48px;
     font-size: 15.5px;
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--field);
     border-color: transparent;
     color: var(--fg);
@@ -1219,11 +1167,10 @@ input[type='number']::-webkit-inner-spin-button {
     border-color: var(--accent-2);
   }
 
-  .login-card .PrimaryButton,
   .login-card button[type='submit'] {
     height: 48px;
     font-size: 15.5px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   .signup-fields {
@@ -1240,7 +1187,7 @@ input[type='number']::-webkit-inner-spin-button {
   .login-form .mx-9 { margin-inline: 0; }
 
   /* OAuth — compact provider buttons on one row. */
-  .login-card .oauth-item { height: 48px; border-radius: 12px; }
+  .login-card .oauth-item { height: 48px; border-radius: 14px; }
 
   .forgot-link { margin-top: 0; }
   .no-account-slot { height: 22px; }
@@ -1313,7 +1260,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .more-ways-btn:hover {
-  color: #f2f2f4;
+  color: var(--fg);
 }
 
 .more-ways-btn:disabled {
@@ -1366,12 +1313,12 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .mwo-change:hover {
-  color: #c2dcf7;
+  color: var(--accent-2-hover);
 }
 
 .mwo-list {
   margin-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--hairline);
 }
 
 .mwo-line {
@@ -1382,7 +1329,7 @@ input[type='number']::-webkit-inner-spin-button {
   gap: clamp(10px, 2vw, 16px);
   padding: 16px clamp(2px, 1vw, 6px);
   border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--hairline);
   background: none;
   text-align: left;
   cursor: pointer;
@@ -1390,7 +1337,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .mwo-line:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ambient);
 }
 
 /* Non-interactive info row (e.g. "Sent to" on the magic-link page). */
@@ -1452,7 +1399,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .mwo-line:hover:not(:disabled) .mwo-line-action {
-  color: #c2dcf7;
+  color: var(--accent-2-hover);
 }
 
 .mwo-spin {
@@ -1496,7 +1443,7 @@ input[type='number']::-webkit-inner-spin-button {
   height: 48px;
   padding: 0 10px;
   border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--field);
   color: var(--fg);
   font-size: 14px;
@@ -1576,18 +1523,18 @@ input[type='number']::-webkit-inner-spin-button {
   .login-card input,
   .login-card select {
     height: 48px;
-    border-radius: 12px;
+    border-radius: 14px;
     font-size: 16px;
   }
 
   .login-card button[type='submit'] {
     height: 48px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   .oauth-item {
     height: 48px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   .signup-fields {
@@ -1607,45 +1554,6 @@ input[type='number']::-webkit-inner-spin-button {
     margin-top: 1.9em;
     padding-top: 1.6em;
   }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   Final premium polish — depth, glow and micro-interactions.
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* Primary actions: flat accent fill, lift on hover — depth from NEUTRAL
-   shadows only. No gradients, no coloured glows (per design rule). */
-.login-card button[type='submit']:not(:disabled),
-.primary-btn:not(:disabled),
-.signup-submit:not(:disabled) {
-  background-image: none;
-  background-color: var(--accent-solid);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-}
-
-.login-card button[type='submit']:disabled,
-.primary-btn:disabled,
-.signup-submit:disabled {
-  background-image: none;
-  box-shadow: none;
-  transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-}
-
-.login-card button[type='submit']:hover:not(:disabled),
-.primary-btn:hover:not(:disabled),
-.signup-submit:hover:not(:disabled) {
-  background-color: var(--accent-solid-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.login-card button[type='submit']:active:not(:disabled),
-.primary-btn:active:not(:disabled),
-.signup-submit:active:not(:disabled) {
-  transform: translateY(0);
-  background-color: var(--accent-press);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Inputs: smooth focus ring. */
@@ -1704,19 +1612,17 @@ input[type='number']::-webkit-inner-spin-button {
   .login-card textarea {
     height: 44px;
     font-size: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
-  .login-card button[type='submit'],
-  .primary-btn,
-  .signup-submit {
-    height: 46px;
+  .login-card button[type='submit'] {
+    height: 48px;
     font-size: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
-  .oauth-item { height: 44px; font-size: 13px; border-radius: 12px; padding: 0 8px; gap: 6px; }
-  .login-card .otp-box { height: 50px; font-size: 20px; border-radius: 12px; }
+  .oauth-item { height: 44px; font-size: 13px; border-radius: 14px; padding: 0 8px; gap: 6px; }
+  .login-card .otp-box { height: 50px; font-size: 20px; border-radius: 14px; }
   .create-pill { height: 48px; font-size: 14px; }
   .wizard-rail { margin-bottom: 1em; }
   .legal-bar { font-size: 12.5px; }
@@ -1745,7 +1651,7 @@ input[type='number']::-webkit-inner-spin-button {
   height: 48px;
   padding: 0 34px 0 16px;
   border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--field);
   color: var(--fg);
   font: inherit;
@@ -1767,8 +1673,8 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--placeholder);
 }
 .dob-cell select option {
-  background: #14161a;
-  color: #ffffff;
+  background: var(--card);
+  color: var(--fg);
 }
 .dob-cell svg {
   pointer-events: none;
@@ -1787,7 +1693,7 @@ input[type='number']::-webkit-inner-spin-button {
   .dob-cell select {
     height: 44px;
     font-size: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 0 28px 0 12px;
   }
 }
@@ -1819,51 +1725,15 @@ input[type='number']::-webkit-inner-spin-button {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* Floating sheets / banners. */
-:root[data-theme="light"] .glass,
-:root[data-theme="light"] .glass-soft {
+:root[data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.92);
   box-shadow:
     0 18px 36px -12px rgba(22, 28, 40, 0.22),
     0 1px 3px rgba(22, 28, 40, 0.08);
 }
-:root[data-theme="light"] .glass::before,
-:root[data-theme="light"] .glass-soft::before,
-:root[data-theme="light"] .sheen::before {
+:root[data-theme="light"] .glass::before {
   background: linear-gradient(90deg, transparent, rgba(18, 19, 22, 0.1), transparent);
 }
-
-/* Divider-list ("more ways") and muted link literals. */
-:root[data-theme="light"] .more-ways-btn:hover {
-  color: var(--fg);
-}
-:root[data-theme="light"] .mwo-change,
-:root[data-theme="light"] .mwo-line-action,
-:root[data-theme="light"] .mwo-spin,
-:root[data-theme="light"] .ms-chip {
-  color: var(--accent-2);
-}
-:root[data-theme="light"] .mwo-change:hover,
-:root[data-theme="light"] .mwo-line:hover:not(:disabled) .mwo-line-action {
-  color: var(--accent-2-press);
-}
-:root[data-theme="light"] .mwo-list,
-:root[data-theme="light"] .mwo-line {
-  border-color: rgba(18, 19, 22, 0.1);
-}
-:root[data-theme="light"] .mwo-line:hover:not(:disabled) {
-  background: rgba(18, 19, 22, 0.04);
-}
-:root[data-theme="light"] .ms-chip {
-  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-/* Native select popups want an opaque menu. */
-:root[data-theme="light"] .dob-cell select option {
-  background: #ffffff;
-  color: var(--fg);
-}
-
 
 /* Scrollbars — white-alpha thumbs vanish on a daylight page. */
 :root[data-theme="light"] * {

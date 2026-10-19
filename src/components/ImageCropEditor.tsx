@@ -272,7 +272,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-transparent bg-accent px-5 py-2.5 text-[17px] text-accent-fg transition-colors hover:bg-accent-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-transparent bg-accent-solid px-5 py-2.5 text-[17px] text-accent-fg transition-colors hover:bg-accent-solid-hover active:bg-accent-press active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}

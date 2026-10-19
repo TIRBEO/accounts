@@ -58,25 +58,25 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * One shape for every action: a full pill, sentence case, semibold. The primary
- * is the scheme accent with Social's glow under it, lifting a pixel on hover
- * and stepping to accent-press on tap — the .login-cta recipe.
+ * One shape for every action: the same 14px plate, height and weight the
+ * website's buttons use (tirbeo.com `rounded-lg` + `font-semibold`), so an
+ * action here reads as the same control there.
  */
 const BUTTON_BASE =
   'relative inline-flex w-full select-none items-center justify-center gap-2 overflow-hidden ' +
-  'rounded-[18px] font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
-  'transition-[background-color,color,border-color,opacity,transform,box-shadow] duration-150 ' +
+  'rounded-lg font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
+  'transition-[background-color,color,border-color,opacity,transform] duration-150 ' +
   'disabled:pointer-events-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
-  sm: 'h-12 px-4 text-[14px]',
-  md: 'h-12 px-5 text-[15px]',
-  lg: 'h-[56px] px-6 text-[15px]',
+  sm: 'h-11 px-4 text-[14px]',
+  md: 'h-11 px-5 text-[15px]',
+  lg: 'h-12 px-6 text-[15px]',
 };
 
-/** Primary — the one action fill: solid accent, white label, flat (no glow).
-    Disabled follows the iOS convention: a muted grey plate with a dimmed
-    label, never a darkened blue. */
+/** Primary — the one action fill: the AA-checked solid blue the site uses
+    (#0062cc daylight / #0a63e5 dark), flat, no glow. Disabled follows the iOS
+    convention: a muted grey plate with a dimmed label, never a darkened blue. */
 export function PrimaryButton({
   children,
   loading = false,
@@ -96,10 +96,10 @@ export function PrimaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'bg-accent text-accent-fg shadow-[0_1px_2px_rgb(0_0_0/0.2)]',
-        'hover:bg-accent-hover',
-        'active:bg-accent-press active:translate-y-0 active:scale-[0.995]',
-        'disabled:bg-btn-disabled-bg disabled:text-btn-disabled-fg disabled:shadow-none disabled:translate-y-0',
+        'bg-accent-solid text-accent-fg',
+        'hover:bg-accent-solid-hover',
+        'active:bg-accent-press active:scale-[0.995]',
+        'disabled:bg-btn-disabled-bg disabled:text-btn-disabled-fg disabled:scale-100',
         className,
       )}
     >
@@ -178,15 +178,15 @@ export function FormNotice({ notice }: { notice?: { msg: string; tone: 'error' |
 
 /**
  * A filled field: grey plate, borderless until focus, then an accent border
- * plus a soft accent ring. The whole box is the target. 48px tall so the value
- * sits at a comfortable reading size and the tap target clears the 44px
- * minimum. Identical to myprofile's CONTROL.
+ * plus a soft accent ring. The whole box is the target. 48px tall and 14px
+ * round — the same control the website's forms use, so a field here and a
+ * field on tirbeo.com are the same object.
  */
 const FIELD_LINE =
-  'w-full rounded-2xl border border-transparent bg-field px-4 text-[16px] text-fg ' +
+  'w-full rounded-lg border border-transparent bg-field px-4 text-[16px] text-fg ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ' +
   'placeholder:text-placeholder hover:bg-field-hover ' +
-  'focus:border-[#0058b3] focus:bg-field-focus focus:shadow-[0_0_0_3px_rgba(0,100,200,0.22)]';
+  'focus:border-accent focus:bg-field-focus focus:shadow-[0_0_0_3px_var(--accent-soft)]';
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
@@ -264,7 +264,7 @@ export function TextAreaField({
         id={fieldId}
         rows={rows}
         aria-invalid={error ? true : undefined}
-        className={cn(FIELD_LINE, 'rounded-2xl resize-none py-3 leading-snug', error && '!border-danger', className)}
+        className={cn(FIELD_LINE, 'resize-none py-3 leading-snug', error && '!border-danger', className)}
         {...textProps}
       />
       {error ? (
@@ -347,7 +347,7 @@ export function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-[#8b909a]" />
+        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-text-4" />
       </div>
     </div>
   );
