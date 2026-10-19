@@ -136,7 +136,7 @@ export const SignupStep1: React.FC<{
               key={s}
               type="button"
               onClick={() => setUsername(s)}
-              className="truncate rounded-lg border border-border-strong bg-field px-3 py-2 text-left text-[14px] text-text-2 transition-colors hover:border-border-hover hover:bg-hover hover:text-fg"
+              className="truncate rounded-full border border-border-strong bg-field px-3.5 py-2 text-left text-[14px] text-text-2 transition-colors hover:border-border-hover hover:bg-hover hover:text-fg"
             >
               @{s}
             </button>

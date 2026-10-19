@@ -77,6 +77,7 @@ export const Login2FA: React.FC<Login2FAProps> = ({
 
         {loginWithBackup && (
           <Field
+            label="Backup code"
             placeholder="Backup code" aria-label="Backup code"
             type="text"
             value={backupCode}

@@ -118,7 +118,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
         <div className={cardCls}>
           {magicStatus === 'verifying' || checking ? (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
+              <div className="grid size-20 place-items-center rounded-2xl border border-border bg-card">
                 <Mail size={30} className="text-text-2" />
               </div>
               <div>
@@ -131,7 +131,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
             </div>
           ) : magicStatus === 'success' ? (
             <div className="flex flex-col items-center gap-3 py-3 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
+              <div className="grid size-20 place-items-center rounded-2xl border border-border bg-card">
                 <CheckCircle2 size={32} className="text-success" />
               </div>
               <div>
@@ -145,7 +145,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 py-3 text-center">
-              <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
+              <div className="grid size-20 place-items-center rounded-2xl border border-border bg-card">
                 <Mail size={30} className="text-danger" />
               </div>
               <div>
@@ -168,7 +168,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
       <div className={cardCls}>
         {denied ? (
           <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
-            <div className="grid size-20 place-items-center rounded-3xl border border-border bg-faint">
+            <div className="grid size-20 place-items-center rounded-2xl border border-border bg-card">
               <XCircle size={30} className="text-danger" />
             </div>
             <h1 className="tb-heading">Not allowed</h1>
@@ -177,7 +177,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
         ) : isMerge ? (
           <>
             <div className="mb-5 flex flex-col items-center text-center">
-              <div className="mb-4 grid size-16 place-items-center rounded-2xl border border-border bg-faint">
+              <div className="mb-4 grid size-16 place-items-center rounded-xl border border-border bg-card">
                 {PROVIDER_ICONS[provider] || <CheckCircle2 size={24} className="text-text-2" />}
               </div>
               <h1 className="tb-heading">{mergeMode === 'transfer' ? `Transfer ${providerLabel} here?` : `Merge ${providerLabel} account?`}</h1>

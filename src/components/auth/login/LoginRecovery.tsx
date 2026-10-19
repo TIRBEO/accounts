@@ -65,6 +65,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
         <div className="signup-fields">
           <div className="space-y-5 text-left">
           <PasswordField
+            label="New password"
             placeholder="New password" aria-label="New password"
             shown={showPassword}
             onToggleShown={() => setShowPassword(!showPassword)}
@@ -74,6 +75,7 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
           />
 
           <PasswordField
+            label="Confirm new password"
             placeholder="Confirm new password" aria-label="Confirm new password"
             shown={showConfirm}
             onToggleShown={() => setShowConfirm(!showConfirm)}

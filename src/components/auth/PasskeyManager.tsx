@@ -156,12 +156,12 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
 
   if (!supported) {
     return (
-      <section className="mt-6 w-full rounded-2xl bg-card p-5 text-left">
-        <h3 className="flex items-center gap-2 text-[15px] font-bold text-fg">
+      <section className="mt-5 w-full rounded-xl border border-border bg-card p-5 text-left">
+        <h3 className="flex items-center gap-2 text-[15px] font-semibold text-fg">
           <KeyRound size={17} className="text-text-4" aria-hidden />
           Passkeys
         </h3>
-        <p className="mt-2 text-[14px] leading-relaxed text-text-4">
+        <p className="mt-2 text-[14px] leading-relaxed text-text-3">
           This browser does not support passkeys. Use Chrome, Safari, Edge or Firefox on a device
           with Touch ID, Windows Hello or a screen lock.
         </p>
@@ -170,12 +170,12 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
   }
 
   return (
-    <section className="mt-6 w-full rounded-2xl bg-card p-5 text-left">
-      <h3 className="flex items-center gap-2 text-[15px] font-bold text-fg">
+    <section className="mt-5 w-full rounded-xl border border-border bg-card p-5 text-left">
+      <h3 className="flex items-center gap-2 text-[15px] font-semibold text-fg">
         <KeyRound size={17} className="text-text-4" aria-hidden />
         Passkeys
       </h3>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-text-4">
+      <p className="mt-1.5 text-[13px] leading-relaxed text-text-3">
         Sign in with Face ID, Touch ID or your screen lock instead of a password.
         {platform ? ' This device supports it.' : ''}
       </p>
@@ -189,7 +189,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
           passkeys.map((passkey) => (
             <li
               key={passkey.id}
-              className="flex items-center gap-3 rounded-xl bg-field px-3.5 py-3"
+              className="flex items-center gap-3 rounded-lg border border-border bg-field px-3.5 py-3"
             >
               <Fingerprint size={18} className="shrink-0 text-text-4" aria-hidden />
               <div className="min-w-0 flex-1">
@@ -207,7 +207,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
                 onClick={() => handleRemove(passkey)}
                 disabled={busy || pendingId !== null}
                 aria-label={`Remove passkey ${passkey.deviceName || 'this device'}`}
-                className="grid size-10 shrink-0 place-items-center rounded-xl text-text-4 transition-colors hover:bg-danger/10 hover:text-danger-text disabled:pointer-events-none disabled:opacity-40"
+                className="grid size-10 shrink-0 place-items-center rounded-full text-text-4 transition-colors hover:bg-danger/10 hover:text-danger-text disabled:pointer-events-none disabled:opacity-40"
               >
                 <Trash2 size={17} aria-hidden />
               </button>

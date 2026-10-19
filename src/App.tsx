@@ -8,7 +8,7 @@ import { CallbackView } from './components/CallbackView';
 import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
-import { BrandMark } from './components/ui/ig-ui';
+import { SiteFooter, SiteHeader } from './components/AppChrome';
 import { getCurrentUser, verifyMagicLink, apiPost } from './lib/api';
 import { getRedirectTarget, redirectBlockedToDashboard } from './lib/redirect';
 import { subscribeToUser, disconnectRealtime } from './lib/realtime';
@@ -64,8 +64,8 @@ const inferToastType = (msg: string): ToastType => {
 const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={18} />, error: <AlertCircle size={18} />, info: <Info size={18} /> };
 
 /**
- * Tirbeo Accounts — minimal dark shell.
- * Branding lives in AuthShell's centered wordmark; no top bar.
+ * Tirbeo Accounts — the tirbeo.com shell: sticky wordmark header, one centred
+ * auth column, hairline footer. Same chrome and palette as the landing app.
  */
 
 /** 'checking' → auth probe in flight · 'guest' → show auth UI · 'redirecting' → signed in, navigating away */
@@ -301,42 +301,14 @@ export default function App() {
 
 
   const page = (content: ReactNode) => (
-    <div className="login-page">
-      <BrandMark className="page-brand" onCanvas />
+    <div className="app-shell">
+      <SiteHeader />
       <RealtimeBanner />
       <SplitLoader active={showLoader} />
-      {/* display:contents lets the .login-card inside become a direct flex
-          child of .login-page — centring and the portrait bottom-sheet pin
-          come from the page, exactly like the social login. */}
-      <main id="main-content" className="contents">
+      <main id="main-content" className="app-main">
         {content}
       </main>
-      {/* Same footer as tirbeo.com, kept to a readable column: © left, the
-          full legal + help set right, over a single hairline. */}
-      <footer className="legal-bar">
-        <div className="legal-inner">
-          <p className="legal-meta">
-            <span>© 2026 Tirbeo</span>
-          </p>
-          <nav className="legal-links" aria-label="Footer">
-            <a href="https://tirbeo.com" target="_blank" rel="noreferrer">
-              About
-            </a>
-            <a href="https://tirbeo.com/terms" target="_blank" rel="noreferrer">
-              Terms of Service
-            </a>
-            <a href="https://tirbeo.com/privacy" target="_blank" rel="noreferrer">
-              Privacy Policy
-            </a>
-            <a href="https://tirbeo.com/accessibility" target="_blank" rel="noreferrer">
-              Accessibility Statement
-            </a>
-            <a href="https://tirbeo.com/contact" target="_blank" rel="noreferrer">
-              Help &amp; Contact
-            </a>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
       {toastNode}
     </div>
   );

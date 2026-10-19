@@ -1,6 +1,6 @@
 {
-  "name": "Tirbeo Auth Screen",
-  "description": "A dark halftone design login and authentication interface with social OAuth options and interactive state management.",
+  "name": "Tirbeo Accounts",
+  "description": "Sign in and sign up for Tirbeo on the same Apple grouped palette, type and controls as tirbeo.com.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -89,6 +89,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
       <div className="signup-fields">
         <div className="space-y-3 text-left">
           <Field
+            label="Email"
             aria-label="Email"
             type="email"
             value={email}
@@ -100,6 +101,7 @@ export const LoginEmail: React.FC<LoginEmailProps> = ({
           />
 
           <PasswordField
+            label="Password"
             aria-label="Password"
             placeholder="Password"
             value={password}

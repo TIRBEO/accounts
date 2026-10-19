@@ -169,7 +169,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
       onClick={onCancel}
     >
       <div
-        className="image-crop-editor-panel glass w-full max-w-[600px] overflow-hidden rounded-3xl text-fg"
+        className="image-crop-editor-panel w-full max-w-[600px] overflow-hidden text-fg"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -178,10 +178,10 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-divider px-6 py-4">
           <div>
-            <h3 className="text-[20px] text-fg">
+            <h3 className="text-lg font-semibold text-fg">
               Edit photo
             </h3>
-            <p className="mt-1 text-[15px] text-text-4">
+            <p className="mt-1 text-[13.5px] text-text-3">
               Crop and save your profile photo.
             </p>
           </div>
@@ -189,7 +189,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="Close"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-muted transition-colors hover:bg-hover hover:text-fg"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
           >
             <X size={18} />
           </button>
@@ -204,12 +204,12 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
           )}
           {mediaError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/85 p-8 text-center text-white/90">
-              <ImageIcon size={28} className="text-muted" />
+              <ImageIcon size={28} className="text-muted-foreground" />
               <span className="text-[17px]">{mediaError}</span>
               <button
                 type="button"
                 onClick={onCancel}
-                className="mt-2 cursor-pointer rounded-xl border border-white/[0.12] bg-white/[0.08] px-3.5 py-2 text-[16px] text-white/85 transition-colors hover:bg-white/[0.15]"
+                className="mt-2 cursor-pointer rounded-full border border-white/[0.12] bg-white/[0.08] px-3.5 py-2 text-[16px] text-white/85 transition-colors hover:bg-white/[0.15]"
               >
                 Close
               </button>
@@ -246,7 +246,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-btn-line px-3.5 py-2.5 text-[16px] text-text-2 transition-colors hover:bg-hover"
+              className="btn btn-secondary btn-sm cursor-pointer"
             >
               <RotateCw size={13} />
               Rotate
@@ -264,7 +264,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="cursor-pointer border-none bg-transparent px-4 py-2.5 text-[17px] text-text-3 transition-colors hover:text-fg"
+              className="btn btn-quiet btn-sm cursor-pointer"
             >
               Cancel
             </button>
@@ -272,7 +272,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-transparent bg-accent-solid px-5 py-2.5 text-[17px] text-accent-fg transition-colors hover:bg-accent-solid-hover active:bg-accent-press active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+              className="btn btn-primary btn-sm cursor-pointer"
             >
               {!isProcessing && <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}

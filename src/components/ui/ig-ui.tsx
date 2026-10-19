@@ -58,20 +58,17 @@ export function Spinner({ size = 12, className }: { size?: number; className?: s
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * One shape for every action: the same 14px plate, height and weight the
- * website's buttons use (tirbeo.com `rounded-lg` + `font-semibold`), so an
- * action here reads as the same control there.
+ * One shape for every action: the landing app's `.btn` recipe — a pill with
+ * the AA-checked `--accent-solid` fill, semibold label and a 42px plate.
+ * Defined in index.css so a button here and a button on tirbeo.com are the
+ * same object, not two lookalikes.
  */
-const BUTTON_BASE =
-  'relative inline-flex w-full select-none items-center justify-center gap-2 overflow-hidden ' +
-  'rounded-lg font-semibold normal-case tracking-[-0.01em] whitespace-nowrap ' +
-  'transition-[background-color,color,border-color,opacity,transform] duration-150 ' +
-  'disabled:pointer-events-none';
+const BUTTON_BASE = 'btn btn-block select-none';
 
 const BUTTON_SIZE: Record<ButtonSize, string> = {
-  sm: 'h-11 px-4 text-[14px]',
-  md: 'h-11 px-5 text-[15px]',
-  lg: 'h-12 px-6 text-[15px]',
+  sm: 'btn-sm',
+  md: '',
+  lg: '',
 };
 
 /** Primary — the one action fill: the AA-checked solid blue the site uses
@@ -96,10 +93,8 @@ export function PrimaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'bg-accent-solid text-accent-fg',
-        'hover:bg-accent-solid-hover',
-        'active:bg-accent-press active:scale-[0.995]',
-        'disabled:bg-btn-disabled-bg disabled:text-btn-disabled-fg disabled:scale-100',
+        'btn-primary',
+        'disabled:scale-100',
         className,
       )}
     >
@@ -111,8 +106,9 @@ export function PrimaryButton({
   );
 }
 
-/** Secondary — a hairline outline, never a grey slab: a filled one sitting
-    next to the accent-filled primary reads as the disabled pair. */
+/** Secondary — a filled grey pill, not an outlined one: the shape every other
+    control in the fleet is, with the label in accent so a quiet pill sitting
+    beside a loud one still reads as pressable rather than disabled. */
 export function SecondaryButton({
   children,
   className = '',
@@ -125,10 +121,7 @@ export function SecondaryButton({
       className={cn(
         BUTTON_BASE,
         BUTTON_SIZE[size],
-        'border border-btn-line bg-transparent text-text-2',
-        'hover:border-btn-line-hover hover:bg-hover hover:text-fg',
-        'active:scale-[0.995]',
-        'disabled:opacity-45',
+        'btn-secondary',
         className,
       )}
     >
@@ -150,7 +143,7 @@ export function TextButton({
       className={cn(
         // A text button is still a button: give it a 40px hit area so it is
         // tappable on a phone, and let colour carry the affordance.
-        'inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 text-[15px] font-semibold text-text-3',
+        'inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 text-[14px] font-semibold text-text-3',
         'transition-colors hover:text-fg active:text-text-2',
         'disabled:opacity-45',
         className,
@@ -177,16 +170,15 @@ export function FormNotice({ notice }: { notice?: { msg: string; tone: 'error' |
 }
 
 /**
- * A filled field: grey plate, borderless until focus, then an accent border
- * plus a soft accent ring. The whole box is the target. 48px tall and 14px
- * round — the same control the website's forms use, so a field here and a
- * field on tirbeo.com are the same object.
+ * A filled field: the landing form's own control — 48px tall, 14px round,
+ * hairline border, grey plate, and an accent border on focus. The whole box
+ * is the target.
  */
 const FIELD_LINE =
-  'w-full rounded-lg border border-transparent bg-field px-4 text-[16px] text-fg ' +
-  'transition-[border-color,box-shadow,background-color] duration-150 ' +
-  'placeholder:text-placeholder hover:bg-field-hover ' +
-  'focus:border-accent focus:bg-field-focus focus:shadow-[0_0_0_3px_var(--accent-soft)]';
+  'w-full rounded-lg border border-border bg-input px-4 text-base text-fg ' +
+  'transition-[border-color,background-color] duration-150 ' +
+  'placeholder:text-placeholder hover:border-border-strong hover:bg-field-hover ' +
+  'focus:border-accent focus:bg-field-focus';
 
 export const Field = React.forwardRef<HTMLInputElement, {
   label?: string;
@@ -347,7 +339,7 @@ export function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute bottom-[15px] right-4 size-5 text-text-4" />
+        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-text-4" />
       </div>
     </div>
   );
@@ -391,8 +383,8 @@ export function ConsentCheck({
       <span
         aria-hidden
         className={cn(
-          'mt-[1px] grid size-5 shrink-0 place-items-center rounded-[6px] border-2 transition-colors duration-150',
-          checked ? 'border-accent bg-accent' : 'border-track group-hover:border-border-strong',
+          'mt-[1px] grid size-5 shrink-0 place-items-center rounded-[5px] border border-border-strong transition-colors duration-150',
+          checked ? 'border-accent bg-accent' : 'group-hover:border-border-hover',
         )}
       >
         {checked ? (
@@ -470,13 +462,13 @@ export function OtpBoxes({
             refs.current[Math.min(text.length, length - 1)]?.focus();
           }}
           className={cn(
-            'otp-box h-14 min-w-0 flex-1 rounded-2xl border border-transparent bg-field text-center text-[21px] font-semibold text-fg',
-            'transition-[border-color,background-color,box-shadow] duration-150',
+            'otp-box h-14 min-w-0 flex-1 rounded-lg border border-border bg-input text-center text-[22px] font-semibold text-fg',
+            'transition-[border-color,background-color] duration-150',
             error
               ? 'border-danger bg-hover'
               : focused === i
-                ? 'border-accent-hover bg-field-focus shadow-[0_0_0_3px_var(--accent-soft-ring)]'
-                : 'hover:bg-field-hover',
+                ? 'border-accent bg-field-focus'
+                : 'hover:border-border-strong hover:bg-field-hover',
           )}
         />
       ))}
@@ -561,7 +553,7 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn('flex gap-1.5 rounded-2xl border border-border bg-field p-1.5', className)}>
+    <div role="radiogroup" aria-label={label} className={cn('flex gap-1 rounded-xl border border-border bg-surface-2 p-1', className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -572,8 +564,8 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'flex-1 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors duration-150',
-              active ? 'bg-border-strong text-fg shadow-[0_1px_3px_rgba(0,0,0,0.4)]' : 'text-text-3 hover:bg-hover hover:text-fg',
+              'flex-1 rounded-lg px-3 py-2 text-[14px] font-medium transition-colors duration-150',
+              active ? 'bg-card text-fg shadow-ambient' : 'text-text-3 hover:bg-hover hover:text-fg',
             )}
           >
             {o.label}
@@ -607,7 +599,7 @@ export function Block({
 /** Grouped list — a hairline box, rows split by a fainter one. */
 export function Group({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('divide-y divide-divider overflow-hidden rounded-2xl border border-border bg-card', className)}>
+    <div className={cn('divide-y divide-divider overflow-hidden rounded-xl border border-border bg-card', className)}>
       {children}
     </div>
   );
@@ -634,7 +626,7 @@ export function Row({
     <>
       {icon ? <span className="shrink-0 text-text-4">{icon}</span> : null}
       <span className="min-w-0 flex-1">
-        <span className={cn('block text-[16px] leading-snug', danger ? 'text-danger-text' : 'text-fg')}>
+        <span className={cn('block text-[15px] leading-snug', danger ? 'text-danger-text' : 'text-fg')}>
           {label}
         </span>
         {sub ? <span className="mt-1 block text-[14px] leading-snug text-text-3">{sub}</span> : null}
@@ -643,7 +635,7 @@ export function Row({
       {chevron !== false && onClick ? <ChevronRight className="size-[22px] shrink-0 text-text-4" /> : null}
     </>
   );
-  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-hover';
+  const cls = 'flex w-full items-center gap-3.5 px-4 py-3.5 text-left text-fg transition-colors hover:bg-hover';
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls}>
@@ -684,7 +676,7 @@ export function CardToggle({
       >
         <span
           className={cn(
-            'block size-6 rounded-full bg-accent-fg shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-transform duration-200 ease-out motion-reduce:transition-none',
+            'block size-6 rounded-full bg-accent-fg shadow-ambient transition-transform duration-200 ease-out motion-reduce:transition-none',
             checked ? 'translate-x-[22px]' : 'translate-x-[2px]',
           )}
         />
@@ -771,9 +763,8 @@ export function BrandMark({
 }
 
 /**
- * Auth frame — the login card: a bare em-scaled column on the
- * black-charcoal canvas. The outer .login-page container (App.tsx) owns
- * centring; on portrait phones the card pins near the top edge.
+ * Auth frame — a bare column on the shared canvas. The app shell (App.tsx)
+ * owns the header, centring and footer; this only lays out the form.
  */
 export function AuthShell({
   title,
@@ -824,11 +815,13 @@ export function AuthShell({
           </div>
         </div>
       ) : null}
-      <header className="login-head">
-        {kicker ? <p className="login-kicker mt-0">{kicker}</p> : null}
-        {title ? <h1 className={cn('tb-heading', kicker ? 'mt-[0.42em]' : 'mt-0')}>{title}</h1> : null}
-        {subtitle ? <p className="tb-sub mt-[0.7em]">{subtitle}</p> : null}
-      </header>
+      {(kicker || title || subtitle) ? (
+        <header className="login-head">
+          {kicker ? <p className="login-kicker mt-0">{kicker}</p> : null}
+          {title ? <h1 className={cn('tb-heading', kicker ? 'mt-[0.42em]' : 'mt-0')}>{title}</h1> : null}
+          {subtitle ? <p className="tb-sub mt-[0.7em]">{subtitle}</p> : null}
+        </header>
+      ) : null}
       <div className="login-form">
         {children}
         {footer ? <p className="login-terms">{footer}</p> : null}

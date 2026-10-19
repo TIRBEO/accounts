@@ -33,38 +33,44 @@ export function SessionGate({ children, onShowToast }: SessionGateProps) {
 
     return (
       <AuthShell>
-        <div className="w-full text-center">
-          {user.photoUrl && !photoBroken ? (
-            <img
-              src={user.photoUrl}
-              alt={user.name || user.email}
-              referrerPolicy="no-referrer"
-              className="mx-auto mb-6 size-16 rounded-3xl border object-cover"
-              onError={() => setPhotoBroken(true)}
-            />
-          ) : photoBroken ? (
-            <span className="mx-auto mb-6 grid size-16 place-items-center overflow-hidden rounded-3xl bg-field">
-              <RandomAvatar seed={user.email || user.name || 'tirbeo'} className="size-full" />
-            </span>
-          ) : (
-            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-3xl bg-field text-[22px] text-text-2">
-              {initials}
+        <div className="w-full">
+          <div className="text-center">
+            <h1 className="tb-heading">You&apos;re signed in</h1>
+            <p className="tb-sub mt-2">
+              Continue to your workspace, or review the security on this account.
+            </p>
+          </div>
+
+          <div className="mt-8 flex items-center gap-3.5 rounded-xl border border-border bg-card p-4 text-left">
+            {user.photoUrl && !photoBroken ? (
+              <img
+                src={user.photoUrl}
+                alt={user.name || user.email}
+                referrerPolicy="no-referrer"
+                className="size-14 shrink-0 rounded-2xl border border-border object-cover"
+                onError={() => setPhotoBroken(true)}
+              />
+            ) : photoBroken ? (
+              <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-field">
+                <RandomAvatar seed={user.email || user.name || 'tirbeo'} className="size-full" />
+              </span>
+            ) : (
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border bg-field text-[18px] font-semibold text-text-2">
+                {initials}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold text-fg">{user.email}</p>
+              {user.name ? (
+                <p className="mt-0.5 truncate text-[13.5px] text-text-3">{user.name}</p>
+              ) : null}
             </div>
-          )}
+          </div>
 
-          <p className="mb-2 text-[14px] font-medium text-text-4">
-            Signed in as
-          </p>
-          <p className="truncate text-[20px] font-medium text-fg">{user.email}</p>
-          {user.name && <p className="mt-1.5 text-[15px] text-text-3">{user.name}</p>}
-
-          <div className="mt-9 flex flex-col gap-2.5">
+          <div className="mt-5 flex flex-col gap-3">
             {/* Same plate as PrimaryButton — the site's CTA recipe, because a
                 navigation link cannot be a <button> and still be middle-clickable. */}
-            <a
-              href={dashboardUrl}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent-solid text-[15px] font-semibold text-accent-fg transition-colors hover:bg-accent-solid-hover active:bg-accent-press active:scale-[0.995]"
-            >
+            <a href={dashboardUrl} className="btn btn-primary btn-block">
               Continue to dashboard
               <ArrowRight size={15} className="opacity-70" aria-hidden />
             </a>
@@ -75,9 +81,9 @@ export function SessionGate({ children, onShowToast }: SessionGateProps) {
                 Sign out
               </span>
             </SecondaryButton>
-
-            {onShowToast ? <PasskeyManager onShowToast={onShowToast} /> : null}
           </div>
+
+          {onShowToast ? <PasskeyManager onShowToast={onShowToast} /> : null}
         </div>
       </AuthShell>
     );

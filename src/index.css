@@ -1,78 +1,74 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Tirbeo Accounts — the tirbeo.com theme, dual-scheme
-
-   One design language across the product: the landing's Apple grouped
-   palette (docs/design/apple-tokens.css) — solid charcoal plates on
-   #1c1c1e, iOS systemBlue as the only action colour, the same system font
-   stack and ink ladder as tirbeo.com. No photo, no scrim, no coloured
-   glows; depth comes from hairlines and grouped surfaces.
+   Tirbeo Accounts — the tirbeo.com theme, shared verbatim with the landing
+   app (apps/landing/app/globals.css). Apple grouped palette, light + dark:
+   #1c1c1e charcoal canvas, #2c2c2e grouped plates, #f2f2f7 daylight canvas,
+   white plates, iOS systemBlue as the only action colour, system font stack.
 
    The scheme is driven by <html data-theme="dark|light"> (set pre-paint by
-   the boot script in index.html), not by a media query:
-   • dark  — #1c1c1e ground, #2c2c2e cards, accent #0a84ff, ink-blue #64a5ff.
-   • light — #f2f2f7 ground, white cards, accent #007aff, ink #0068d6.
-
-   • desktop (≥1280) — scrolling feed rails (signup) / story fan + comments
-     post (login) flank the centered card
-   • portrait phones — full-width column pinned near the top
-   Card sizes are em-based off --u so proportions hold at any resolution.
+   the boot script in index.html), not by a media query.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Canvas — the exact Apple grouped palette tirbeo.com ships: solid
-     charcoal ground, opaque grouped plates, no photo, no scrim. */
+  /* Canonical landing tokens */
   --bg: #1c1c1e;
   --card: #2c2c2e;
-  --surface: #3a3a3c;
-  --surface-hover: #48484a;
+  --surface: #2c2c2e;
+  --surface-2: #3a3a3c;
   --surface-3: #48484a;
-
-  /* Text — the landing's ink ladder, opaque so type stays crisp. */
   --fg: #ffffff;
+  --muted: #b6b6bd;
+  --link: #64a5ff;
   --text-2: #ebeaf0;
   --text-3: #b6b6bd;
   --text-4: #a8a8af;
   --placeholder: #a8a8af;
-  --muted: var(--text-3);
-  --muted-2: var(--text-3);
-  --link: #64a5ff;
-
-  /* Washes */
-  --ambient: rgba(255, 255, 255, 0.05);
-  --faint: rgba(255, 255, 255, 0.06);
-  --glass: rgba(28, 28, 30, 0.85);
-  --glass-2: rgba(28, 28, 30, 0.94);
-  --glass-3: #2c2c2e;
-
-  /* Fields keep a soft fill plate — iOS grouped-list style. */
-  --field: #3a3a3c;
-  --field-focus: #48484a;
-  --field-hover: #404043;
-  /* Chrome paints its own opaque block over a field and colours the value.
-     This is the surface that covers it. Must stay opaque and dark. */
-  --autofill-fill: #2c2c2e;
-
-  /* Lines */
   --border: #48484a;
   --border-strong: #5a5a5e;
-  --border-hover: #5a5a5e;
   --divider: #38383a;
   --hover: #3a3a3c;
-  --track: #3a3a3c;
-
-  /* Accent — the landing's iOS systemBlue: #0a84ff on dark, hover lifts
-     lighter, press sinks. Ink-blue reads as #64a5ff on the dark plate. */
   --accent: #0a84ff;
   --accent-hover: #409cff;
   --accent-press: #0060c9;
-  /* Filled-button blue — iOS #0a84ff is only 3.65:1 under white text. */
+  --accent-text: #64a5ff;
+  --accent-fg: #ffffff;
+  /* Filled-button blue. iOS #0a84ff only reaches 3.65:1 under white text,
+     which fails WCAG AA; these clear 4.5:1 while staying systemBlue. */
   --accent-solid: #0a63e5;
   --accent-solid-hover: #0a52c9;
+  --danger: #ff453a;
+  --danger-text: #ff6961;
+  --success: #32d74b;
+  --warn: #ffd60a;
+  --stack-sans: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --scrim: rgb(0 0 0 / 62%);
+  --field: #3a3a3c;
+  --fill: rgba(120, 120, 128, 0.24);
+  --fill-hover: rgba(120, 120, 128, 0.34);
+  --fill-press: rgba(120, 120, 128, 0.42);
+  --hairline: #38383a;
+  --glass: rgba(28, 28, 30, 0.85);
+  --glass-2: rgba(28, 28, 30, 0.94);
+  --glass-3: #2c2c2e;
+  --ambient: rgba(255, 255, 255, 0.05);
+  --faint: rgba(255, 255, 255, 0.06);
+
+  /* Accounts-only tokens */
+  --surface-hover: #48484a;
+  --field-focus: #48484a;
+  --field-hover: #404043;
+  --autofill-fill: #3a3a3c;
+  --border-hover: #5a5a5e;
+  --track: #3a3a3c;
+  --accent-soft: rgba(10, 132, 255, 0.32);
+  --accent-soft-ring: rgba(10, 132, 255, 0.28);
   --ig: #0a84ff;
   --ig-hover: #409cff;
   --ig-press: #0060c9;
@@ -80,195 +76,204 @@
   --accent-2: #64a5ff;
   --accent-2-hover: #8ebdff;
   --accent-2-press: #409cff;
-  --accent-soft: rgba(10, 132, 255, 0.32);
-  --accent-fg: #ffffff;
-
-  /* State */
-  --danger: #ff453a;
-  --danger-text: #ff6961;
-  --success: #32d74b;
   --success-text: #4ade60;
-  --warn: #ffd60a;
   --warn-text: #ffd60a;
-
-  /* Focus */
-  --ring: rgba(10, 132, 255, 0.45);
+  --ring: var(--accent);
   --focus-ring: #0a84ff;
-
-  /* Motion */
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
-
-  /* Surfaces */
-  --hairline: #38383a;
   --ink: #ffffff;
   --ink-fg: #1c1c1e;
-
-  /* Scrim behind floating sheets; outline-button lines; the disabled
-     primary plate. Added for the current sheet/passkey markup. */
-  --scrim: rgb(0 0 0 / 62%);
   --btn-line: #48484a;
   --btn-line-hover: #5a5a5e;
   --btn-disabled-bg: rgba(255, 255, 255, 0.12);
   --btn-disabled-fg: rgba(255, 255, 255, 0.45);
 
-  /* --accent-text is the accent read as ink (glyphs/links), not as a fill.
-     On the dark plate that is the light ramp; the fill would be too dark. */
-  --accent-text: var(--accent-2);
+  /* shadcn-style aliases */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card-foreground: var(--fg);
+  --popover: var(--card);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--field);
+  --ring-color: var(--accent);
+  --radius: 12px;
 }
 
-/* Light mode — the landing's light scheme: iOS grouped-gray canvas, white
-   opaque plates, systemBlue #007aff as the fill and #0068d6 read as ink. */
 :root[data-theme="light"] {
   color-scheme: light;
 
   --bg: #f2f2f7;
   --card: #ffffff;
-  --surface: #e8e8ee;
-  --surface-hover: #dcdce2;
-  --surface-3: #d1d1d6;
-
+  --surface: #ffffff;
+  --surface-2: #f2f2f7;
+  --surface-3: #e8e8ee;
   --fg: #171717;
+  --muted: #5d5d66;
+  --link: #0068d6;
   --text-2: #3f3f46;
   --text-3: #5d5d66;
   --text-4: #6e6e76;
   --placeholder: #6e6e76;
-  --muted: var(--text-3);
-  --muted-2: var(--text-3);
-  --link: #0068d6;
-
-  --ambient: rgba(18, 19, 22, 0.04);
-  --faint: rgba(18, 19, 22, 0.05);
-  --glass: rgba(255, 255, 255, 0.86);
-  --glass-2: rgba(255, 255, 255, 0.95);
-  --glass-3: #ffffff;
-
-  --field: #ffffff;
-  --field-focus: #ffffff;
-  --field-hover: #f7f7fa;
-  --autofill-fill: #ffffff;
-
   --border: #d1d1d6;
   --border-strong: #c6c6c8;
-  --border-hover: #b8b8be;
   --divider: #c6c6c8;
   --hover: #ececf1;
-  --track: rgba(120, 120, 128, 0.24);
-
   --accent: #007aff;
   --accent-hover: #0066d6;
   --accent-press: #0055b8;
+  --accent-text: #0068d6;
+  --accent-fg: #ffffff;
   --accent-solid: #0062cc;
   --accent-solid-hover: #004fb8;
+  --danger: #e0342c;
+  --danger-text: #c9261f;
+  --success: #1ea64b;
+  --warn: #c47b00;
+  --scrim: rgb(18 19 22 / 45%);
+  --field: #ffffff;
+  --fill: rgba(120, 120, 128, 0.16);
+  --fill-hover: rgba(120, 120, 128, 0.24);
+  --fill-press: rgba(120, 120, 128, 0.32);
+  --hairline: #c6c6c8;
+  --glass: rgba(255, 255, 255, 0.86);
+  --glass-2: rgba(255, 255, 255, 0.95);
+  --glass-3: #ffffff;
+  --ambient: rgba(18, 19, 22, 0.04);
+  --faint: rgba(18, 19, 22, 0.05);
+
+  --surface-hover: #dcdce2;
+  --field-focus: #ffffff;
+  --field-hover: #f7f7fa;
+  --autofill-fill: #ffffff;
+  --border-hover: #b8b8be;
+  --track: rgba(120, 120, 128, 0.24);
+  --accent-soft: rgba(0, 122, 255, 0.24);
+  --accent-soft-ring: rgba(0, 122, 255, 0.2);
   --ig: #007aff;
   --ig-hover: #0066d6;
   --ig-press: #0055b8;
   --btn-label: rgba(255, 255, 255, 0.85);
-  /* As ink on a white plate the light blue ramp would fail AA — the link
-     colour flips to the dark end of the same hue. */
   --accent-2: #0068d6;
   --accent-2-hover: #0055b8;
   --accent-2-press: #004494;
-  --accent-soft: rgba(0, 122, 255, 0.24);
-  --accent-fg: #ffffff;
-
-  --danger: #e0342c;
-  --danger-text: #c9261f;
-  --success: #1ea64b;
   --success-text: #146c33;
-  --warn: #c47b00;
   --warn-text: #8a5200;
-
-  --ring: rgba(0, 122, 255, 0.35);
+  --ring: var(--accent);
   --focus-ring: #007aff;
-
-  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
-
-  --hairline: #c6c6c8;
   --ink: #171717;
   --ink-fg: #ffffff;
-
-  --scrim: rgba(18, 19, 22, 0.45);
   --btn-line: #d1d1d6;
   --btn-line-hover: #c6c6c8;
   --btn-disabled-bg: rgba(18, 19, 22, 0.08);
   --btn-disabled-fg: rgba(18, 19, 22, 0.42);
 
-  --accent-text: var(--accent-2);
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card-foreground: var(--fg);
+  --popover: var(--card);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-fg);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--field);
+  --ring-color: var(--accent);
 }
 
 @theme inline {
+  --font-sans: var(--stack-sans);
+  --font-display: var(--stack-sans);
+  --font-mono: var(--stack-mono);
+
   --color-bg: var(--bg);
   --color-fg: var(--fg);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-surface: var(--surface);
-  --color-surface-2: var(--surface-hover);
+  --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
   --color-text-4: var(--text-4);
   --color-muted: var(--muted);
-  --color-muted-2: var(--muted-2);
+  --color-muted-2: var(--muted-2, var(--text-3));
+  --color-muted-foreground: var(--muted-foreground);
   --color-faint: var(--faint);
+  --color-ambient: var(--ambient);
   --color-glass: var(--glass);
   --color-glass-2: var(--glass-2);
   --color-glass-3: var(--glass-3);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-hover: var(--border-hover);
   --color-divider: var(--divider);
+  --color-hairline: var(--hairline);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-press: var(--accent-press);
-  /* The fill for action buttons. `--accent` is the systemBlue tint used for
-     links and controls; white text on it fails WCAG AA, so every solid CTA —
-     here and on tirbeo.com — uses this darker step instead. */
   --color-accent-solid: var(--accent-solid);
   --color-accent-solid-hover: var(--accent-solid-hover);
+  --color-accent-text: var(--accent-text);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-hover: var(--accent-2-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-ig: var(--ig);
   --color-ig-hover: var(--ig-hover);
   --color-ig-press: var(--ig-press);
-  --color-accent-2: var(--accent-2);
-  --color-accent-2-hover: var(--accent-2-hover);
-  --color-accent-fg: var(--accent-fg);
   --color-danger: var(--danger);
   --color-danger-text: var(--danger-text);
   --color-success: var(--success);
+  --color-success-text: var(--success-text);
   --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
   --color-hover: var(--hover);
   --color-link: var(--link);
   --color-track: var(--track);
   --color-field: var(--field);
+  --color-input: var(--input);
   --color-field-focus: var(--field-focus);
   --color-field-hover: var(--field-hover);
-  --color-border-hover: var(--border-hover);
+  --color-fill: var(--fill);
+  --color-fill-hover: var(--fill-hover);
+  --color-fill-press: var(--fill-press);
   --color-ink: var(--ink);
   --color-ink-fg: var(--ink-fg);
   --color-placeholder: var(--placeholder);
-
-  /* Additions the current component markup leans on. */
-  --color-accent-text: var(--accent-text);
-  --color-accent-soft: var(--accent-soft);
-  --color-success-text: var(--success-text);
-  --color-warn-text: var(--warn-text);
-  --color-hairline: var(--hairline);
-  --color-ambient: var(--ambient);
-  --color-muted-ink: var(--muted-2);
   --color-scrim: var(--scrim);
   --color-btn-line: var(--btn-line);
   --color-btn-line-hover: var(--btn-line-hover);
   --color-btn-disabled-bg: var(--btn-disabled-bg);
   --color-btn-disabled-fg: var(--btn-disabled-fg);
+  --color-ring: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   --shadow-ambient: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 10px 26px -18px rgb(0 0 0 / 60%);
   --shadow-pop: 0 10px 30px -8px rgb(0 0 0 / 55%);
   --shadow-sheet: 0 -20px 60px -12px rgb(0 0 0 / 68%);
-
-  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
 
   --radius-sm: 8px;
   --radius-md: 10px;
@@ -280,71 +285,37 @@
   --animate-fade-in: fade-in 180ms ease-out both;
 }
 
-/* ── Legacy --tb-* aliases (still referenced by token-class markup) ── */
-:root {
-  --tb-bg: var(--bg);
-  --tb-text: var(--fg);
-  --tb-on-surface: var(--fg);
-  --tb-on-surface-variant: var(--muted);
-  --tb-primary: var(--accent);
-  --tb-on-primary: #ffffff;
-  --tb-outline-variant: var(--border);
-  --tb-surface-container-low: var(--faint);
-  --tb-surface-container: var(--card);
-  --tb-surface-container-high: var(--hover);
-  --tb-surface-container-highest: var(--divider);
-  --tb-state-hover: var(--hover);
-  --tb-error: var(--danger-text);
-  --tb-success: var(--success-text);
-}
-
 @layer base {
   *,
   *::before,
   *::after {
     border-color: var(--border);
-    /* Flex children default to min-width:auto and push the layout wider than
+    /* Flex children default to min-width:auto and push layouts wider than
        the viewport; every row in this app is a flex row with text in it. */
     min-width: 0;
   }
 
   html {
+    background: var(--background);
     -webkit-text-size-adjust: 100%;
   }
 
   body {
+    min-width: 20rem;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--fg);
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-      sans-serif;
-    font-size: 15px;
+    font-family: var(--stack-sans);
+    font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
-    /* A full-bleed photo page must never scroll sideways. */
-    overflow-x: clip;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--accent) 30%, transparent);
-    color: var(--fg);
-  }
-
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--track);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #404040;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--accent);
+    color: var(--accent-fg);
   }
 
   button {
@@ -367,6 +338,350 @@
   textarea::placeholder {
     opacity: 1;
   }
+
+  /* One focus ring for the whole app, like tirbeo.com. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Fields draw their own focus (accent border), which reads better than an
+     outline crossing the plate. */
+  :where(input, textarea, select):focus,
+  :where(input, textarea, select):focus-visible {
+    outline: none;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--fg) !important;
+    caret-color: var(--fg);
+    -webkit-box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
+    box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
+    transition: background-color 6000000s 0s, color 6000000s 0s;
+  }
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Page chrome — the landing header and footer, reused on every screen
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 40px 20px;
+  padding-top: calc(40px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .app-main {
+    padding: 56px 24px;
+  }
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.site-header.is-scrolled {
+  border-bottom-color: var(--divider);
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (min-width: 640px) {
+  .site-header-inner {
+    padding: 0 24px;
+  }
+}
+
+.site-brand {
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.site-brand:hover {
+  color: var(--text-2);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (min-width: 640px) {
+  .site-nav {
+    gap: 8px;
+  }
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 20px;
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 72rem;
+  margin: 0 auto;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+@media (min-width: 640px) {
+  .site-footer-inner {
+    flex-direction: row;
+  }
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 20px;
+  row-gap: 8px;
+}
+
+.site-footer-links a,
+.site-footer-links button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin: -4px 0;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.site-footer-links a:hover,
+.site-footer-links button:hover {
+  color: var(--fg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Buttons — the landing recipe. One pill for every action: the fill
+   carries the meaning, the radius never changes.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.btn:active {
+  transform: scale(0.995);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* A disabled fill is not an enabled one seen through glass — iOS mutes the
+   plate and the label. Half-transparent blue reads as "loading", not "off". */
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-fg);
+}
+
+.btn-secondary:disabled,
+.btn-secondary[aria-disabled="true"],
+.btn-quiet:disabled,
+.btn-quiet[aria-disabled="true"] {
+  opacity: 0.5;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--accent-solid);
+  color: var(--accent-fg);
+}
+
+.btn-primary:hover {
+  background: var(--accent-solid-hover);
+}
+
+.btn-secondary {
+  background: var(--fill);
+  color: var(--accent-text);
+}
+
+.btn-secondary:hover {
+  background: var(--fill-hover);
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--text-3);
+}
+
+.btn-quiet:hover {
+  background: var(--fill);
+  color: var(--fg);
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Type ladder — the landing's ink, sized for the auth column
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.tb-heading {
+  font-size: clamp(30px, 1vw + 26px, 36px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.tb-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-3);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.tb-heading + .tb-sub {
+  margin-top: 12px;
+}
+
+.tb-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.tb-hint {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-4);
+}
+
+.tb-error {
+  color: var(--danger-text);
+}
+
+.tb-wordmark {
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
 }
 
 .text-link {
@@ -376,239 +691,109 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Focus — one rule for the whole app (2px accent, like Social)
-   Unlayered so it outranks the `outline-none` utilities the inputs use.
+   Auth column — one centred column on the landing canvas
    ═══════════════════════════════════════════════════════════════════════ */
-:focus-visible {
-  outline: 2px solid var(--focus-ring) !important;
-  outline-offset: 3px !important;
-}
-:where(:focus):not(:focus-visible) {
-  outline: none !important;
-}
-/* Inputs draw their own focus (accent border + soft ring), which reads
-   better than an outline crossing the field. */
-:where(input, textarea, select):focus,
-:where(input, textarea, select):focus-visible {
-  outline: none !important;
-}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Autofill
-   Chrome paints an opaque block over the field and recolours the value.
-   Cover it with our own white and suppress the flash with an absurd
-   transition length.
-   ═══════════════════════════════════════════════════════════════════════ */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
-  -webkit-text-fill-color: var(--fg) !important;
-  caret-color: var(--fg);
-  -webkit-box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
-  box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
-  transition: background-color 6000000s 0s, color 6000000s 0s;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Type — em-based off the card's --u scale so everything inside the card
-   keeps its proportions at any viewport size.
-   ═══════════════════════════════════════════════════════════════════════ */
-.tb-heading {
-  font-size: 1.95em;
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.032em;
-  color: var(--fg);
-  text-align: center;
-  text-wrap: balance;
-}
-.tb-sub {
-  font-size: 0.98em;
-  line-height: 1.6;
-  color: var(--text-3);
-  text-align: center;
-  text-wrap: balance;
-}
-/* Breathing room between a step's title and its description. */
-.tb-heading + .tb-sub {
-  margin-top: 14px;
-}
-.tb-label {
-  display: block;
-  margin-bottom: 0.45em;
-  font-size: 0.9em;
-  font-weight: 600;
-  color: var(--text-2);
-}
-/* Error and hint copy sits directly under its field. */
-.tb-hint {
-  margin-top: 0.5em;
-  font-size: 0.82em;
-  line-height: 1.45;
-  color: var(--text-3);
-}
-.tb-error {
-  color: var(--danger-text);
-}
-.tb-wordmark {
-  font-size: 1em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent-2);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Surfaces — one frosted-glass treatment, the social login recipe.
-   ═══════════════════════════════════════════════════════════════════════ */
-.glass {
-  background: rgba(24, 24, 26, 0.92);
-  border: 1px solid var(--hairline);
-  box-shadow:
-    0 18px 36px -12px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-}
-.glass::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-  pointer-events: none;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Range slider — a hairline track with a white knob
-   ═══════════════════════════════════════════════════════════════════════ */
-input[type='range'] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-input[type='range']::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 999px;
-  background: var(--track);
-}
-input[type='range']::-moz-range-track {
-  height: 4px;
-  border-radius: 999px;
-  background: var(--track);
-}
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--fg);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-  transition: box-shadow 150ms ease;
-}
-input[type='range']::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--fg);
-}
-input[type='range']:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
-}
-input[type='range']:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.tb-range::-webkit-slider-runnable-track,
-.tb-range::-moz-range-track {
-  background: transparent;
-}
-
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Login shell — one Apple-clean canvas at every size, one centered column
-   everywhere (var(--bg) page, var(--field) fields, accent action).
-   Card sizes are em-based off --u so proportions hold at any resolution.
-   ═══════════════════════════════════════════════════════════════════════ */
-.login-page {
-  position: relative;
-  /* Owns a stacking context so the rail columns and panes layer predictably. */
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: 16px;
-  padding-top: calc(16px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  background-color: var(--bg);
-}
-
-/* Clean canvas — plain themed background, no photo, no scrim (Apple-style). */
-
-/* The form column — no plate: the fields sit directly on the page. */
 .login-card {
-  --u: min(
-    clamp(13px, 0.45vw + 10.6px, 18px),
-    clamp(12px, 2.1vh + 4px, 18px)
-  );
-  box-sizing: border-box;
   position: relative;
   display: flex;
   flex-direction: column;
   width: min(460px, 100%);
   margin: auto;
-  padding: 1.8em 1.5em 2.2em;
-  font-size: var(--u);
+  padding: 0;
+  font-size: 15px;
   text-align: left;
 }
 
-/* Wider frame for the settings-style screens (2FA, passkeys, callback). */
 .login-card[data-wide="true"] {
   width: min(560px, 100%);
 }
 
-/* The wordmark is hidden at every width — the heading is the only title. */
-.page-brand {
-  display: block;
-  position: fixed;
-  top: 16px;
-  left: 20px;
-  z-index: 6;
-  height: 30px;
-  width: auto;
-  opacity: 0.95;
-  transition: opacity 0.2s ease;
+.login-head {
+  margin-bottom: 20px;
 }
 
-.page-brand:hover { opacity: 1; }
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 
-/* Wizard chrome — Back / step counter row and the progress track. */
-/* Wizard chrome — just four quiet pills; the only wayfinding text lives
-   in the progressbar's accessible label. */
+.login-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.login-title {
+  margin-top: 4px;
+  font-size: clamp(30px, 1vw + 26px, 36px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+.login-sub {
+  margin-top: 10px;
+  max-width: 38ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+.login-terms {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--divider);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--text-3);
+}
+
+.login-terms a {
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.login-terms a:hover {
+  color: var(--fg);
+}
+
+/* Fields: the landing's 48px plate, 14px radius, hairline that turns accent
+   on focus. Kept here as well as in Field so a stray <input> matches. */
+.login-card input,
+.login-card select,
+.login-card textarea {
+  font-size: 16px;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.signup-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.signup-fields > * + * {
+  margin-top: 0;
+}
+
+/* Wizard chrome — four quiet pills and a Back affordance. */
 .wizard-rail {
   width: 100%;
-  margin-bottom: 1.6em;
+  margin-bottom: 24px;
 }
 
 .wizard-row {
   display: flex;
   align-items: center;
-  gap: 1em;
+  gap: 16px;
 }
 
 .wizard-segs {
@@ -633,14 +818,14 @@ input[type='number']::-webkit-inner-spin-button {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.25em;
+  gap: 4px;
   min-width: 44px;
   min-height: 32px;
-  padding: 0.2em 0.3em 0.2em 0;
+  padding: 2px 4px 2px 0;
   border: 0;
   background: transparent;
   font-family: inherit;
-  font-size: 0.82em;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-3);
   transition: color 150ms ease;
@@ -650,382 +835,25 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--fg);
 }
 
-/* Wizard steps: title + subtitle sit left with real breathing room, and the
-   secondary line stays normal weight — the heading is the loud one. */
-.login-card:has(.wizard-rail) .login-head {
-  padding-left: 1em;
-}
 .login-card:has(.wizard-rail) .login-head .tb-heading,
 .login-card:has(.wizard-rail) .login-head .tb-sub {
   text-align: left;
 }
 
-/* The form column — separated from the head by a soft gap. */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-top: 1.2em;
-}
-
-.login-kicker {
-  margin: 1.5em 0 0;
-  font-size: 0.82em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent-2);
-}
-
-.login-title {
-  margin-top: 0.42em;
-  font-size: 2.05em;
-  line-height: 1.12;
-  font-weight: 800;
-  letter-spacing: -0.032em;
-  color: var(--fg);
-  text-wrap: balance;
-}
-
-.login-sub {
-  margin-top: 0.8em;
-  max-width: 38ch;
-  font-size: 0.98em;
-  line-height: 1.6;
-  color: var(--text-3);
-}
-
-.login-terms {
-  margin-top: auto;
-  padding-bottom: 0.6em;
-  margin-bottom: 0;
-  /* keep >=1.7em gap even when pinned */
-  margin-block-start: auto;
-  padding-top: 2.2em;
-  border-top: 1px solid var(--hairline);
-  font-size: 0.8em;
-  line-height: 1.55;
-  text-align: center;
-  color: var(--text-4);
-}
-
-.login-terms a {
-  color: var(--text-3);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.login-terms a:hover {
-  color: var(--fg);
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
-   Keyframes
+   Notices, inline errors, empty states
    ═══════════════════════════════════════════════════════════════════════ */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes rise {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes halo {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.06); }
-}
 
-.scrollbar-none {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Toast — light frosted pill floating over the art
-   ═══════════════════════════════════════════════════════════════════════ */
-.tb-toast {
-  position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  translate: -50% 0;
-  width: fit-content;
-  max-width: min(420px, calc(100vw - 32px));
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 14px 20px;
-  border: 1px solid var(--hairline);
-  border-radius: 9999px;
-  background: rgba(24, 24, 26, 0.92);
-  box-shadow: var(--shadow-pop);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  font-size: 15px;
-  color: var(--fg);
-  will-change: transform, opacity;
-}
-.tb-toast--success { border-color: rgba(0, 168, 68, 0.35); }
-.tb-toast--success > span:first-child { color: var(--success-text); }
-.tb-toast--error { border-color: rgba(255, 48, 64, 0.35); }
-.tb-toast--error > span:first-child { color: var(--danger-text); }
-.tb-toast--info > span:first-child { color: var(--accent); }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Legal bar — the tirbeo.com footer: © left, quiet links right, one
-   hairline above. Stacks centred on phones.
-   ═══════════════════════════════════════════════════════════════════════ */
-.legal-bar {
-  margin-top: auto;
-  width: 100%;
-  padding-top: 16px;
-  border-top: 1px solid var(--divider);
-  font-size: 13px;
-  color: var(--text-4);
-  user-select: none;
-}
-
-/* The bar spans the page; its content stops at a readable column. */
-.legal-inner {
-  max-width: 980px;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
-}
-
-.legal-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  column-gap: 18px;
-}
-
-.legal-links button,
-.legal-links a {
-  background: none;
-  border: 0;
-  padding: 2px 0;
-  font: inherit;
-  color: var(--text-4);
-  text-decoration: none;
-  transition: color 150ms ease;
-}
-
-.legal-links button:hover,
-.legal-links a:hover {
-  color: var(--text-2);
-}
-
-.legal-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-/* The full footer shows at every width; the below-PC bar is static and in
-   the flow, so extra rows can never overlap the card. */
-
-/* ═══ Signup step 2 — "Tell us about you" ═══ */
-.step2-lede {
-  margin: 0;
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-3);
-}
-
-.avatar-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 2px 0;
-}
-
-/* The plate itself is not the button: a gradient overlay carries the camera
-   action and a separate trash badge removes the photo, so both stay reachable
-   without squashing a 136px circle into one control. */
-.avatar-plate {
-  position: relative;
-  width: 136px;
-  height: 136px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 50%;
-  border: 2px dashed var(--divider);
-  background: var(--field);
-}
-
-.avatar-plate > img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-ph {
-  width: 48px;
-  height: 48px;
-  color: var(--text-4);
-  opacity: 0.6;
-}
-
-.avatar-cta {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 12px;
-  border: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 62%);
-  cursor: pointer;
-}
-
-.avatar-cta > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  transition: background 150ms ease;
-}
-
-.avatar-cta:hover > span {
-  background: rgba(0, 0, 0, 0.75);
-}
-
-.avatar-x {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.65);
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.avatar-x:hover {
-  background: rgba(0, 0, 0, 0.85);
-}
-
-.avatar-cap {
-  margin: 0;
-  text-align: center;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.avatar-cap span {
-  display: block;
-  margin-top: 2px;
-  font-size: 12.5px;
-  font-weight: 400;
-  color: var(--text-4);
-}
-
-/* Collapsible optional work block. */
-.work-box {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--ambient);
-}
-
-.work-box summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px 16px;
-  cursor: pointer;
-  list-style: none;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.work-box summary::-webkit-details-marker {
-  display: none;
-}
-
-.work-box summary em {
-  margin-left: 8px;
-  font-size: 12.5px;
-  font-style: normal;
-  font-weight: 400;
-  color: var(--text-4);
-}
-
-/* The chevron is the open/closed state — it flips rather than changing words. */
-.work-box summary svg {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  color: var(--text-4);
-  transition: transform 180ms var(--ease-enter);
-}
-
-.work-box[open] summary svg {
-  transform: rotate(180deg);
-}
-
-.work-body {
-  display: grid;
-  gap: 14px;
-  padding: 2px 16px 16px;
-}
-
-@media (min-width: 640px) {
-  .work-body {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   No-account notice — one small line under the fields when a lookup finds
-   nothing for the address. The slot keeps its height reserved so nothing
-   on the form jumps. No card, no buttons, no toast.
-   ═══════════════════════════════════════════════════════════════════════ */
 .no-account-slot {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 26px;
-  margin-top: -14px;
+  min-height: 24px;
+  margin-top: -6px;
 }
 
 .no-account-note {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--danger-text);
   animation: fade-in 180ms var(--ease-enter) both;
@@ -1036,7 +864,7 @@ input[type='number']::-webkit-inner-spin-button {
   padding: 0;
   background: none;
   font: inherit;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--danger-text);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1047,12 +875,11 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--danger);
 }
 
-/* Inline error/success line on login screens — replaces toasts. */
 .form-notice {
-  margin-top: -8px;
+  margin-top: -4px;
   text-align: center;
-  font-size: 14.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   animation: fade-in 180ms var(--ease-enter) both;
 }
 
@@ -1064,33 +891,312 @@ input[type='number']::-webkit-inner-spin-button {
   color: var(--success-text);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+/* ═══════════════════════════════════════════════════════════════════════
+   Sign-in extras — forgot link, more ways, OAuth, OTP, magic link
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
 }
 
+.forgot-link {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-3);
+  transition: color 150ms ease;
+}
 
+.forgot-link:hover {
+  color: var(--fg);
+}
 
-/* Login footer CTA — the same plate as PrimaryButton, so the two are one
-   control and only the markup differs. Matches tirbeo.com's button recipe:
-   14px radius, --accent-solid fill, flat, semibold. */
+.forgot-link:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.more-ways {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.more-ways-btn {
+  display: inline-block;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-3);
+  transition: color 150ms ease;
+}
+
+.more-ways-btn:hover {
+  color: var(--fg);
+}
+
+.more-ways-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.otp-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.otp-email {
+  margin-top: 10px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.otp-box {
+  height: 58px;
+  border-radius: 14px;
+  font-size: 24px;
+}
+
+/* "More ways to sign in" — hairline list, no boxes. */
+.mwo-mail {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.mwo-change {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.mwo-change:hover {
+  color: var(--accent-2-hover);
+}
+
+.mwo-list {
+  margin-top: 24px;
+  border-top: 1px solid var(--divider);
+}
+
+.mwo-line {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.mwo-line:hover:not(:disabled) {
+  background: var(--ambient);
+}
+
+.mwo-line--static {
+  cursor: default;
+}
+
+.mwo-line--static:hover {
+  background: none;
+}
+
+.mwo-line:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mwo-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--field);
+  color: var(--text-3);
+}
+
+.mwo-line:hover:not(:disabled) .mwo-ico {
+  color: var(--fg);
+  border-color: var(--border-hover);
+}
+
+.mwo-line-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.mwo-line-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.mwo-line-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-4);
+}
+
+.mwo-line-action {
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent-text);
+  transition: color 150ms ease;
+}
+
+.mwo-line:hover:not(:disabled) .mwo-line-action {
+  color: var(--accent-2-hover);
+}
+
+.mwo-spin {
+  flex: none;
+  color: var(--accent-text);
+}
+
+.mwo-list + .form-notice {
+  margin-top: 16px;
+}
+
+/* Magic-link "Sent to" chip. */
+.ms-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-right: 7px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent-text);
+}
+
+/* OAuth — three equal provider pills, the same shape as every button. */
+.oauth-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.oauth-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--fg);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms var(--ease-enter);
+}
+
+.oauth-item:hover {
+  background: var(--field-hover);
+  border-color: var(--border-strong);
+}
+
+.oauth-item:active {
+  transform: scale(0.995);
+  background: var(--field-focus);
+}
+
+.oauth-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.oauth-item:disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.oauth-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+.oauth-ico svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.oauth-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.or-divider {
+  margin-top: 22px;
+  margin-bottom: 16px;
+}
+
+.or-divider span:not([aria-hidden]) {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-3);
+}
+
+.mode-login .or-divider {
+  gap: 14px;
+}
+
+/* Login footer CTA — same plate as PrimaryButton. */
 .create-pill {
   display: flex;
   width: 100%;
-  height: 48px;
+  height: 42px;
   margin-top: 12px;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: 999px;
   border: none;
   background: var(--accent-solid);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--accent-fg);
@@ -1121,536 +1227,204 @@ input[type='number']::-webkit-inner-spin-button {
   cursor: not-allowed;
 }
 
-/* ── Desktop (≥1280) — the same centered column as every other width,
-   just pinned to one comfortable scale: 460px column, 32px title,
-   48px controls. ── */
-@media (min-width: 1280px) {
-  .login-card {
-    --u: 15px;
-  }
+/* ═══════════════════════════════════════════════════════════════════════
+   Grouped surfaces — the landing's frosted plates and grouped lists
+   ═══════════════════════════════════════════════════════════════════════ */
 
-  .login-card .tb-heading {
-    font-size: 32px;
-    letter-spacing: -0.03em;
-    line-height: 1.12;
-    white-space: normal;
-    color: var(--fg);
-  }
-
-  .login-card .tb-sub { font-size: 17px; }
-
-  .login-head { margin-bottom: 12px; }
-
-  .login-card .tb-label {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text-3);
-    margin-bottom: 6px;
-  }
-
-  .login-card input,
-  .login-card select,
-  .login-card textarea {
-    height: 48px;
-    font-size: 15.5px;
-    border-radius: 14px;
-    background: var(--field);
-    border-color: transparent;
-    color: var(--fg);
-  }
-  .login-card input::placeholder { color: var(--placeholder); }
-  .login-card input:hover,
-  .login-card select:hover { background: var(--field-hover); }
-  .login-card input:focus,
-  .login-card select:focus {
-    background: var(--field-focus);
-    border-color: var(--accent-2);
-  }
-
-  .login-card button[type='submit'] {
-    height: 48px;
-    font-size: 15.5px;
-    border-radius: 14px;
-  }
-
-  .signup-fields {
-    margin-top: 0;
-    display: grid;
-    gap: 16px;
-  }
-  .signup-fields > * + * { margin-top: 0; }
-  .signup-fields .grid { gap: 16px; }
-
-  .login-form form > .flex.items-center.justify-center:first-child {
-    justify-content: space-evenly;
-  }
-  .login-form .mx-9 { margin-inline: 0; }
-
-  /* OAuth — compact provider buttons on one row. */
-  .login-card .oauth-item { height: 48px; border-radius: 14px; }
-
-  .forgot-link { margin-top: 0; }
-  .no-account-slot { height: 22px; }
-
-  .login-terms {
-    margin-top: 32px;
-    padding-top: 24px;
-    text-align: center;
-    font-size: 13.5px;
-  }
-}
-
-/* autofill must not punch through the big charcoal signup fields */
-.login-page:has(.mode-signup) input:-webkit-autofill, .login-page:has(.mode-login) input:-webkit-autofill,
-.login-page:has(.mode-signup) input:-webkit-autofill:hover, .login-page:has(.mode-login) input:-webkit-autofill:hover,
-.login-page:has(.mode-signup) input:-webkit-autofill:active , .login-page:has(.mode-login) input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
-  box-shadow: 0 0 0 1000px var(--autofill-fill) inset !important;
-  -webkit-text-fill-color: var(--fg) !important;
-}
-
-.login-page:has(.mode-signup) input:-webkit-autofill:focus , .login-page:has(.mode-login) input:-webkit-autofill:focus {
-  -webkit-box-shadow:
-    0 0 0 1000px var(--autofill-fill) inset,
-    0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) !important;
-  box-shadow:
-    0 0 0 1000px var(--autofill-fill) inset,
-    0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) !important;
-  -webkit-text-fill-color: var(--fg) !important;
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Single-page login — forgot link, compact OAuth buttons, more-ways.
+   Signup step 2 — avatar, work details, DOB
    ═══════════════════════════════════════════════════════════════════════ */
-.forgot-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -10px;
-}
 
-.forgot-link {
-  padding: 4px 2px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-4);
-  transition: color 0.2s ease;
-}
-
-.forgot-link:hover {
-  color: var(--accent-2);
-}
-
-.forgot-link:disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.more-ways {
-  margin-top: 18px;
+.step2-lede {
+  margin: 0;
   text-align: center;
-}
-
-.more-ways-btn {
-  display: inline-block;
-  padding: 4px 6px;
-  color: var(--text-4);
-  font-size: 14.5px;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.more-ways-btn:hover {
-  color: var(--fg);
-}
-
-.more-ways-btn:disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Verification / recovery screens — shared centered header. Medallion icons
-   and the email pill were removed by design: title, one line, plain email. */
-.otp-head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.otp-email {
-  margin-top: 10px;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  color: var(--fg);
-  font-size: 17px;
-  font-weight: 600;
-}
-
-/* Code boxes — deliberately big plates, overriding the 48px field rule. */
-.login-card .otp-box {
-  height: 64px;
-  border-radius: 14px;
-  font-size: 26px;
-}
-
-/* ── More ways to sign in — divider list, no boxes, website theme. ── */
-.mwo-mail {
-  color: var(--fg);
-  font-weight: 600;
-}
-
-.mwo-change {
-  border: 0;
-  padding: 0;
-  background: none;
-  font: inherit;
-  font-weight: 700;
-  color: var(--accent-2);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  transition: color 150ms ease;
-}
-
-.mwo-change:hover {
-  color: var(--accent-2-hover);
-}
-
-.mwo-list {
-  margin-top: 30px;
-  border-top: 1px solid var(--hairline);
-}
-
-.mwo-line {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(10px, 2vw, 16px);
-  padding: 16px clamp(2px, 1vw, 6px);
-  border: 0;
-  border-bottom: 1px solid var(--hairline);
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-}
-
-.mwo-line:hover:not(:disabled) {
-  background: var(--ambient);
-}
-
-/* Non-interactive info row (e.g. "Sent to" on the magic-link page). */
-.mwo-line--static {
-  cursor: default;
-}
-
-.mwo-line--static:hover {
-  background: none;
-}
-
-.mwo-line:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.mwo-ico {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--field);
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
-.mwo-line:hover:not(:disabled) .mwo-ico {
-  color: var(--fg);
-  border-color: var(--border-hover);
-}
-
-.mwo-line-text {
-  min-width: 0;
-  flex: 1;
-}
-
-.mwo-line-label {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--fg);
-}
-
-.mwo-line-sub {
-  display: block;
-  margin-top: 3px;
-  font-size: 13.5px;
-  color: var(--text-4);
-}
-
-.mwo-line-action {
-  flex: none;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--accent-2);
-  transition: color 150ms ease;
-}
-
-.mwo-line:hover:not(:disabled) .mwo-line-action {
-  color: var(--accent-2-hover);
-}
-
-.mwo-spin {
-  flex: none;
-  color: var(--accent-2);
-}
-
-.mwo-list + .form-notice {
-  margin-top: 16px;
-}
-
-
-/* ── Magic-link "Check your email" — inline login step. ── */
-.ms-chip {
-  display: inline-flex;
+.avatar-pick {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin-right: 7px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent-2);
+  gap: 12px;
+  padding: 2px 0;
 }
 
-/* ── OAuth — one compact row of provider buttons: glyph beside the
-   provider name, painted like the card's own controls (--field plate,
-   hairline border, 12px radius). ── */
-.oauth-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-.oauth-item {
+.avatar-plate {
+  position: relative;
+  width: 128px;
+  height: 128px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 0;
-  height: 48px;
-  padding: 0 10px;
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
   background: var(--field);
-  color: var(--fg);
+}
+
+.avatar-plate > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-ph {
+  width: 44px;
+  height: 44px;
+  color: var(--text-4);
+  opacity: 0.7;
+}
+
+.avatar-cta {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+  border: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 62%);
+  cursor: pointer;
+}
+
+.avatar-cta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 150ms ease;
+}
+
+.avatar-cta:hover > span {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.avatar-x {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.avatar-x:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.avatar-cap {
+  margin: 0;
+  text-align: center;
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms var(--ease-enter);
+  color: var(--text-2);
 }
-.oauth-item:hover {
-  background: var(--field-hover);
-  border-color: var(--border-hover);
-}
-.oauth-item:active {
-  transform: scale(0.99);
-  background: var(--field-focus);
-}
-.oauth-item:focus-visible {
-  outline: none;
-  border-color: var(--accent-2);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.oauth-item:disabled {
-  pointer-events: none;
-  opacity: 0.4;
-}
-.oauth-ico {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-}
-.oauth-ico svg {
-  width: 20px;
-  height: 20px;
+
+.avatar-cap span {
   display: block;
-}
-.oauth-label {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-4);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Below the PC breakpoint (<1280px) there is ONE fluid rule set — the
-   same centered column, gutters adapt via min().
-   ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1279px) {
-  .login-card {
-    --u: 15px;
-    width: min(460px, 100%);
-    margin: auto;
-    padding: 24px 16px 32px;
-  }
+.work-box {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--ambient);
+}
 
-  .login-card[data-wide='true'] {
-    width: min(560px, 100%);
-  }
+.work-box summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
 
-  .login-card .tb-heading {
-    font-size: 32px;
-    letter-spacing: -0.03em;
-    line-height: 1.12;
-  }
+.work-box summary::-webkit-details-marker {
+  display: none;
+}
 
-  .login-card .tb-sub {
-    font-size: 17px;
-  }
+.work-box summary em {
+  margin-left: 8px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-4);
+}
 
-  .login-head {
-    margin-bottom: 0.6em;
-  }
+.work-box summary svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-4);
+  transition: transform 180ms var(--ease-enter);
+}
 
-  /* Fields and buttons share one plate size at every width; 16px input
-     text keeps iOS from zooming on focus. */
-  .login-card input,
-  .login-card select {
-    height: 48px;
-    border-radius: 14px;
-    font-size: 16px;
-  }
+.work-box[open] summary svg {
+  transform: rotate(180deg);
+}
 
-  .login-card button[type='submit'] {
-    height: 48px;
-    border-radius: 14px;
-  }
+.work-body {
+  display: grid;
+  gap: 14px;
+  padding: 2px 16px 16px;
+}
 
-  .oauth-item {
-    height: 48px;
-    border-radius: 14px;
-  }
-
-  .signup-fields {
-    margin-top: 0;
-    display: grid;
-    gap: 16px;
-  }
-
-  .no-account-slot {
-    height: auto;
-    min-height: 26px;
-    margin-top: -6px;
-    padding: 0 4px;
-  }
-
-  .login-terms {
-    margin-top: 1.9em;
-    padding-top: 1.6em;
+@media (min-width: 640px) {
+  .work-body {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-/* Inputs: smooth focus ring. */
-.login-card input,
-.login-card select,
-.login-card textarea {
-  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
-}
-
-
-/* Footer links: gentle hover. */
-.legal-bar a,
-.legal-bar button {
-  transition: color 0.2s ease;
-}
-
-.legal-bar a:hover,
-.legal-bar button:hover {
-  color: var(--fg);
-}
-
-/* Dark scrollbars. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
-}
-
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-}
-
-/* ═══════════════ Mobile & small screens: compact everything ═══════════════ */
-@media (max-width: 639px) {
-  .login-card {
-    --u: 12.5px;
-    padding: 1.15em 1.1em 1.5em;
-  }
-
-  .tb-heading {
-    font-size: 1.72em;
-    letter-spacing: -0.026em;
-  }
-
-  .login-head { margin-bottom: 0.6em; }
-
-  .login-card input,
-  .login-card select,
-  .login-card textarea {
-    height: 44px;
-    font-size: 14px;
-    border-radius: 14px;
-  }
-
-  .login-card button[type='submit'] {
-    height: 48px;
-    font-size: 14px;
-    border-radius: 14px;
-  }
-
-  .oauth-item { height: 44px; font-size: 13px; border-radius: 14px; padding: 0 8px; gap: 6px; }
-  .login-card .otp-box { height: 50px; font-size: 20px; border-radius: 14px; }
-  .create-pill { height: 48px; font-size: 14px; }
-  .wizard-rail { margin-bottom: 1em; }
-  .legal-bar { font-size: 12.5px; }
-  .legal-inner { flex-direction: column; gap: 10px; }
-  .legal-links { justify-content: center; gap: 0.9em 1.2em; }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Auth extras — DOB selects, work box, divider and wordmark ink-swap.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* Date of birth — three selects composing one ISO value, painted like the
-   card's own 48px plates. The chevron is drawn, not the native one. */
+/* Date of birth — three selects composing one ISO value. */
 .dob-group {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
+
 .dob-cell {
   position: relative;
 }
+
 .dob-cell select {
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
   height: 48px;
-  padding: 0 34px 0 16px;
-  border: 1px solid var(--hairline);
+  padding: 0 34px 0 14px;
+  border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--field);
   color: var(--fg);
@@ -1658,24 +1432,29 @@ input[type='number']::-webkit-inner-spin-button {
   font-size: 15px;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
+
 .dob-cell select:hover {
   background: var(--field-hover);
+  border-color: var(--border-strong);
 }
+
 .dob-cell select:focus {
   background: var(--field-focus);
-  border-color: var(--accent-2);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--accent);
 }
+
 .dob-cell select:invalid,
 .dob-cell select.placeholder {
   color: var(--placeholder);
 }
+
 .dob-cell select option {
   background: var(--card);
   color: var(--fg);
 }
+
 .dob-cell svg {
   pointer-events: none;
   position: absolute;
@@ -1686,71 +1465,274 @@ input[type='number']::-webkit-inner-spin-button {
   height: 16px;
   color: var(--text-4);
 }
+
 @media (max-width: 639px) {
   .dob-group {
     gap: 8px;
   }
+
   .dob-cell select {
-    height: 44px;
+    height: 46px;
     font-size: 14px;
-    border-radius: 14px;
     padding: 0 28px 0 12px;
   }
 }
 
-/* "OR CONTINUE WITH" divider — sits in the card's 20–24px rhythm between
-   the primary action and the OAuth row. Login entry only; the signup
-   wizard keeps its tighter rhythm. */
-.mode-login .or-divider {
-  gap: 14px;
-  margin-top: 24px;
-  margin-bottom: 20px;
-}
-
-/* The on-canvas wordmark — two ink cuts, one shown per scheme. */
+/* Brand mark ink swap — two cuts, one shown per scheme. */
 .brand-mark {
   display: none;
 }
+
 :root[data-theme="light"] .brand-mark--ink {
   display: block;
 }
+
 :root[data-theme="dark"] .brand-mark--paper {
   display: block;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   LIGHT MODE — the same architecture poured white: dark ink, black-alpha
-   washes, hairlines and hover mirrors, identical blues. Specificity is
-   deliberately one attribute above every era rule, so these win at all widths.
+   Toast
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Floating sheets / banners. */
-:root[data-theme="light"] .glass {
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow:
-    0 18px 36px -12px rgba(22, 28, 40, 0.22),
-    0 1px 3px rgba(22, 28, 40, 0.08);
-}
-:root[data-theme="light"] .glass::before {
-  background: linear-gradient(90deg, transparent, rgba(18, 19, 22, 0.1), transparent);
+.tb-toast {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  translate: -50% 0;
+  width: fit-content;
+  max-width: min(420px, calc(100vw - 32px));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--glass-2);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  font-size: 14px;
+  color: var(--fg);
+  will-change: transform, opacity;
 }
 
-/* Scrollbars — white-alpha thumbs vanish on a daylight page. */
-:root[data-theme="light"] * {
-  scrollbar-color: rgba(18, 19, 22, 0.2) transparent;
-}
-:root[data-theme="light"] *::-webkit-scrollbar-thumb {
-  background: rgba(18, 19, 22, 0.2);
-}
-:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(18, 19, 22, 0.32);
+.tb-toast--success {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
 }
 
-/* Phones: hide the fixed wordmark — the brand-mark ink-swap rules above
-   out-specify a bare `.page-brand`, so match their specificity here. */
-@media (max-width: 640px) {
-  :root[data-theme] .page-brand.brand-mark--ink,
-  :root[data-theme] .page-brand.brand-mark--paper {
-    display: none;
+.tb-toast--success > span:first-child {
+  color: var(--success-text);
+}
+
+.tb-toast--error {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.tb-toast--error > span:first-child {
+  color: var(--danger-text);
+}
+
+.tb-toast--info > span:first-child {
+  color: var(--accent);
+}
+
+/* ── Range slider ───────────────────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--track);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--track);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 150ms ease;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--fg);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+input[type="range"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tb-range::-webkit-slider-runnable-track,
+.tb-range::-moz-range-track {
+  background: transparent;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ── Photo crop dialog ──────────────────────────────────────────────── */
+.image-crop-editor-panel {
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+}
+
+@media (max-width: 639px) {
+  .image-crop-editor-panel {
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 20px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Dialogs — bottom sheet under 640px, centred pop above it (landing recipe)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@keyframes sheet-in {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+}
+
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98) translateY(6px);
+  }
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.sheet-panel {
+  animation: sheet-in 340ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.sheet-panel.is-closing {
+  animation: sheet-out 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.sheet-scrim {
+  animation: scrim-in 220ms ease both;
+}
+
+.sheet-scrim.is-closing {
+  animation: scrim-out 260ms ease both;
+}
+
+@media (min-width: 640px) {
+  .sheet-panel {
+    animation-name: pop-in;
+    animation-duration: 220ms;
+  }
+
+  .sheet-panel.is-closing {
+    animation-name: pop-out;
+    animation-duration: 180ms;
+  }
+}
+
+/* ── Keyframes used by primitives ───────────────────────────────────── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

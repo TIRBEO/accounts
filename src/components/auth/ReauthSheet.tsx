@@ -160,7 +160,7 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
             type="button"
             aria-label="Cancel"
             onClick={onClose}
-            className="absolute inset-0 cursor-default bg-scrim backdrop-blur-sm"
+            className="sheet-scrim absolute inset-0 cursor-default bg-scrim backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -171,22 +171,27 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl glass text-fg sm:rounded-3xl"
+            className="sheet-panel relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[20px] border border-border bg-card text-fg sm:rounded-xl"
           >
+            {/* iOS grabber — marks the sheet as dismissible. */}
+            <div
+              aria-hidden="true"
+              className="mx-auto mt-3 h-1 w-9 rounded-full bg-border-strong sm:hidden"
+            />
             <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-field text-text-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-field text-text-3">
                   <ShieldCheck className="size-[18px]" />
                 </div>
-                <h2 id="reauth-title" className="truncate text-[20px] text-fg">{title}</h2>
+                <h2 id="reauth-title" className="truncate text-lg font-semibold text-fg">{title}</h2>
               </div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-none bg-transparent text-muted transition-colors hover:bg-hover hover:text-fg"
+                className="shrink-0 cursor-pointer rounded-md p-2 text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
               >
-                <X className="size-[18px]" />
+                <X className="size-4" />
               </button>
             </header>
 
@@ -246,7 +251,7 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
 
               {active === 'passkey' && (
                 <div className="flex flex-col items-center gap-2 py-2 text-center">
-                  <div className="grid size-14 place-items-center rounded-2xl bg-field text-text-3">
+                  <div className="grid size-14 place-items-center rounded-xl border border-border bg-field text-text-3">
                     <Fingerprint className="size-6" />
                   </div>
                   <p className="text-[14px] leading-relaxed text-text-3">

@@ -26,6 +26,10 @@ export function resolveTheme(id: ThemeId): "dark" | "light" {
     : "dark";
 }
 
+/** Fired by `applyTheme`, so `useSyncExternalStore` readers (the toggle)
+    re-render without a `setState` inside an effect. */
+const THEME_CHANGED = "tirbeo:theme-changed";
+
 export function applyTheme(id: ThemeId) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -37,6 +41,20 @@ export function applyTheme(id: ThemeId) {
   } catch {
     /* private mode — palette still applies for this session */
   }
+  window.dispatchEvent(new Event(THEME_CHANGED));
+}
+
+/** Subscribe to theme changes: our own writes plus device flips while the
+    choice is "system". Returns the unsubscribe function React expects. */
+export function subscribeTheme(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => onChange();
+  window.addEventListener(THEME_CHANGED, handler);
+  const stopSystem = onSystemThemeChange(onChange);
+  return () => {
+    window.removeEventListener(THEME_CHANGED, handler);
+    stopSystem();
+  };
 }
 
 /** A "system" choice tracks the device; the other two never move. */

@@ -15,11 +15,9 @@ import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
  * competes with the one action the screen is actually asking for.
  */
 const FOOTER_ACTION =
-  'inline-flex min-h-11 items-center rounded-full px-1 text-[17px] font-bold tracking-[-0.01em] ' +
-  'text-fg underline decoration-border-strong decoration-2 underline-offset-[6px] ' +
-  'transition-colors duration-150 hover:decoration-fg ' +
-  'focus-visible:outline-none focus-visible:underline focus-visible:decoration-fg ' +
-  'focus-visible:shadow-[0_0_0_2px_var(--ring)]';
+  'inline-flex min-h-10 items-center rounded-full px-1 text-[14px] font-semibold ' +
+  'text-accent-text transition-colors duration-150 hover:text-accent-2-hover ' +
+  'active:text-accent-press';
 import {
   login,
   verify2FA,
