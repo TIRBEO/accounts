@@ -275,7 +275,7 @@ export const ImageCropEditor: React.FC<ImageCropEditorProps> = ({
               disabled={isProcessing || mediaLoading || !!mediaError || !cropArea}
               className="btn btn-primary btn-sm cursor-pointer"
             >
-              {!isProcessing && <Check size={15} />}
+              {isProcessing ? <Spinner size={14} /> : <Check size={15} />}
               {isProcessing ? "Saving…" : "Save photo"}
             </button>
           </div>

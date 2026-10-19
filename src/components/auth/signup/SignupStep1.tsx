@@ -58,7 +58,7 @@ export const SignupStep1: React.FC<{
   let usernameHint: React.ReactNode = undefined;
   if (!showUsernameError) {
     if (usernameStatus === 'checking') {
-      usernameHint = <span className="text-text-4">{usernameMessage || 'Checking availability...'}</span>;
+      usernameHint = <span className="text-text-4">{usernameMessage || 'Checking availability…'}</span>;
     } else if (usernameStatus === 'available') {
       usernameHint = <span className="text-success-text">{usernameMessage}</span>;
     } else if (usernameStatus === 'taken') {

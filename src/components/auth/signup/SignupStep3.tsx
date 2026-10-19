@@ -77,7 +77,7 @@ export const SignupStep3: React.FC<SignupStep3Props> = ({
       </div>
 
       <PrimaryButton type="submit" disabled={!codeComplete} loading={isSubmitting}>
-        {isSubmitting ? 'Verifying...' : 'Verify & Continue'}
+        {isSubmitting ? 'Verifying…' : 'Verify & Continue'}
       </PrimaryButton>
       </div>
     </form>

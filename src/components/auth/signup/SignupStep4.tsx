@@ -157,7 +157,7 @@ export const SignupStep4: React.FC<SignupStep4Props> = ({
         disabled={!step4Complete || captchaPending}
         loading={isSubmitting}
       >
-        {isSubmitting ? 'Creating account...' : 'Sign up'}
+        {isSubmitting ? 'Creating account…' : 'Sign up'}
       </PrimaryButton>
       </div>
     </form>
