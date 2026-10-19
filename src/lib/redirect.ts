@@ -130,13 +130,15 @@ export function unwrapHandoffTarget(raw: string, depth = 0): string {
 }
 
 /**
- * Resolve the post-auth destination from the current page URL.
- * Falls back to the default dashboard URL when nothing valid is present.
- * Only validated Tirbeo targets are ever returned — third-party URLs are
- * silently dropped to prevent open-redirect / session-hijack.
+ * Where this app was *asked* to send the visitor, from the URL alone.
+ *
+ * Deliberately excludes the referrer: at boot the referrer is the dashboard the
+ * person came from, so answering it would bounce dashboard → accounts →
+ * dashboard instead of letting them reach the screens this app owns (passkeys,
+ * re-auth). A hand-off has to be requested, not assumed.
  */
-export function getRedirectTarget(): string {
-  if (typeof window === 'undefined') return DEFAULT_DASHBOARD_URL;
+export function requestedHandoff(): string | null {
+  if (typeof window === 'undefined') return null;
 
   const params = new URLSearchParams(window.location.search);
   for (const key of REDIRECT_PARAM_KEYS) {
@@ -147,18 +149,30 @@ export function getRedirectTarget(): string {
     if (!trimmed) continue;
 
     if (trimmed.includes('://')) {
-      if (isAllowedRedirectTarget(trimmed)) {
-        const clean = unwrapHandoffTarget(trimmed);
-        // A target that points back at this very handoff screen would re-enter
-        // the flow instead of finishing it — drop it and keep looking.
-        if (clean !== window.location.origin + window.location.pathname && isAllowedRedirectTarget(clean)) return clean;
-      }
+      if (!isAllowedRedirectTarget(trimmed)) continue;
+      const clean = unwrapHandoffTarget(trimmed);
+      // A target that points back at this very handoff screen would re-enter
+      // the flow instead of finishing it — drop it and keep looking.
+      if (clean === window.location.origin + window.location.pathname) continue;
+      if (isAllowedRedirectTarget(clean)) return clean;
       continue;
     }
 
     const built = buildFromAppName(trimmed);
     if (built && isAllowedRedirectTarget(built)) return built;
   }
+  return null;
+}
+
+/**
+ * Resolve the post-auth destination from the current page URL.
+ * Falls back to the default dashboard URL when nothing valid is present.
+ * Only validated Tirbeo targets are ever returned — third-party URLs are
+ * silently dropped to prevent open-redirect / session-hijack.
+ */
+export function getRedirectTarget(): string {
+  const requested = requestedHandoff();
+  if (requested) return requested;
 
   const referrer = document.referrer;
   if (referrer && isAllowedRedirectTarget(referrer)) return referrer;

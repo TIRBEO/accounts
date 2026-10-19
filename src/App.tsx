@@ -9,10 +9,10 @@ import { MagicLinkSentPage } from './components/auth/MagicLinkSentPage';
 import { SplitLoader } from './components/SplitLoader';
 import { RealtimeBanner } from './components/RealtimeBanner';
 import { SiteFooter, SiteHeader } from './components/AppChrome';
-import { getCurrentUser, verifyMagicLink, apiPost } from './lib/api';
-import { getRedirectTarget, goBlocked } from './lib/redirect';
+import { verifyMagicLink, apiPost } from './lib/api';
+import { getRedirectTarget, goBlocked, isAllowedRedirectTarget, requestedHandoff } from './lib/redirect';
+import { announceSignIn, useSession } from './hooks/useSession';
 import { subscribeToUser, disconnectRealtime } from './lib/realtime';
-import { broadcastSession, clearSessionTrace, parseSessionMessage } from './lib/sessionSync';
 
 const isCallbackPath = () => window.location.pathname.startsWith('/callback');
 const isMagicSentPath = () => window.location.pathname.startsWith('/magic-sent');
@@ -53,7 +53,10 @@ async function attachLinkToken(showToast: (msg: string, type?: 'success' | 'erro
   }
   return linkAttachInFlight;
 }
-let bootRan = false;
+
+/** StrictMode mounts effects twice; a magic-link token is spent on the first pass. */
+let magicRan = false;
+
 export type ToastType = 'success' | 'error' | 'info';
 const inferToastType = (msg: string): ToastType => {
   const m = msg.toLowerCase();
@@ -66,22 +69,15 @@ const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={
 /**
  * Tirbeo Accounts — the tirbeo.com shell: sticky wordmark header, one centred
  * auth column, hairline footer. Same chrome and palette as the landing app.
+ *
+ * This component decides what to SHOW; it holds no opinion about who is signed
+ * in. `useSession` is the only place that asks, so the probe cannot be run
+ * twice with two different rules about what a dropped request means.
  */
-
-/** 'checking' → auth probe in flight · 'guest' → show auth UI · 'redirecting' → signed in, navigating away */
-type AuthState = 'checking' | 'guest' | 'redirecting';
-
 export default function App() {
-  const [authState, setAuthState] = useState<AuthState>(() =>
-    // Routes that manage their own auth state start as 'guest' so the boot
-    // loader never sits on top of them.
-    isCallbackPath() || isMagicSentPath() ? 'guest' : 'checking',
-  );
+  const session = useSession();
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const lastIdRef = useRef<string | null>(null);
-  const authStateRef = useRef<AuthState>(authState);
-  useEffect(() => { authStateRef.current = authState; }, [authState]);
+  const userId = session.user?.id ?? null;
 
   const showToast = useCallback((msg: string, type?: ToastType) => {
     setToast({ msg, type: type || inferToastType(msg) });
@@ -96,12 +92,6 @@ export default function App() {
   const [routePath, setRoutePath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/',
   );
-  /* No artificial delay on entry. This used to hold a 700ms split-screen on
-     /magic-sent and /callback, so the screen that exists purely to say "we sent
-     it" showed a loading animation first — on a phone, half a second of
-     nothing before any content. The callback route genuinely waits on the token
-     exchange, but that wait belongs to the page, not to a loader laid over it. */
-  const [initialSplit] = useState(false);
   const pathRef = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
   useEffect(() => {
     // Wrap history mutations to detect SPA navigations instantly — no polling.
@@ -130,113 +120,60 @@ export default function App() {
     };
   }, []);
 
-  const showLoader = authState !== 'guest' || pageChanging || initialSplit;
-
-  // ── Boot: magic-link exchange + session probe (runs once) ──
+  // ── Magic link: exchange the token the email carried (runs once) ──
   // Module-level guard: StrictMode's second effect pass must not re-read the
-  // URL (magic_token is stripped by the first pass) nor cancel its in-flight
+  // URL (the token is stripped by the first pass) nor cancel its in-flight
   // exchange — otherwise /login?magic_token= never signs in during dev.
   useEffect(() => {
-    if (isCallbackPath() || isMagicSentPath()) return;
-    if (bootRan) return;
-    bootRan = true;
-    const init = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const redirectTarget = getRedirectTarget();
-      const magicToken = params.get('magic_token');
-      if (magicToken) {
-        window.history.replaceState({}, '', window.location.pathname);
-        const result = await verifyMagicLink(magicToken);
-        if (result.block) { goBlocked(); return; }
-        if (result.ok) {
-          setAuthState('redirecting');
-          showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`);
-          broadcastSession('login');
-          const linked = await attachLinkToken(showToast);
-          setTimeout(() => { window.location.href = linked || redirectTarget; }, 800);
-          return;
-        }
+    if (isCallbackPath() || isMagicSentPath() || magicRan) return;
+    magicRan = true;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('magic_token');
+    if (!token) return;
+    window.history.replaceState({}, '', window.location.pathname);
+    const exchange = async () => {
+      const result = await verifyMagicLink(token);
+      if (result.block) { goBlocked(); return; }
+      if (!result.ok) {
         showToast(result.error || 'This magic link is invalid or has expired.');
-      }
-      const session = await getCurrentUser();
-      if (session.block) { goBlocked(); return; }
-      if (session.ok && session.data) {
-        lastIdRef.current = session.data.id;
-        setUserId(session.data.id);
-        setAuthState('redirecting');
-        const linked = await attachLinkToken(showToast);
-        window.location.href = linked || redirectTarget;
         return;
       }
-      setAuthState('guest');
+      showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`, 'success');
+      void announceSignIn();
+      // The emailed link names its own destination, already allowlist-checked by
+      // the API — that beats guessing from this page's query string.
+      const fromLink = result.redirectTo && isAllowedRedirectTarget(result.redirectTo)
+        ? result.redirectTo
+        : getRedirectTarget();
+      const linked = await attachLinkToken(showToast);
+      setTimeout(() => { window.location.href = linked || fromLink; }, 800);
     };
-    init();
+    void exchange();
   }, [showToast]);
 
-  // ── Cross-tab / cross-app session sync ──
-  // Event-driven only: BroadcastChannel + storage events cover same-origin tabs;
-  // visibilitychange/focus re-probes the shared cookie session when the user
-  // returns to the tab (covers logins made in dashboard/forms subdomains).
-  // The previous 5-second polling loop burned battery and caused reload loops.
+  // ── What the session answer means for this screen ──
+  // A closed account goes to the settings gate, which reads the facts from the
+  // API — nothing about the closure travels in the URL. A signed-in visitor is
+  // handed off only when the URL *asked* for a destination; otherwise they stay
+  // on this app's signed-in screen, which is where passkeys are managed. Bouncing
+  // them to the dashboard because they came from the dashboard is a loop.
+  const handedOffRef = useRef(false);
   useEffect(() => {
     if (isCallbackPath() || isMagicSentPath()) return;
-    let lastCheck = 0;
-    const checkOnce = (force = false) => {
-      const now = Date.now();
-      if (!force && now - lastCheck < 1000) return; // debounce focus+visibility firing together
-      lastCheck = now;
-      getCurrentUser().then((s) => {
-        if (s.block) { goBlocked(); return; }
-        const authed = !!s.ok && !!s.data;
-        const newId = s.data?.id || null;
-        if (authed && newId !== lastIdRef.current) {
-          lastIdRef.current = newId;
-          if (authStateRef.current !== 'redirecting') {
-            setAuthState('redirecting');
-            attachLinkToken(showToast).then((linked) => { window.location.href = linked || getRedirectTarget(); });
-          }
-        } else if (!authed && lastIdRef.current) {
-          // Signed out elsewhere — drop back to the auth form without a reload.
-          lastIdRef.current = null;
-          if (authStateRef.current !== 'guest') setAuthState('guest');
-        }
-      }).catch(() => {});
-    };
-    const onLogout = () => {
-      lastIdRef.current = null;
-      setAuthState('guest');
-      window.location.reload();
-    };
-    const bc = (() => { try { return new BroadcastChannel('tirbeo:session'); } catch { return null; } })();
-    const onBc = (e: MessageEvent) => {
-      const ev = parseSessionMessage(e.data);
-      if (ev?.type === 'login') checkOnce(true);
-      else if (ev?.type === 'logout') onLogout();
-    };
-    bc?.addEventListener('message', onBc);
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key !== 'tirbeo_session') return;
-      const ev = parseSessionMessage(e.newValue);
-      if (ev?.type === 'logout') { onLogout(); return; }
-      if (ev?.type === 'login') checkOnce(true);
-    };
-    const onVisible = () => { if (document.visibilityState === 'visible') checkOnce(); };
-    bc && window.addEventListener('storage', handleStorage);
-    document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', onVisible);
-    return () => {
-      bc?.removeEventListener('message', onBc);
-      bc?.close();
-      window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', onVisible);
-    };
-  }, []);
+    if (session.status === 'blocked') { goBlocked(); return; }
+    if (session.status !== 'member') { handedOffRef.current = false; return; }
+    if (handedOffRef.current) return;
+    handedOffRef.current = true;
+    const target = requestedHandoff();
+    void attachLinkToken(showToast).then((linked) => {
+      const destination = linked || target;
+      if (destination) window.location.href = destination;
+    });
+  }, [session.status, showToast]);
 
   const handleSuccessAuth = useCallback((email: string, provider: string) => {
-    showToast(provider === 'Email Registration' ? 'Account created — welcome to Tirbeo' : `Signed in as ${email}`);
-    broadcastSession('login');
-    setAuthState('redirecting');
+    showToast(provider === 'Email Registration' ? 'Account created — welcome to Tirbeo' : `Signed in as ${email}`, 'success');
+    void announceSignIn();
     setTimeout(async () => {
       const linked = await attachLinkToken(showToast);
       window.location.href = linked || getRedirectTarget();
@@ -296,7 +233,7 @@ export default function App() {
     <div className="app-shell">
       <SiteHeader />
       <RealtimeBanner />
-      <SplitLoader active={showLoader} />
+      <SplitLoader active={pageChanging} />
       <main id="main-content" className="app-main">
         {content}
       </main>

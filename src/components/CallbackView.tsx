@@ -4,7 +4,7 @@ import { getCurrentUser, apiPost, verifyMagicLink } from '../lib/api';
 import { isAllowedRedirectTarget, unwrapHandoffTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
 import { haptic } from '../lib/haptics';
 import { trackEvent, trackError } from '../lib/telemetry';
-import { broadcastSession } from '../lib/sessionSync';
+import { announceSignIn } from '../hooks/useSession';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
 import { AuthShell, PrimaryButton, SecondaryButton, Spinner } from './ui/ig-ui';
 
@@ -50,7 +50,7 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
           trackEvent('auth.login_success', { metadata: { method: 'magic_link' } });
           setMagicStatus('success'); haptic('success');
           onToast?.(`Magic link verified${res.email ? ' for ' + res.email : ''} — redirecting...`, 'success');
-          broadcastSession('login');
+          void announceSignIn();
           setTimeout(() => { window.location.href = redirectTo; }, 900);
         } else {
           if (res.error && res.error.includes('already been used') && verifiedMagicTokens.size === 1) {

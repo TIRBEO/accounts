@@ -1,166 +1,195 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCurrentUser, logout, refreshSession, type CurrentUserData } from '../lib/api';
-import { broadcastSession, clearSessionTrace } from '../lib/sessionSync';
+import { useSyncExternalStore } from 'react';
+import { getCurrentUser, logout, type CurrentUserData } from '../lib/api';
+import { broadcastSession, clearSessionTrace, parseSessionMessage } from '../lib/sessionSync';
 
-const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates the session before the 15-min access token expires
-const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange often fire together; coalesce them
+/* ═══ THE ONE SESSION OWNER ═══
+   Two implementations used to probe the same endpoint at boot: this hook (for
+   the signed-in screen) and an effect inside App (for the hand-off). Each kept
+   its own rules about what a dropped request means, and the slower of the two
+   decided when the login form was allowed to paint.
 
-export interface SessionState {
-  user: CurrentUserData | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-}
+   There is one answer now, held outside React, read with useSyncExternalStore:
+   the probe starts as this module is imported — during the auth chunk's
+   download, not after it — and the screens read the same snapshot instead of
+   each keeping its own copy. */
+
+const KEEPALIVE_MS = 10 * 60 * 1000; // 10 minutes — rotates before the 15-min access token expires
+const CHECK_DEBOUNCE_MS = 1000; // focus + visibilitychange fire together; coalesce them
 
 const SYNC_CHANNEL = 'tirbeo:session';
 
-function getSyncChannel(): BroadcastChannel | null {
-  try {
-    if (typeof BroadcastChannel !== 'undefined') return new BroadcastChannel(SYNC_CHANNEL);
-  } catch {}
-  return null;
+export type SessionStatus = 'unknown' | 'guest' | 'member' | 'blocked';
+
+export interface Session {
+  /** 'unknown' only until the first probe answers — never a reason to hide a form. */
+  status: SessionStatus;
+  user: CurrentUserData | null;
 }
 
-export function useSession() {
-  const [state, setState] = useState<SessionState>({
-    user: null,
-    loading: true,
-    isAuthenticated: false,
-  });
-  const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const syncRef = useRef<BroadcastChannel | null>(null);
-  const lastUserIdRef = useRef<string | null>(null);
-  const lastCheckRef = useRef(0);
+let snapshot: Session = { status: 'unknown', user: null };
+const listeners = new Set<() => void>();
 
-  const clearKeepalive = useCallback(() => {
-    if (keepaliveRef.current) {
-      clearInterval(keepaliveRef.current);
-      keepaliveRef.current = null;
-    }
-  }, []);
+function publish(next: Session): void {
+  // Same person, same answer — a new object from the probe is not a change, and
+  // re-rendering every screen on each 10-minute token rotation is noise.
+  const samePerson = next.user === snapshot.user || (!!next.user && next.user.id === snapshot.user?.id);
+  if (next.status === snapshot.status && samePerson) return;
+  snapshot = next;
+  for (const listener of listeners) listener();
+}
 
-  const startKeepalive = useCallback(() => {
-    clearKeepalive();
-    keepaliveRef.current = setInterval(() => {
-      refreshSession().catch(() => {});
-    }, KEEPALIVE_MS);
-  }, [clearKeepalive]);
+function getSession(): Session {
+  return snapshot;
+}
 
-  const checkSession = useCallback(async (debounced = false) => {
-    if (debounced) {
-      const now = Date.now();
-      if (now - lastCheckRef.current < CHECK_DEBOUNCE_MS) return;
-      lastCheckRef.current = now;
-    }
-    const result = await getCurrentUser();
-    if (result.ok && result.data) {
-      const prev = lastUserIdRef.current;
-      lastUserIdRef.current = result.data.id;
-      setState({ user: result.data, loading: false, isAuthenticated: true });
-      startKeepalive();
-      // Remember which user the shared session belongs to so other apps can
-      // detect a stale bearer token minted for a previously signed-in account.
-      try { localStorage.setItem('tirbeo:token-user', result.data.id); } catch {}
-      // Only broadcast when the signed-in user actually changed — previously
-      // every tab broadcast a 'login' on page load, waking every other tab.
-      if (prev !== null && prev !== result.data.id) broadcastSession('login');
-    } else {
-      const wasAuth = lastUserIdRef.current !== null;
-      /* A request that never got an answer is not an answer. status 0 is a
-         network failure and 5xx is the server admitting it could not check —
-         on either, the session is still whatever it was, and the keepalive
-         retries. Treating a dropped request as a sign-out is how a person on a
-         train gets told they were never signed in, and it clears the cookies
-         that were the only proof they were. */
-      const indeterminate = result.status === 0 || result.status >= 500;
-      if (indeterminate && wasAuth) return;
-      lastUserIdRef.current = null;
-      setState({ user: null, loading: false, isAuthenticated: false });
-      clearKeepalive();
-      if (wasAuth) broadcastSession('logout');
-    }
-  }, [startKeepalive, clearKeepalive]);
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
 
-  useEffect(() => {
-    checkSession();
-    // same-origin tabs: BroadcastChannel + storage
-    const bc = getSyncChannel();
-    syncRef.current = bc;
-    const onBc = (e: MessageEvent) => {
-      if (e.data?.type === 'logout') {
-        lastUserIdRef.current = null;
-        setState({ user: null, loading: false, isAuthenticated: false });
-        clearKeepalive();
-      } else if (e.data?.type === 'login') {
-        checkSession(true);
+export function useSession(): Session {
+  return useSyncExternalStore(subscribe, getSession, getSession);
+}
+
+let keepalive: ReturnType<typeof setInterval> | null = null;
+let lastCheckAt = 0;
+let lastUserId: string | null = null;
+let probe: Promise<void> | null = null;
+
+function startKeepalive(): void {
+  stopKeepalive();
+  keepalive = setInterval(() => { void probeSession(true); }, KEEPALIVE_MS);
+}
+
+function stopKeepalive(): void {
+  if (keepalive) { clearInterval(keepalive); keepalive = null; }
+}
+
+/**
+ * Ask the API who is signed in.
+ *
+ * A request that never got an answer is not an answer: status 0 is a network
+ * failure and 5xx is the server admitting it could not check. On either, the
+ * session stays whatever it was — treating a dropped request as a sign-out is
+ * how someone on a train gets told they were never signed in, and the screens
+ * behind that message then clear the cookies that were the only proof.
+ */
+function probeSession(force = false): Promise<void> {
+  if (probe) return probe;
+  if (!force && Date.now() - lastCheckAt < CHECK_DEBOUNCE_MS) return Promise.resolve();
+  lastCheckAt = Date.now();
+  probe = getCurrentUser()
+    .then((res) => {
+      if (res.block) {
+        lastUserId = null;
+        stopKeepalive();
+        publish({ status: 'blocked', user: null });
+        return;
       }
-    };
-    bc?.addEventListener('message', onBc);
-
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'tirbeo_session') {
-        try {
-          const v = e.newValue ? JSON.parse(e.newValue) : null;
-          if (v?.type === 'logout') {
-            lastUserIdRef.current = null;
-            setState({ user: null, loading: false, isAuthenticated: false });
-            clearKeepalive();
-          } else if (v?.type === 'login') {
-            checkSession(true);
-          }
-        } catch { checkSession(true); }
+      if (res.ok && res.data) {
+        const changed = lastUserId !== null && lastUserId !== res.data.id;
+        lastUserId = res.data.id;
+        // Which account the shared cookies belong to, for the other apps' stale
+        // bearer-token check.
+        try { localStorage.setItem('tirbeo:token-user', res.data.id); } catch {}
+        publish({ status: 'member', user: res.data });
+        startKeepalive();
+        // Only when the person actually changed: every tab used to broadcast a
+        // 'login' on load and wake every other tab.
+        if (changed) broadcastSession('login', res.data.id);
+        return;
       }
-    };
-    window.addEventListener('storage', onStorage);
+      if ((res.status === 0 || res.status >= 500) && lastUserId) return;
+      const wasMember = lastUserId !== null;
+      lastUserId = null;
+      stopKeepalive();
+      publish({ status: 'guest', user: null });
+      if (wasMember) broadcastSession('logout');
+    })
+    .catch(() => {})
+    .finally(() => { probe = null; });
+  return probe;
+}
 
-    // cross-subdomain tabs (accounts ↔ dashboard ↔ forms): the cookie is shared
-    // on api.tirbeo.com, but localStorage is not — so re-probe when the user
-    // returns to this tab. Event-driven instead of the old 5-second poll.
-    // Also pauses the session keepalive while hidden: background tabs don't
-    // need token rotation, and it saves wake-ups/battery on mobile.
-    const onFocus = () => {
-      if (document.visibilityState === 'visible') {
-        checkSession(true);
-        if (lastUserIdRef.current) startKeepalive();
-      } else {
-        clearKeepalive();
-      }
-    };
-    document.addEventListener('visibilitychange', onFocus);
-    window.addEventListener('focus', onFocus);
+/**
+ * A login this app just completed, whose cookies the API already installed.
+ * Tell every other tab to re-read the session, and re-read it here — the caller
+ * only knows an email address, not what `/users/me` says the session is.
+ */
+export function announceSignIn(): Promise<void> {
+  broadcastSession('login');
+  return probeSession(true);
+}
 
-    return () => {
-      clearKeepalive();
-      bc?.removeEventListener('message', onBc);
-      bc?.close();
-      window.removeEventListener('storage', onStorage);
-      document.removeEventListener('visibilitychange', onFocus);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [checkSession, clearKeepalive, startKeepalive]);
-
-  const refresh = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true }));
-    await checkSession();
-  }, [checkSession]);
-
-  const signOut = useCallback(async () => {
-    clearKeepalive();
+/** Sign out here, and tell every other tab this browser has open. */
+export async function signOut(): Promise<void> {
+  stopKeepalive();
+  try {
+    await logout();
+  } finally {
     try {
-      await logout();
-    } finally {
-      // Drop every browser-side trace of the session, not just React state.
-      try {
-        localStorage.removeItem('tirbeo:token-user');
-        localStorage.removeItem('tirbeo:security');
-        localStorage.removeItem('tirbeo:last-active');
-      } catch {}
-      clearSessionTrace();
-      lastUserIdRef.current = null;
-      setState({ user: null, loading: false, isAuthenticated: false });
-      broadcastSession('logout');
-      window.location.assign('/login');
-    }
-  }, [clearKeepalive]);
+      localStorage.removeItem('tirbeo:token-user');
+      localStorage.removeItem('tirbeo:security');
+      localStorage.removeItem('tirbeo:last-active');
+    } catch {}
+    clearSessionTrace();
+    lastUserId = null;
+    publish({ status: 'guest', user: null });
+    broadcastSession('logout');
+  }
+}
 
-  return { ...state, refresh, signOut };
+let started = false;
+
+/**
+ * Wire the session to the rest of the browser: same-origin tabs through
+ * BroadcastChannel + storage events, other Tirbeo apps through the shared
+ * cookie, re-read when this tab comes back to the front. Event-driven — the
+ * old 5-second poll burned battery and caused reload loops.
+ *
+ * Called once, from main.tsx, before React renders.
+ */
+export function startSessionSync(): void {
+  if (started || typeof window === 'undefined') return;
+  started = true;
+
+  void probeSession(true);
+
+  let channel: BroadcastChannel | null = null;
+  try {
+    if (typeof BroadcastChannel !== 'undefined') channel = new BroadcastChannel(SYNC_CHANNEL);
+  } catch {}
+
+  const onRemoteLogin = () => { void probeSession(true); };
+  const onRemoteLogout = () => {
+    lastUserId = null;
+    stopKeepalive();
+    publish({ status: 'guest', user: null });
+  };
+
+  channel?.addEventListener('message', (e) => {
+    const event = parseSessionMessage(e.data);
+    if (event?.type === 'logout') onRemoteLogout();
+    else if (event?.type === 'login') onRemoteLogin();
+  });
+
+  // localStorage is how the message reaches the tabs that did not send it.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'tirbeo_session') return;
+    const event = parseSessionMessage(e.newValue);
+    if (event?.type === 'logout') onRemoteLogout();
+    else onRemoteLogin();
+  });
+
+  // The cookie is shared across *.tirbeo.com but localStorage is not, so a
+  // sign-in made in the dashboard is invisible here until this tab looks again.
+  // Unforced, so the focus + visibilitychange pair a woken tab fires counts as
+  // one probe; a hidden tab stops rotating a token nobody is using.
+  const onVisible = () => {
+    if (document.visibilityState !== 'visible') { stopKeepalive(); return; }
+    void probeSession();
+    if (lastUserId) startKeepalive();
+  };
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('focus', onVisible);
 }
