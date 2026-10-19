@@ -4,9 +4,11 @@ import { ThemeToggle } from './ThemeToggle';
 /**
  * The landing app's chrome, reused on every accounts screen.
  *
- * Same 64px sticky header, same wordmark, same quiet nav actions, same
- * hairline footer — so moving from tirbeo.com to accounts.tirbeo.com is a
- * colour-scheme-preserving transition, not a different product.
+ * Same 64px sticky header, same wordmark, same hairline footer — so moving
+ * from tirbeo.com to accounts.tirbeo.com is a colour-scheme-preserving
+ * transition, not a different product. What it does not carry is navigation:
+ * this app has one job per screen, and a filled CTA in the header would compete
+ * with the one on the screen beneath it. The wordmark is the way back out.
  */
 
 const SITE = 'https://tirbeo.com';
@@ -35,17 +37,8 @@ export function SiteHeader() {
           Tirbeo
         </a>
 
-        <nav className="site-nav" aria-label="Main">
-          <a href={`${SITE}/teams`} className="btn btn-quiet btn-sm">
-            Teams
-          </a>
-          <a href={`${SITE}/contact`} className="btn btn-quiet btn-sm">
-            Contact
-          </a>
+        <nav className="site-nav" aria-label="Page">
           <ThemeToggle />
-          <a href={SITE} className="btn btn-primary btn-sm">
-            tirbeo.com
-          </a>
         </nav>
       </div>
     </header>
