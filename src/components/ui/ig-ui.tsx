@@ -447,7 +447,6 @@ export function OtpBoxes({
   pattern?: string;
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
-  const [focused, setFocused] = useState(-1);
 
   const setChar = (i: number, ch: string) => {
     const chars = Array.from({ length }, (_, j) => value[j] || '');
@@ -470,8 +469,6 @@ export function OtpBoxes({
           autoComplete={i === 0 ? 'one-time-code' : 'off'}
           aria-label={`${label} digit ${i + 1} of ${length}`}
           value={value[i] || ''}
-          onFocus={() => setFocused(i)}
-          onBlur={() => setFocused((f) => (f === i ? -1 : f))}
           onChange={(e) => {
             const ch = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(-1);
             if (!ch && e.target.value !== '') return;
@@ -492,11 +489,10 @@ export function OtpBoxes({
           className={cn(
             'otp-box h-14 min-w-0 flex-1 rounded-lg border border-border bg-input text-center text-[22px] font-semibold text-fg',
             'transition-[border-color,background-color] duration-150',
-            error
-              ? 'border-danger bg-hover'
-              : focused === i
-                ? 'border-accent bg-field-focus'
-                : 'hover:border-border-strong hover:bg-field-hover',
+            'hover:border-border-strong hover:bg-field-hover focus:border-accent focus:bg-field-focus',
+            // Variant rules always beat the base ones; a plain `border-danger` would
+            // lose its tie with `border-border` to sheet order and never show.
+            error && '!border-danger',
           )}
         />
       ))}
