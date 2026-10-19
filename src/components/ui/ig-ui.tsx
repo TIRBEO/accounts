@@ -29,27 +29,17 @@ export function cn(...parts: Array<string | false | null | undefined | 0 | 0n>):
 
 /* ── Feedback ─────────────────────────────────────────────────────────── */
 
+/** The fleet's one in-flight mark: a ring turning at 700ms in the colour of
+    the label beside it (`.spinner` in index.css, the same recipe myprofile,
+    landing and social carry). `size` sets the box — the geometry belongs to
+    the recipe. */
 export function Spinner({ size = 12, className }: { size?: number; className?: string }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      className={cn('shrink-0', className)}
-      style={{ animation: 'spin 0.7s linear infinite' }}
+    <span
+      className={cn('spinner', className)}
+      style={{ '--spinner-size': `${size}px` } as React.CSSProperties}
       aria-hidden="true"
-    >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray="26 60"
-      />
-    </svg>
+    />
   );
 }
 
