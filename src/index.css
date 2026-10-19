@@ -1550,6 +1550,40 @@
   color: var(--accent);
 }
 
+/* ── Live announcement ──────────────────────────────────────────────────
+   The same plate as the toast, pinned under the sticky header instead of
+   above the footer. It wraps: an announcement that gets clipped to an
+   ellipsis has stopped being an announcement. */
+.tb-notice {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: fit-content;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--glass-2);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg);
+  animation: toast-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tb-notice > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
 /* ── Range slider ───────────────────────────────────────────────────── */
 input[type="range"] {
   -webkit-appearance: none;
