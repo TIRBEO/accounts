@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Fingerprint, KeyRound, ShieldCheck, X } from 'lucide-react';
 import {
   PrimaryButton,
@@ -56,6 +55,24 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
   const [sendingCode, setSendingCode] = useState(false);
   const [notice, setNotice] = useState<{ msg: string; tone: 'error' | 'success' } | null>(null);
 
+  /* Dismiss is an animation, not an unmount: the sheet stays mounted for the
+     260ms the scrim and panel take to leave, then tells the parent. Same
+     recipe as myprofile's Sheet, so `.sheet-panel`/`.sheet-scrim` in
+     index.css drive both directions instead of an animation library. */
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
+  useEffect(() => () => { if (closeTimer.current) window.clearTimeout(closeTimer.current); }, []);
+
+  function startClose() {
+    if (closing) return;
+    setClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      setClosing(false);
+      onClose();
+    }, 260);
+  }
+
   // Reset every field each time the sheet opens, so a stale proof never lingers.
   useEffect(() => {
     if (!open) return;
@@ -75,13 +92,14 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') startClose(); };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, onClose, closing]);
 
   const handleSendCode = async () => {
     if (sendingCode) return;
@@ -134,7 +152,7 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
       if (active === 'passkey') { /* token is fresh each try */ }
       return;
     }
-    onClose();
+    startClose();
   };
 
   const canSubmit =
@@ -144,137 +162,126 @@ export const ReauthSheet: React.FC<ReauthSheetProps> = ({
       (active === 'totp' && totp.length === 6) ||
       (active === 'code' && emailCode.length === 6));
 
+  if (!open && !closing) return null;
+  const out = closing ? ' is-closing' : '';
+
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="reauth-title"
-        >
-          <motion.button
-            type="button"
-            aria-label="Cancel"
-            onClick={onClose}
-            className="sheet-scrim absolute inset-0 cursor-default bg-scrim backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          />
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reauth-title"
+    >
+      <button
+        type="button"
+        aria-label="Cancel"
+        onClick={startClose}
+        className={`sheet-scrim${out} absolute inset-0 cursor-default bg-scrim backdrop-blur-sm`}
+      />
 
-          <motion.div
-            initial={{ opacity: 0, y: 28, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.97 }}
-            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className="sheet-panel relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[20px] border border-border bg-card text-fg sm:rounded-xl"
-          >
-            {/* iOS grabber — marks the sheet as dismissible. */}
-            <div
-              aria-hidden="true"
-              className="mx-auto mt-3 h-1 w-9 rounded-full bg-border-strong sm:hidden"
-            />
-            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-field text-text-3">
-                  <ShieldCheck className="size-[18px]" />
-                </div>
-                <h2 id="reauth-title" className="truncate text-lg font-semibold text-fg">{title}</h2>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="shrink-0 cursor-pointer rounded-md p-2 text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
-              >
-                <X className="size-4" />
-              </button>
-            </header>
-
-            <div className="px-5 py-5 sm:px-6">
-              <p className="mb-4 text-[15px] leading-relaxed text-text-3">{description}</p>
-
-              {choices.length > 1 && (
-                <div className="mb-5">
-                  <Segmented<ReauthMethod>
-                    value={active}
-                    onChange={(v) => { setActive(v); setNotice(null); }}
-                    options={choices.map((m) => ({ value: m, label: LABELS[m] }))}
-                    label="Choose a way to verify"
-                  />
-                </div>
-              )}
-
-              {active === 'password' && (
-                <PasswordField
-                  aria-label="Password"
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  shown={showPassword}
-                  onToggleShown={() => setShowPassword((v) => !v)}
-                />
-              )}
-
-              {active === 'totp' && (
-                <div className="space-y-2">
-                  <OtpBoxes label="Authenticator code" value={totp} onChange={setTotp} />
-                  <p className="text-center text-[13px] text-text-4">The 6-digit code from your authenticator app.</p>
-                </div>
-              )}
-
-              {active === 'code' && (
-                <div className="space-y-4">
-                  {sentTo ? (
-                    <p className="text-center text-[14px] text-text-3">
-                      We emailed a code to <span className="font-semibold text-fg">{sentTo}</span>.{' '}
-                      <TextButton onClick={handleSendCode} disabled={sendingCode}>
-                        {sendingCode ? 'Sending…' : 'Resend'}
-                      </TextButton>
-                    </p>
-                  ) : (
-                    <SecondaryButton type="button" onClick={handleSendCode} disabled={sendingCode}>
-                      <span className="inline-flex items-center justify-center gap-2">
-                        {sendingCode ? <Spinner size={16} /> : <KeyRound size={16} />}
-                        Email me a code
-                      </span>
-                    </SecondaryButton>
-                  )}
-                  <OtpBoxes label="Emailed code" value={emailCode} onChange={setEmailCode} />
-                </div>
-              )}
-
-              {active === 'passkey' && (
-                <div className="flex flex-col items-center gap-2 py-2 text-center">
-                  <div className="grid size-14 place-items-center rounded-xl border border-border bg-field text-text-3">
-                    <Fingerprint className="size-6" />
-                  </div>
-                  <p className="text-[14px] leading-relaxed text-text-3">
-                    Confirm with the passkey on this device to continue.
-                  </p>
-                </div>
-              )}
-
-              <FormNotice notice={notice} />
-
-              <div className="mt-5">
-                <PrimaryButton type="button" onClick={handleConfirm} loading={busy} disabled={!canSubmit}>
-                  {active === 'passkey' ? 'Verify with passkey' : 'Confirm'}
-                </PrimaryButton>
-              </div>
-              <div className="mt-2 text-center">
-                <TextButton onClick={onClose} disabled={busy}>Cancel</TextButton>
-              </div>
+      <div
+        className={`sheet-panel${out} relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[20px] border border-border bg-card text-fg sm:rounded-xl`}
+      >
+        {/* iOS grabber — marks the sheet as dismissible. */}
+        <div
+          aria-hidden="true"
+          className="mx-auto mt-3 h-1 w-9 rounded-full bg-border-strong sm:hidden"
+        />
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-divider px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-field text-text-3">
+              <ShieldCheck className="size-[18px]" />
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <h2 id="reauth-title" className="truncate text-lg font-semibold text-fg">{title}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={startClose}
+            aria-label="Close"
+            className="shrink-0 cursor-pointer rounded-md p-2 text-muted-foreground transition-colors hover:bg-fill hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </header>
+
+        <div className="px-5 py-5 sm:px-6">
+          <p className="mb-4 text-[15px] leading-relaxed text-text-3">{description}</p>
+
+          {choices.length > 1 && (
+            <div className="mb-5">
+              <Segmented<ReauthMethod>
+                value={active}
+                onChange={(v) => { setActive(v); setNotice(null); }}
+                options={choices.map((m) => ({ value: m, label: LABELS[m] }))}
+                label="Choose a way to verify"
+              />
+            </div>
+          )}
+
+          {active === 'password' && (
+            <PasswordField
+              aria-label="Password"
+              placeholder="Your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              shown={showPassword}
+              onToggleShown={() => setShowPassword((v) => !v)}
+            />
+          )}
+
+          {active === 'totp' && (
+            <div className="space-y-2">
+              <OtpBoxes label="Authenticator code" value={totp} onChange={setTotp} />
+              <p className="text-center text-[13px] text-text-4">The 6-digit code from your authenticator app.</p>
+            </div>
+          )}
+
+          {active === 'code' && (
+            <div className="space-y-4">
+              {sentTo ? (
+                <p className="text-center text-[14px] text-text-3">
+                  We emailed a code to <span className="font-semibold text-fg">{sentTo}</span>.{' '}
+                  <TextButton onClick={handleSendCode} disabled={sendingCode}>
+                    {sendingCode ? 'Sending…' : 'Resend'}
+                  </TextButton>
+                </p>
+              ) : (
+                <SecondaryButton type="button" onClick={handleSendCode} disabled={sendingCode}>
+                  <span className="inline-flex items-center justify-center gap-2">
+                    {sendingCode ? <Spinner size={16} /> : <KeyRound size={16} />}
+                    Email me a code
+                  </span>
+                </SecondaryButton>
+              )}
+              <OtpBoxes label="Emailed code" value={emailCode} onChange={setEmailCode} />
+            </div>
+          )}
+
+          {active === 'passkey' && (
+            <div className="flex flex-col items-center gap-2 py-2 text-center">
+              <div className="grid size-14 place-items-center rounded-xl border border-border bg-field text-text-3">
+                <Fingerprint className="size-6" />
+              </div>
+              <p className="text-[14px] leading-relaxed text-text-3">
+                Confirm with the passkey on this device to continue.
+              </p>
+            </div>
+          )}
+
+          <FormNotice notice={notice} />
+
+          <div className="mt-5">
+            <PrimaryButton type="button" onClick={handleConfirm} loading={busy} disabled={!canSubmit}>
+              {active === 'passkey' ? 'Verify with passkey' : 'Confirm'}
+            </PrimaryButton>
+          </div>
+          <div className="mt-2 text-center">
+            <TextButton onClick={startClose} disabled={busy}>Cancel</TextButton>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

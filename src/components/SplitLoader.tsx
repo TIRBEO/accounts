@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
 import { BrandMark } from './ui/ig-ui';
 
 export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
@@ -7,13 +6,18 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
      an overlay at all, so a fast route reads as instant instead of a blur
      flash. Slow waits still get the full rail. */
   const [visible, setVisible] = useState(false);
-  const reduceMotion = useReducedMotion();
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (!active) {
-      const t = setTimeout(() => setVisible(false), 320);
+      setLeaving(true);
+      const t = setTimeout(() => {
+        setLeaving(false);
+        setVisible(false);
+      }, 320);
       return () => clearTimeout(t);
     }
+    setLeaving(false);
     const t = setTimeout(() => setVisible(true), 120);
     return () => clearTimeout(t);
   }, [active]);
@@ -21,40 +25,18 @@ export const SplitLoader: React.FC<{ active: boolean }> = ({ active }) => {
   if (!visible) return null;
 
   return (
-    <motion.div
+    <div
       aria-hidden="true"
       role="presentation"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: active ? 1 : 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-9999 grid place-items-center bg-bg/70 backdrop-blur-2xl"
-      style={{ pointerEvents: active ? 'auto' : 'none' }}
+      className={`split-overlay${leaving ? ' is-leaving' : ''}`}
     >
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col items-center gap-7"
-      >
+      <div className="flex flex-col items-center gap-7">
         <BrandMark size="lg" onCanvas />
 
         {/* Indeterminate rail — a travelling azure segment, the standard
             "working, duration unknown" signal. */}
-        <div
-          className="relative h-px w-[168px] overflow-hidden rounded-full bg-divider"
-          role="presentation"
-        >
-          <motion.div
-            className="absolute inset-y-0 w-[54px] rounded-full bg-accent"
-            animate={reduceMotion ? undefined : { x: ['-54px', '168px'] }}
-            transition={
-              reduceMotion
-                ? undefined
-                : { duration: 1.15, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }
-            }
-          />
-        </div>
-      </motion.div>
-    </motion.div>
+        <div className="split-rail" role="presentation" />
+      </div>
+    </div>
   );
 };

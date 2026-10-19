@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback, type ReactNode, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 const AuthCard = lazy(() => import('./components/auth/AuthCard').then((m) => ({ default: m.AuthCard })));
@@ -280,26 +279,18 @@ export default function App() {
     };
   }, [userId, showToast]);
 
+  // The live region stays mounted whether or not a toast is showing: an
+  // announcement inserted into a region that appears at the same time can be
+  // missed by screen readers.
   const toastNode = (
     <div role="region" aria-label="Notifications" aria-live="polite" aria-atomic="true">
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            key={toast.msg}
-            initial={{ opacity: 0, y: 10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.97 }}
-            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            className={`tb-toast tb-toast--${toast.type}`}
-            role="status"
-          >
-            <span aria-hidden="true">{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {toast && (
+        <div key={toast.msg} role="status" className={`tb-toast tb-toast--${toast.type}`}>
+          <span aria-hidden="true">{TOAST_ICON[toast.type]}</span><span>{toast.msg}</span>
+        </div>
+      )}
     </div>
   );
-
 
   const page = (content: ReactNode) => (
     <div className="app-shell">
@@ -314,20 +305,17 @@ export default function App() {
     </div>
   );
 
-  // Wrap in MotionConfig so every animation respects prefers-reduced-motion.
   return (
-    <MotionConfig reducedMotion="user">
-      {routePath.startsWith('/callback')
-        ? page(<CallbackView onToast={showToast} />)
-        : routePath.startsWith('/magic-sent')
-          ? page(<MagicLinkSentPage />)
-          : page(
-              <SessionGate onShowToast={showToast}>
-                <Suspense fallback={<AuthCardSkeleton />}>
-                  <AuthCard key="authcard" onSuccessAuth={handleSuccessAuth} onShowToast={showToast} />
-                </Suspense>
-              </SessionGate>,
-            )}
-    </MotionConfig>
+    routePath.startsWith('/callback')
+      ? page(<CallbackView onToast={showToast} />)
+      : routePath.startsWith('/magic-sent')
+        ? page(<MagicLinkSentPage />)
+        : page(
+            <SessionGate onShowToast={showToast}>
+              <Suspense fallback={<AuthCardSkeleton />}>
+                <AuthCard onSuccessAuth={handleSuccessAuth} onShowToast={showToast} />
+              </Suspense>
+            </SessionGate>,
+          )
   );
 }

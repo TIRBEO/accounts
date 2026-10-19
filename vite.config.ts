@@ -46,9 +46,10 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'motion': ['motion/react'],
+            // 'react-dom' alone does not match the subpath the app imports, so
+            // without the explicit entry React 19 stays inside the app chunk.
+            'react-vendor': ['react', 'react-dom', 'react-dom/client'],
             'lucide': ['lucide-react'],
-            'react-vendor': ['react', 'react-dom'],
           },
         },
       },
