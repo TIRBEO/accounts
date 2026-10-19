@@ -10,6 +10,7 @@
 // Vite exposes VITE_* vars; NEXT_PUBLIC_* is read too so the existing
 // .env.local keys work without changes.
 import { trackError } from './telemetry';
+import { deviceIdHeader } from './device';
 // A prod build (vite build) with a dirty .env.local would otherwise bake
 // http://localhost:... into the bundle and every redirect would follow it.
 const dropLoopbackInProd = (v?: string) =>
@@ -76,6 +77,7 @@ async function postJson<T>(
       'Content-Type': 'application/json',
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
       ...(turnstileToken ? { 'x-turnstile-token': turnstileToken } : {}),
+      ...deviceIdHeader(),
     },
     // Send/receive cookies so the __session cookie set by the API is stored
     // for the API domain (shared with the dashboard on .tirbeo.com).
@@ -234,6 +236,7 @@ async function requestJson<T>(
     headers: {
       ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      ...deviceIdHeader(),
     },
     credentials: 'include',
     ...(hasBody ? { body: JSON.stringify(opts!.body) } : {}),
