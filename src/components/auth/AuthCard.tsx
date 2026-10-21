@@ -979,13 +979,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
   const emailValid = !validateEmail(email);
   const usernameValid = validateUsername(username) === undefined;
+  // 'error' passes: the hint promises "you can continue" when the availability
+  // endpoint is unreachable, and /api/auth/signup enforces uniqueness anyway.
   const step1Complete = Boolean(
     firstName.trim() &&
     lastName.trim() &&
     emailValid &&
     usernameValid &&
-    usernameStatus === 'available' &&
-    emailCheckStatus === 'available',
+    (usernameStatus === 'available' || usernameStatus === 'error') &&
+    (emailCheckStatus === 'available' || emailCheckStatus === 'error'),
   );
   const step2Complete = Boolean(gender && dob && !validateDob(dob));
   const step4Complete = Boolean(
