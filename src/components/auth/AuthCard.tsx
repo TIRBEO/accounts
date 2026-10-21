@@ -6,6 +6,7 @@ import { clearSessionTrace } from '../../lib/sessionSync';
 import { AuthShell, Spinner } from '../ui/ig-ui';
 import { TurnstileCaptcha } from './TurnstileCaptcha';
 import { TURNSTILE_SITE_KEY } from '../../lib/turnstile';
+import type { ToastType } from '../../lib/toast';
 
 /**
  * Switching between sign in and sign up is navigation, not a task. It gets
@@ -55,7 +56,7 @@ import { LoginRecovery } from './login/LoginRecovery';
 
 interface AuthCardProps {
   onSuccessAuth: (email: string, provider: string) => void;
-  onShowToast: (msg: string) => void;
+  onShowToast: (msg: string, type: ToastType) => void;
 }
 
 type SignupStep = 1 | 2 | 3 | 4;
@@ -133,7 +134,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       consentPrivacy, setConsentPrivacy,
       isSubmitting, setIsSubmitting,
       isPasskeyLoading, setIsPasskeyLoading,
-      setCooldowns, isInCooldown, getCooldownRemaining,
+      isInCooldown, getCooldownRemaining,
       canSend, remainingSends, sendWithRateLimit,
       getMaxSends, refreshRemaining, getResetAt, setResetAt,
       errors, setErrors,
@@ -176,7 +177,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       /* OAuth callbacks that fail server-side redirect here with ?error=…&ref=…
          — the ref is the event ID recorded in the admin ledger, so what the
          person sees and what staff can look up are the same code. */
-      const ref = (params.get('ref') || '').replace(/[^0-9a-f-]/gi, '').slice(0, 16);
+      const ref = (params.get('ref') || '').replace(/[^0-9a-f-]/gi, '').slice(0, 19);
       notice(ref && ref.includes('-')
         ? `Something went wrong with that sign-in. Please try again. (Ref: ${ref})`
         : 'Something went wrong with that link. Please try again.');
@@ -246,7 +247,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     e.preventDefault();
 
     if (!(await validateStep(signupStep))) {
-      onShowToast('Please fix the errors before continuing');
+      onShowToast('Please fix the errors before continuing', 'error');
       return;
     }
 
@@ -298,7 +299,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           if (noteCaptchaChallenge(result)) {
             trackEvent('auth.signup_failed', { metadata: { reason: 'captcha_required' } });
             setIsSubmitting(false);
-            onShowToast('Please complete the security check, then try again.');
+            onShowToast('Please complete the security check, then try again.', 'error');
             return;
           }
           const flags = result.data as { usernameTaken?: boolean } | null;
@@ -314,7 +315,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           trackEvent('auth.signup_failed', {
             metadata: { reason: flags?.usernameTaken ? 'username_taken' : 'server_error', status: result.status },
           });
-          onShowToast(result.error || 'Error creating account');
+          onShowToast(result.error || 'Error creating account', 'error');
           haptic('error');
           captureException(new Error(result.error || 'Signup failed'));
           invalidateCaptcha();
@@ -355,7 +356,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         // session issued by the signup endpoint is cleared so the login screen
         // does not immediately auto-bounce via getCurrentUser().
         haptic('success');
-        onShowToast('Account created — please log in');
+        onShowToast('Account created — please log in', 'success');
         setIsSubmitting(false);
         try {
           await logout();
@@ -370,7 +371,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         return;
       }
     } catch (err) {
-      onShowToast('An unexpected error occurred');
+      onShowToast('An unexpected error occurred', 'error');
       trackError('signup:submit', err);
       captureException(err);
       haptic('error');
@@ -491,6 +492,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     e.preventDefault();
     setLoginNotice(null);
 
+    /* Every code screen reads its refusal from its own error slot, so each one
+       is checked by the same validator the field uses — no hand-rolled copies
+       of the digit rule, and no message that lands where nothing renders it. */
     if (loginStep === 'email') {
       const emailError = validateField('email', email);
       if (emailError) {
@@ -499,24 +503,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         return;
       }
     } else if (loginStep === 'otp') {
-      if (loginOtpCode.length !== 6 || !/^\d{6}$/.test(loginOtpCode)) {
-        setErrors({ loginOtpCode: 'Code must be 6 digits' });
+      if (validateField('loginOtpCode', loginOtpCode)) {
         setTouched({ loginOtpCode: true });
         return;
       }
     } else if (loginStep === '2fa') {
-      if (loginWithBackup) {
-        if (!backupCode.trim()) {
-          setErrors({ twoFactorCode: 'Backup code is required' });
-          setTouched({ twoFactorCode: true });
-          return;
-        }
-      } else {
-        if (twoFactorCode.length !== 6 || !/^\d{6}$/.test(twoFactorCode)) {
-          setErrors({ twoFactorCode: 'Code must be 6 digits' });
-          setTouched({ twoFactorCode: true });
-          return;
-        }
+      const field = loginWithBackup ? 'backupCode' : 'twoFactorCode';
+      if (validateField(field, loginWithBackup ? backupCode : twoFactorCode)) {
+        setTouched({ [field]: true });
+        return;
       }
     }
 
@@ -671,10 +666,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const resetsAt: number | undefined =
         (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.['login-otp']?.resetAt;
       if (resetsAt) setResetAt('login-otp', resetsAt);
-      const retryAfter = resetsAt
-        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
-        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
-      setCooldowns((prev) => ({ ...prev, 'login-otp': retryAfter }));
       const limitMsg = resetsAt
         ? `Limit reached for code sends${resetCopy(resetsAt)}`
         : (result.error || 'Please wait before resending');
@@ -694,25 +685,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (!file) return;
 
     if (file.size === 0) {
-      onShowToast('File is empty. Please select a valid image.');
+      onShowToast('File is empty. Please select a valid image.', 'error');
       return;
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      onShowToast('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      onShowToast('Please select a valid image file (JPEG, PNG, GIF, or WebP)', 'error');
       return;
     }
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      onShowToast('Image must be less than 5MB');
+      onShowToast('Image must be less than 5MB', 'error');
       return;
     }
 
     const minSize = 100;
     if (file.size < minSize) {
-      onShowToast('File appears to be corrupted or too small');
+      onShowToast('File appears to be corrupted or too small', 'error');
       return;
     }
 
@@ -721,26 +712,26 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const imageUrl = event.target?.result as string;
 
       if (!imageUrl || imageUrl.length < 100) {
-        onShowToast('Failed to read image file. It may be corrupted.');
+        onShowToast('Failed to read image file. It may be corrupted.', 'error');
         return;
       }
 
       const img = new Image();
       img.onload = () => {
         if (img.width === 0 || img.height === 0) {
-          onShowToast('Image has invalid dimensions');
+          onShowToast('Image has invalid dimensions', 'error');
           return;
         }
         setTempImageUrl(imageUrl);
         setShowImageEditor(true);
       };
       img.onerror = () => {
-        onShowToast('Failed to load image. The file may be corrupted.');
+        onShowToast('Failed to load image. The file may be corrupted.', 'error');
       };
       img.src = imageUrl;
     };
     reader.onerror = () => {
-      onShowToast('Failed to read file');
+      onShowToast('Failed to read file', 'error');
     };
     reader.readAsDataURL(file);
 
@@ -753,14 +744,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setProfilePic(croppedImageUrl);
     setShowImageEditor(false);
     setTempImageUrl(null);
-    onShowToast('Profile photo set');
+    onShowToast('Profile photo set', 'success');
   };
 
   const handleRemoveProfilePic = async () => {
     setProfilePic(null);
     setTempImageUrl(null);
     setShowImageEditor(false);
-    onShowToast('Profile photo removed');
+    onShowToast('Profile photo removed', 'success');
   };
 
   const handleCancelImageEditor = () => {
@@ -802,10 +793,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const retryAfterMs = result.retryAfterMs || (result as any).data?.retryAfterMs;
       const resetsAt = (result as any).resetsAt || (retryAfterMs ? Date.now() + retryAfterMs : undefined);
       if (resetsAt) setResetAt(key, resetsAt);
-      const retryAfter = resetsAt
-        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
-        : retryAfterMs ? Math.ceil(retryAfterMs / 1000) : 30;
-      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
       notice(
         resetsAt
           ? `Limit reached for magic link sends${resetCopy(resetsAt)}`
@@ -844,10 +831,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const resetsAt: number | undefined =
         (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.[key]?.resetAt;
       if (resetsAt) setResetAt(key, resetsAt);
-      const retryAfter = resetsAt
-        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
-        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
-      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
       notice(
         resetsAt
           ? `Limit reached${resetCopy(resetsAt)}`
@@ -864,15 +847,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       notice('Please enter your email first');
       return;
     }
-    if (recoveryMethod === 'magic-link') {
-      await handleDirectLoginRequest('magic-link');
-      return;
-    }
-    const key = recoveryMethod === 'recovery' ? 'recovery' : 'otp';
-    const pwMethod = key === 'recovery' ? 'recovery' : 'otp';
-    const result = await sendWithRateLimit(key, () => requestPasswordReset(email, pwMethod as any), { cooldownKey: key });
+    const method = recoveryMethod === 'recovery' ? 'recovery' : 'otp';
+    const result = await sendWithRateLimit(method, () => requestPasswordReset(email, method), { cooldownKey: method });
     if (result.ok) {
-      setRecoveryMethod(recoveryMethod === 'recovery' ? 'recovery' : 'code');
+      setRecoveryMethod(method === 'recovery' ? 'recovery' : 'code');
       setRecoveryStage('code');
       setRecoveryCode('');
       setResetToken('');
@@ -880,8 +858,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       setTouched({});
       setLoginStep('recovery');
     } else if (result.status === 429) {
-      const retryAfter = result.data?.retryAfterMs ? Math.ceil(result.data.retryAfterMs / 1000) : 30;
-      setCooldowns((prev) => ({ ...prev, [key]: retryAfter }));
       notice(result.error || 'Please wait before requesting another code');
     } else {
       notice(result.error || 'Failed to send the reset code');
@@ -892,30 +868,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     if (!email || isInCooldown('signup-otp')) return;
     const result = await sendWithRateLimit('signup-otp', () => requestSignupOtp(email), { cooldownKey: 'signup-otp' });
     if (result.ok) {
-      onShowToast('Verification code resent to ' + email);
+      onShowToast('Verification code resent to ' + email, 'success');
     } else if (result.status === 429) {
       const payload: any = (result as any).data || {};
       const exceeded = payload.exceeded as string | undefined;
       const resetsAt: number | undefined =
         (exceeded && payload.remaining?.[exceeded]?.resetAt) || payload.remaining?.['signup-otp']?.resetAt;
       if (resetsAt) setResetAt('signup-otp', resetsAt);
-      const retryAfter = resetsAt
-        ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000))
-        : payload.retryAfterMs ? Math.ceil(payload.retryAfterMs / 1000) : 30;
-      setCooldowns((prev) => ({ ...prev, 'signup-otp': retryAfter }));
       onShowToast(
         resetsAt
           ? `Limit reached for verification codes${resetCopy(resetsAt)}`
           : (result.error || 'Please wait before resending'),
+        'error',
       );
     } else {
-      onShowToast(result.error || 'Error sending verification code');
+      onShowToast(result.error || 'Error sending verification code', 'error');
     }
   };
 
   const handleRecoveryCodeSubmit = async (code: string) => {
-    if (recoveryMethod === 'magic-link') return;
-
     // Forgot-password / recovery-email flow: verify the reset code, then
     // show the new-password step. (One-time-code direct login uses the
     // separate LoginOtp step, not this screen.)
@@ -977,7 +948,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
     setErrors({});
     setTouched({});
-    await handlePasswordResetRequest('otp');
+    // The reset request is the wait this screen shows a spinner for — the
+    // button reads isSubmitting rather than keeping a second pending state.
+    setIsSubmitting(true);
+    try {
+      await handlePasswordResetRequest('otp');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const goBack = () => {
@@ -1252,7 +1230,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             setLoginOtpCode={setLoginOtpCode}
             errors={errors}
             touched={touched}
-            handleBlur={handleBlur}
             loginPending2fa={loginPending2fa}
             isSubmitting={isSubmitting}
             isInCooldown={isInCooldown}
@@ -1279,8 +1256,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             touched={touched}
             handleBlur={handleBlur}
             isSubmitting={isSubmitting}
-            setRecoveryMethod={setRecoveryMethod}
-            setLoginStep={setLoginStep}
             onSubmit={handleLoginSubmit}
             onBack={goBack}
             loginNotice={loginNotice}

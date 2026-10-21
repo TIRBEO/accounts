@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Field, FormNotice, OtpBoxes, PasswordField, PrimaryButton, Spinner, TextButton } from '../../ui/ig-ui';
+import { FormNotice, OtpBoxes, PasswordField, PrimaryButton, TextButton } from '../../ui/ig-ui';
+import { validatePassword } from '../../../lib/validations';
+
+const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Strong', 'Very strong'];
 
 interface LoginRecoveryProps {
   email: string;
   loginProfile: { email: string; exists: boolean; photoUrl?: string | null; name?: string | null; hasRecoveryEmail?: boolean; recoveryEmail?: string | null } | null;
-  recoveryMethod: 'code' | 'magic-link' | 'recovery' | null;
+  recoveryMethod: 'code' | 'recovery' | null;
   recoveryStage: 'code' | 'password';
   recoveryCode: string;
   setRecoveryCode: (value: string) => void;
@@ -30,22 +33,13 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resending, setResending] = useState(false);
 
-  const doResend = async () => {
-    if (resending) return;
-    setResending(true);
-    try {
-      await onResend();
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const methodLabel = recoveryMethod === 'magic-link' ? 'magic link' : 'reset code';
-  const codeLength = 6;
-  const cooldownKey = recoveryMethod === 'magic-link' ? 'magic-link' : recoveryMethod === 'recovery' ? 'recovery' : 'otp';
+  /* A reset code is only ever sent by the 'otp' or 'recovery' method — the
+     magic-link route lands on its own sent-screen, not here. */
+  const cooldownKey = recoveryMethod === 'recovery' ? 'recovery' : 'otp';
   const sendsRemaining = remainingSends(cooldownKey);
+  const limitReached = sendsRemaining === 0;
+  const strength = validatePassword(newPassword).strength;
 
   const codeAddress =
     recoveryMethod === 'recovery'
@@ -63,16 +57,26 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
         </div>
 
         <div className="signup-fields">
-          <div className="space-y-5 text-left">
-          <PasswordField
-            label="New password"
-            placeholder="New password" aria-label="New password"
-            shown={showPassword}
-            onToggleShown={() => setShowPassword(!showPassword)}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            autoComplete="new-password"
-          />
+          <div>
+            <PasswordField
+              label="New password"
+              placeholder="New password" aria-label="New password"
+              shown={showPassword}
+              onToggleShown={() => setShowPassword(!showPassword)}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+
+            {newPassword && (
+              <div className="pw-meter" data-level={strength} role="status">
+                {[1, 2, 3, 4].map((level) => (
+                  <i key={level} className={level <= strength ? 'is-on' : undefined} />
+                ))}
+                <span>{STRENGTH_LABELS[strength]}</span>
+              </div>
+            )}
+          </div>
 
           <PasswordField
             label="Confirm new password"
@@ -99,7 +103,6 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
           >
             Save new password
           </PrimaryButton>
-          </div>
         </div>
 
         <div className="more-ways">
@@ -114,67 +117,37 @@ export const LoginRecovery: React.FC<LoginRecoveryProps> = ({
   return (
     <div>
       <div className="otp-head">
-        <h2 className="tb-heading">
-          {recoveryMethod === 'magic-link' ? 'Check your email' : 'Enter verification code'}
-        </h2>
+        <h2 className="tb-heading">Enter verification code</h2>
         <p className="tb-sub mt-1.5">
-          {recoveryMethod === 'magic-link'
-            ? 'We sent a sign-in magic link to'
-            : 'We sent a 6-digit reset code to'}
+          We sent a 6-digit reset code to
         </p>
         <p className="otp-email">{codeAddress}</p>
       </div>
 
       <div className="signup-fields">
-        <div className="space-y-5 text-left">
-        {recoveryMethod !== 'magic-link' && (
-          <>
-            <OtpBoxes label="Reset code" value={recoveryCode} onChange={setRecoveryCode} />
+        <OtpBoxes label="Reset code" value={recoveryCode} onChange={setRecoveryCode} />
 
-            {/* No quota meter — the limit only speaks when it is actually hit. */}
-            <p className="text-center text-[14px] text-text-4">
-              {isInCooldown(cooldownKey) ? (
-                <>Resend in {getCooldownRemaining(cooldownKey)}s</>
-              ) : (
-                <TextButton onClick={doResend} disabled={resending}>
-                  {resending && <Spinner size={14} className="text-accent-text" />}
-                  Resend {methodLabel}
-                </TextButton>
-              )}
-              {sendsRemaining === 0 && (
-                <span className="text-danger-text"> · limit reached</span>
-              )}
-            </p>
-
-            <FormNotice notice={loginNotice} />
-
-            <PrimaryButton
-              type="button"
-              onClick={() => onSubmitCode(recoveryCode)}
-              disabled={recoveryCode.length !== codeLength}
-              loading={isSubmitting}
-            >
-              Verify &amp; Continue
-            </PrimaryButton>
-          </>
-        )}
-
-        {recoveryMethod === 'magic-link' && (
-          <>
-            <p className="text-center text-[14px] text-text-4">
-              {isInCooldown(cooldownKey) ? (
-                <>Resend in {getCooldownRemaining(cooldownKey)}s</>
-              ) : (
-                <TextButton onClick={doResend} disabled={resending}>
-                  {resending && <Spinner size={14} className="text-accent-text" />}
-                  Resend magic link
-                </TextButton>
-              )}
-            </p>
-            <FormNotice notice={loginNotice} />
-          </>
-        )}
+        <div className="resend-row">
+          {isInCooldown(cooldownKey) ? (
+            <span>Resend in {getCooldownRemaining(cooldownKey)}s</span>
+          ) : (
+            <TextButton type="button" onClick={onResend}>Resend reset code</TextButton>
+          )}
+          <span className={limitReached ? 'resend-note is-limit' : 'resend-note'}>
+            {limitReached ? 'limit reached' : `${sendsRemaining} left`}
+          </span>
         </div>
+
+        <FormNotice notice={loginNotice} />
+
+        <PrimaryButton
+          type="button"
+          onClick={() => onSubmitCode(recoveryCode)}
+          disabled={recoveryCode.length !== 6}
+          loading={isSubmitting}
+        >
+          Verify &amp; Continue
+        </PrimaryButton>
       </div>
 
       <div className="more-ways">

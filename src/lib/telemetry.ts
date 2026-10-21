@@ -22,11 +22,13 @@ function newEventId(): string {
       return crypto.randomUUID();
     }
   } catch {
-    /* fall through to the legacy id */
+    /* fall through to the Web Crypto template */
   }
-  // Old browsers without crypto.randomUUID: timestamp + randomness is
-  // enough for a de-dup key on a fire-and-forget pipe.
-  return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  // No Math.random: a de-dup key must not be guessable from the event stream.
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 /** user@example.com → example.com. Never return the local part. */

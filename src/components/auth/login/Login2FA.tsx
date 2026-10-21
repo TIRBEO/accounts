@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { LoginStep } from '../../../lib/validations';
-import { Field, FormNotice, OtpBoxes, PrimaryButton, Segmented, TextButton } from '../../ui/ig-ui';
+import { Field, FormNotice, OtpBoxes, PrimaryButton, Segmented } from '../../ui/ig-ui';
 
 interface Login2FAProps {
   twoFactorCode: string;
@@ -15,8 +14,6 @@ interface Login2FAProps {
   touched: Record<string, boolean>;
   handleBlur: (field: string) => void;
   isSubmitting: boolean;
-  setRecoveryMethod: (method: 'code' | 'magic-link' | 'recovery' | null) => void;
-  setLoginStep: (step: LoginStep) => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
   loginNotice?: { msg: string; tone: 'error' | 'success' } | null;
@@ -42,7 +39,8 @@ export const Login2FA: React.FC<Login2FAProps> = ({
       </div>
 
       <div className="signup-fields">
-        <div className="space-y-5 text-left">
+        {/* One switcher for the two factors — the segmented row already is the
+           "use a backup code instead" link, so nothing repeats it below. */}
         <Segmented
           value={loginWithBackup ? 'backup' : 'code'}
           onChange={(next) => {
@@ -69,12 +67,6 @@ export const Login2FA: React.FC<Login2FAProps> = ({
           />
         )}
 
-        {!loginWithBackup && showCodeError && (
-          <p role="alert" className="text-center text-[14px] text-danger-text">
-            {errors.twoFactorCode}
-          </p>
-        )}
-
         {loginWithBackup && (
           <Field
             label="Backup code"
@@ -89,6 +81,10 @@ export const Login2FA: React.FC<Login2FAProps> = ({
           />
         )}
 
+        {!loginWithBackup && showCodeError && (
+          <p role="alert" className="tb-lede tb-error">{errors.twoFactorCode}</p>
+        )}
+
         <FormNotice notice={loginNotice} />
 
         <PrimaryButton
@@ -101,15 +97,6 @@ export const Login2FA: React.FC<Login2FAProps> = ({
         >
           Verify
         </PrimaryButton>
-
-        {!loginWithBackup && (
-          <div className="text-center">
-            <TextButton onClick={() => setLoginWithBackup(true)}>
-              Use backup code instead
-            </TextButton>
-          </div>
-        )}
-        </div>
       </div>
 
       <div className="more-ways">

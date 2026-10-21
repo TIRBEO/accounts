@@ -3,6 +3,7 @@ import { CheckCircle2, Mail, XCircle } from 'lucide-react';
 import { getCurrentUser, apiPost, verifyMagicLink } from '../lib/api';
 import { isAllowedRedirectTarget, unwrapHandoffTarget, DEFAULT_DASHBOARD_URL } from '../lib/redirect';
 import { haptic } from '../lib/haptics';
+import type { ToastType } from '../lib/toast';
 import { trackEvent, trackError } from '../lib/telemetry';
 import { announceSignIn } from '../hooks/useSession';
 import { GitHubIcon, GoogleIcon, DiscordIcon } from './SocialIcons';
@@ -19,7 +20,7 @@ function getParam(key: string): string { return new URLSearchParams(window.locat
 function sanitizeTarget(raw: string): string { if (!raw) return DEFAULT_DASHBOARD_URL; const clean = unwrapHandoffTarget(raw); if (isAllowedRedirectTarget(clean)) return clean; return DEFAULT_DASHBOARD_URL; }
 const verifiedMagicTokens = new Set<string>();
 
-interface CallbackViewProps { onToast?: (msg: string, type?: 'success' | 'error' | 'info') => void; }
+interface CallbackViewProps { onToast?: (msg: string, type: ToastType) => void; }
 
 export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
   const [checking, setChecking] = useState(true);
@@ -137,9 +138,6 @@ export const CallbackView: React.FC<CallbackViewProps> = ({ onToast }) => {
               <div>
                 <h1 className="tb-heading">You&apos;re signed in</h1>
                 <p className="tb-sub mt-1.5">Magic link verified — opening your workspace.</p>
-              </div>
-              <div className="mt-2 h-px w-full overflow-hidden rounded-full bg-divider">
-                <div className="h-full w-full rounded-full bg-accent" />
               </div>
               <p className="text-[16px] text-text-4">Redirecting to {redirectTo.replace(/^https?:\/\//,'').slice(0,32)}…</p>
             </div>

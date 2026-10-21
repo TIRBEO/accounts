@@ -5,11 +5,12 @@ import { getRedirectTarget } from '../../lib/redirect';
 import { AuthCardSkeleton, AuthShell, SecondaryButton } from '../ui/ig-ui';
 import { RandomAvatar } from '../ui/random-avatar';
 import { PasskeyManager } from './PasskeyManager';
+import type { ToastType } from '../../lib/toast';
 
 interface SessionGateProps {
   children: React.ReactNode;
   /** Toast sink so the passkey panel can report without its own provider. */
-  onShowToast?: (message: string) => void;
+  onShowToast?: (message: string, type: ToastType) => void;
 }
 
 export function SessionGate({ children, onShowToast }: SessionGateProps) {

@@ -4,8 +4,11 @@ import { trackError, trackEvent, emailDomain } from '../../lib/telemetry';
 import { validateEmail, validateName, validateUsername, validatePassword, validateConfirmPassword, validateVerificationCode, validateTwoFactorCode, validateDob } from '../../lib/validations';
 import type { FormErrors, SignupStep, LoginStep } from '../../lib/validations';
 import { workFieldMeta } from '../../lib/profile-fields';
+import type { ToastType } from '../../lib/toast';
 
-const COOLDOWN_SECONDS = 30;
+/* How long a send locks its own button for, when the server gives no deadline.
+   Shared with the magic-link sent page so both count down from one number. */
+export const COOLDOWN_SECONDS = 30;
 const WINDOW_MS = 15 * 60 * 1000;
 const SYNC_DEBOUNCE_MS = 2000;
 const LIMITS_SYNC_MS = 30_000;
@@ -33,7 +36,7 @@ const DEFAULT_SEND_LIMITS: Record<string, number> = {
   'global-ip': 20,
 };
 
-export function useAuthForm(onShowToast: (msg: string) => void) {
+export function useAuthForm(onShowToast: (msg: string, type: ToastType) => void) {
   const [mode, setMode] = useState<'login' | 'signup'>(() =>
     typeof window !== 'undefined' && window.location.pathname.startsWith('/login') ? 'login' : 'signup',
   );
@@ -100,7 +103,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
   const [loginOtpCode, setLoginOtpCode] = useState('');
   const [backupCode, setBackupCode] = useState('');
   const [loginWithBackup, setLoginWithBackup] = useState(false);
-  const [recoveryMethod, setRecoveryMethod] = useState<'code' | 'magic-link' | 'recovery' | null>(null);
+  const [recoveryMethod, setRecoveryMethod] = useState<'code' | 'recovery' | null>(null);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [recoveryStage, setRecoveryStage] = useState<'code' | 'password'>('code');
@@ -272,45 +275,39 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     [windowResetsAt],
   );
 
-  // ─── Per-method cooldown timers ───
-  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
-  const cooldownRef = useRef<Record<string, number>>({});
+  // ─── Per-method send deadlines ───
+  /* One number per send: the instant its button unlocks. The countdown is
+     counted against `now`, so a tab throttled in the background resumes on the
+     real deadline instead of an interval that fell behind and reads as a hang. */
+  const [cooldownUntil, setCooldownUntil] = useState<Record<string, number>>({});
+  const [now, setNow] = useState(() => Date.now());
 
-  const isInCooldown = (key: string) => (cooldowns[key] || 0) > 0 || (cooldownRef.current[key] || 0) > Date.now();
-  const getCooldownRemaining = (key: string) => {
-    if ((cooldownRef.current[key] || 0) > Date.now()) return Math.ceil((cooldownRef.current[key] - Date.now()) / 1000);
-    return cooldowns[key] || 0;
-  };
+  const isInCooldown = (key: string) => (cooldownUntil[key] || 0) > now;
+  const getCooldownRemaining = (key: string) =>
+    Math.max(0, Math.ceil(((cooldownUntil[key] || 0) - now) / 1000));
   const startCooldown = useCallback((key: string, endAtMs?: number) => {
-    // Cooldown timers stay local (UX), but when the server told us when its
-    // window/cooldown actually ends (429 retryAfterMs → endAtMs), the timer
-    // runs to that end instead of a guessed 30s.
-    const end = endAtMs && endAtMs > Date.now() ? endAtMs : Date.now() + COOLDOWN_SECONDS * 1000;
-    cooldownRef.current[key] = end;
-    setCooldowns(prev => ({ ...prev, [key]: Math.max(1, Math.ceil((end - Date.now()) / 1000)) }));
+    // Local UX only — the server is the authority on every request. When the
+    // 429 carried a deadline (its window reset, or retryAfterMs), the button
+    // unlocks at that instant rather than at a guessed 30s.
+    const at = Date.now();
+    const end = endAtMs && endAtMs > at ? endAtMs : at + COOLDOWN_SECONDS * 1000;
+    setNow(at);
+    setCooldownUntil(prev => ({ ...prev, [key]: end }));
   }, []);
 
-  // Cooldown ticker — single interval (clears ref when expired)
+  const isLocked = Object.values(cooldownUntil).some(v => v > now);
   useEffect(() => {
-    const active = Object.entries(cooldowns).filter(([, v]) => v > 0);
-    if (active.length === 0) return;
-    const timer = setInterval(() => {
-      setCooldowns(prev => {
-        const next = { ...prev };
-        let changed = false;
-        for (const [k, v] of Object.entries(next)) {
-          if (v > 0) {
-            const nv = Math.max(0, v - 1);
-            next[k] = nv;
-            if (nv === 0) delete cooldownRef.current[k];
-            changed = true;
-          }
-        }
-        return changed ? next : prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [Object.keys(cooldowns).filter(k => cooldowns[k] > 0).join(',')]);
+    if (!isLocked) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    const bump = () => setNow(Date.now());
+    document.addEventListener('visibilitychange', bump);
+    window.addEventListener('focus', bump);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', bump);
+      window.removeEventListener('focus', bump);
+    };
+  }, [isLocked]);
 
   // ─── Validation state ───
   const [errors, setErrors] = useState<FormErrors>({});
@@ -357,21 +354,19 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
               (data.retryAfterMs ? Date.now() + data.retryAfterMs : undefined);
             if (resetsAt) setResetAt('signup-otp', resetsAt);
             if (data.remaining && typeof data.remaining === 'object') applyRemainingMap(data.remaining);
-            // Cooldown end from the server's value when it provided one.
-            const retryAfter = data.retryAfterMs
-              ? Math.ceil(data.retryAfterMs / 1000)
-              : resetsAt ? Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000)) : COOLDOWN_SECONDS;
-            startCooldown('signup-otp', Date.now() + retryAfter * 1000);
-            onShowToast(result.error || 'Please wait before requesting another code');
+            // `resetsAt` already folds in the server's retryAfterMs; with
+            // neither, the button falls back to the local 30s lock.
+            startCooldown('signup-otp', resetsAt);
+            onShowToast(result.error || 'Please wait before requesting another code', 'error');
           } else {
-            onShowToast(result.status === 409 ? 'An account with this email already exists' : 'Error sending verification code');
+            onShowToast(result.status === 409 ? 'An account with this email already exists' : 'Error sending verification code', 'error');
           }
           // The signup-otp send response carries no counts map — re-sync so
           // the optimistic bump is reconciled with the server's truth.
           void syncFromDb();
         } else {
           void syncFromDb();
-          onShowToast('Verification code sent to ' + email);
+          onShowToast('Verification code sent to ' + email, 'success');
           trackEvent('auth.otp_sent', { metadata: { flow: 'signup', domain: emailDomain(email) } });
         }
       } catch (err) {
@@ -625,6 +620,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       case 'twoFactorCode':
         error = validateTwoFactorCode(value);
         break;
+      case 'backupCode':
+        error = value.trim() ? undefined : 'Backup code is required';
+        break;
       case 'loginOtpCode':
         error = validateVerificationCode(value);
         break;
@@ -678,6 +676,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
       case 'confirmPassword': return confirmPassword;
       case 'verificationCode': return verificationCode;
       case 'twoFactorCode': return twoFactorCode;
+      case 'backupCode': return backupCode;
       case 'loginOtpCode': return loginOtpCode;
       case 'recoveryCode': return recoveryCode;
       case 'dob': return dob;
@@ -753,8 +752,7 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     // server anyway.
     setSendAttempts({});
     setWindowResetsAt({});
-    setCooldowns({});
-    cooldownRef.current = {};
+    setCooldownUntil({});
   }, []);
 
   const clearValidation = useCallback(() => {
@@ -813,9 +811,9 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
           (result as any)?.resetsAt ||
           (retryAfterMs ? Date.now() + retryAfterMs : undefined);
         if (resetsAt) setResetAt(method, resetsAt);
-        // Cooldown end from the server's retryAfterMs when it provided one —
-        // only the legacy guessed 30s when the server said nothing.
-        startCooldown(key, retryAfterMs ? Date.now() + retryAfterMs : undefined);
+        // The server's own deadline wins; the guessed 30s only applies when the
+        // 429 said nothing about when the caller may try again.
+        startCooldown(key, resetsAt || (retryAfterMs ? Date.now() + retryAfterMs : undefined));
         // Counts come from the server's authoritative map; the blanket
         // "mark exhausted" fallback only applies when the payload carried none.
         if (serverRemaining) {
@@ -892,7 +890,6 @@ export function useAuthForm(onShowToast: (msg: string) => void) {
     // Submit
     isSubmitting, setIsSubmitting,
     // Rate limiting / cooldowns
-    cooldowns, setCooldowns,
     isInCooldown,
     getCooldownRemaining,
     startCooldown,

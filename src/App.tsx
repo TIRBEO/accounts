@@ -13,6 +13,7 @@ import { verifyMagicLink, apiPost } from './lib/api';
 import { getRedirectTarget, goBlocked, isAllowedRedirectTarget, requestedHandoff } from './lib/redirect';
 import { announceSignIn, useSession } from './hooks/useSession';
 import { subscribeToUser, disconnectRealtime } from './lib/realtime';
+import type { ToastType } from './lib/toast';
 
 const isCallbackPath = () => window.location.pathname.startsWith('/callback');
 const isMagicSentPath = () => window.location.pathname.startsWith('/magic-sent');
@@ -36,7 +37,7 @@ function takeLinkToken(): string | null {
   return linkTokenAtBoot;
 }
 let linkAttachInFlight: Promise<string | null> | null = null;
-async function attachLinkToken(showToast: (msg: string, type?: 'success' | 'error' | 'info') => void): Promise<string | null> {
+async function attachLinkToken(showToast: (msg: string, type: ToastType) => void): Promise<string | null> {
   const token = takeLinkToken();
   if (!token) return null;
   if (!linkAttachInFlight) {
@@ -57,13 +58,6 @@ async function attachLinkToken(showToast: (msg: string, type?: 'success' | 'erro
 /** StrictMode mounts effects twice; a magic-link token is spent on the first pass. */
 let magicRan = false;
 
-export type ToastType = 'success' | 'error' | 'info';
-const inferToastType = (msg: string): ToastType => {
-  const m = msg.toLowerCase();
-  if (/(error|invalid|failed|expire|unable|wrong|too many|already exists|already registered|could not|couldn.t|not configured|try again|no account)/.test(m)) return 'error';
-  if (/(success|signed in|sent to|verified|created|updated|welcome|resent|check your email|logged in)/.test(m)) return 'success';
-  return 'info';
-};
 const TOAST_ICON: Record<ToastType, ReactNode> = { success: <CheckCircle2 size={18} />, error: <AlertCircle size={18} />, info: <Info size={18} /> };
 
 /**
@@ -79,8 +73,8 @@ export default function App() {
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
   const userId = session.user?.id ?? null;
 
-  const showToast = useCallback((msg: string, type?: ToastType) => {
-    setToast({ msg, type: type || inferToastType(msg) });
+  const showToast = useCallback((msg: string, type: ToastType) => {
+    setToast({ msg, type });
     setTimeout(() => setToast((c) => (c?.msg === msg ? null : c)), 3200);
   }, []);
 
@@ -135,7 +129,7 @@ export default function App() {
       const result = await verifyMagicLink(token);
       if (result.block) { goBlocked(); return; }
       if (!result.ok) {
-        showToast(result.error || 'This magic link is invalid or has expired.');
+        showToast(result.error || 'This magic link is invalid or has expired.', 'error');
         return;
       }
       showToast(`Signed in successfully${result.email ? ' as ' + result.email : ''}`, 'success');
@@ -203,8 +197,9 @@ export default function App() {
         return;
       }
       // createNotification sends title/body; legacy/pusherToastUser sends message.
+      // A push carries no severity of its own, so it reads as neutral news.
       const text = ev?.message || (ev?.title ? (ev?.body ? `${ev.title} — ${ev.body}` : ev.title) : '');
-      if (text) showToast(text);
+      if (text) showToast(text, 'info');
     }).then((unsub) => {
       if (disposed && unsub) unsub();
       else cleanup = unsub;

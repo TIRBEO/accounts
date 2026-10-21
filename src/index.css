@@ -1129,20 +1129,6 @@
   margin-top: 16px;
 }
 
-/* Magic-link "Sent to" chip. */
-.ms-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin-right: 7px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent-text);
-}
-
 /* OAuth — three equal provider pills, the same shape as every button. */
 .oauth-list {
   display: grid;

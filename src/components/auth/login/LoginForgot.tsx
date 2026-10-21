@@ -23,20 +23,9 @@ export const LoginForgot: React.FC<LoginForgotProps> = ({
   email, setEmail, errors, touched, handleBlur, isSubmitting, accountMissing, onSubmit, onBack, loginNotice,
 }) => {
   const showEmailError = touched.email && errors.email;
-  const [sending, setSending] = React.useState(false);
-
-  const doSubmit = async (e: React.FormEvent) => {
-    if (sending) return;
-    setSending(true);
-    try {
-      await onSubmit(e);
-    } finally {
-      setSending(false);
-    }
-  };
 
   return (
-    <form onSubmit={doSubmit}>
+    <form onSubmit={onSubmit}>
       <div className="otp-head">
         <h2 className="tb-heading">Reset your password</h2>
         <p className="tb-sub mt-1.5">
@@ -45,7 +34,6 @@ export const LoginForgot: React.FC<LoginForgotProps> = ({
       </div>
 
       <div className="signup-fields">
-        <div className="space-y-5 text-left">
         <Field
           aria-label="Email"
           label="Email"
@@ -64,12 +52,11 @@ export const LoginForgot: React.FC<LoginForgotProps> = ({
             would only ask again is a dead end, not a choice. */}
         <PrimaryButton
           type="submit"
-          loading={sending || isSubmitting}
+          loading={isSubmitting}
           disabled={!!validateEmail(email) || !!accountMissing}
         >
           Send reset code
         </PrimaryButton>
-        </div>
       </div>
 
       <div className="more-ways">

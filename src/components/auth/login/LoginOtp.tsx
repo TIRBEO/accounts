@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FormNotice, OtpBoxes, PrimaryButton, Spinner, TextButton } from '../../ui/ig-ui';
+import { FormNotice, OtpBoxes, PrimaryButton, TextButton } from '../../ui/ig-ui';
 
 interface LoginOtpProps {
   email: string;
@@ -9,7 +9,6 @@ interface LoginOtpProps {
   setLoginOtpCode: (v: string) => void;
   errors: Record<string, string | undefined>;
   touched: Record<string, boolean>;
-  handleBlur: (field: string) => void;
   loginPending2fa: boolean;
   isSubmitting: boolean;
   isInCooldown: (key: string) => boolean;
@@ -22,24 +21,14 @@ interface LoginOtpProps {
 }
 
 export const LoginOtp: React.FC<LoginOtpProps> = ({
-  email, loginOtpCode, setLoginOtpCode, errors, touched, handleBlur,
+  email, loginOtpCode, setLoginOtpCode, errors, touched,
   loginPending2fa, isSubmitting, isInCooldown, getCooldownRemaining,
   onResend, onSubmit, onBack, remainingSends, loginNotice,
 }) => {
   const showCodeError = touched.loginOtpCode && errors.loginOtpCode;
   const codeComplete = loginOtpCode.length === 6;
   const sendsRemaining = remainingSends('login-otp');
-
-  const [resending, setResending] = React.useState(false);
-  const doResend = async () => {
-    if (resending) return;
-    setResending(true);
-    try {
-      await onResend();
-    } finally {
-      setResending(false);
-    }
-  };
+  const limitReached = sendsRemaining === 0;
 
   return (
     <form onSubmit={onSubmit}>
@@ -53,7 +42,6 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
       </div>
 
       <div className="signup-fields">
-        <div className="space-y-5 text-left">
         <OtpBoxes
           label="Email verification code"
           value={loginOtpCode}
@@ -61,41 +49,28 @@ export const LoginOtp: React.FC<LoginOtpProps> = ({
           error={Boolean(showCodeError)}
         />
 
-        {/* Keeps the code field's blur validation wired (same as before). */}
-        <input
-          type="hidden"
-          value={loginOtpCode}
-          onChange={(e) => setLoginOtpCode(e.target.value)}
-          onBlur={() => handleBlur('loginOtpCode')}
-        />
-
         {showCodeError && (
-          <p role="alert" className="text-center text-[14px] text-danger-text">
-            {errors.loginOtpCode}
-          </p>
+          <p role="alert" className="tb-lede tb-error">{errors.loginOtpCode}</p>
         )}
 
-        {/* No quota meter — the limit only speaks when it is actually hit. */}
-        <p className="text-center text-[14px] text-text-4">
+        {/* The tap itself is the feedback: a send starts the 30s countdown, which
+           replaces this button, so no separate in-flight spinner is needed. */}
+        <div className="resend-row">
           {isInCooldown('login-otp') ? (
-            <>Resend in {getCooldownRemaining('login-otp')}s</>
+            <span>Resend in {getCooldownRemaining('login-otp')}s</span>
           ) : (
-            <TextButton onClick={doResend} disabled={resending}>
-              {resending && <Spinner size={14} className="text-accent-text" />}
-              Resend code
-            </TextButton>
+            <TextButton type="button" onClick={onResend}>Resend code</TextButton>
           )}
-          {sendsRemaining === 0 && (
-            <span className="text-danger-text"> · limit reached</span>
-          )}
-        </p>
+          <span className={limitReached ? 'resend-note is-limit' : 'resend-note'}>
+            {limitReached ? 'limit reached' : `${sendsRemaining} left`}
+          </span>
+        </div>
 
         <FormNotice notice={loginNotice} />
 
         <PrimaryButton type="submit" loading={isSubmitting} disabled={!codeComplete}>
           Verify
         </PrimaryButton>
-        </div>
       </div>
 
       <div className="more-ways">

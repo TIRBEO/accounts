@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { requestMagicLink, getRemainingLimits } from '../../lib/api';
 import { trackEvent } from '../../lib/telemetry';
-import { AuthShell, Field, PrimaryButton, TextButton } from '../ui/ig-ui';
+import { AuthShell, Field, PrimaryButton } from '../ui/ig-ui';
 import { validateEmail } from '../../lib/validations';
+import { COOLDOWN_SECONDS } from './useAuthForm';
 
 /* The one hard fact about a magic link: it is short-lived and single-use.
    The page is a charcoal plate naming the inbox, one resend action, and a
@@ -27,31 +27,28 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const email = emailProp || params?.get('email') || '';
   const [ptr, setPtr] = useState(() => ptrProp || params?.get('ptr') || '');
-  const [cooldown, setCooldown] = useState(0);
   const [sending, setSending] = useState(false);
   /* -1 until the server answers, so nothing renders a number we are not sure
      of. The page is a confirmation, not a quota meter — it never blocks on
      this. */
   const [remaining, setRemaining] = useState(-1);
-  const [retryAfter, setRetryAfter] = useState(0);
   const [sendError, setSendError] = useState('');
-  const [limitResetAt, setLimitResetAt] = useState(0);
+  /* One deadline, whatever set it: a send's own cooldown or a 429's server-side
+     window reset. A second countdown state would only disagree with this one. */
+  const [lockedUntil, setLockedUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   /* The no-address fallback below is the one state where the reader names the
      address themselves, so it carries its own little form's worth of state. */
   const [manualEmail, setManualEmail] = useState('');
   const [manualSending, setManualSending] = useState(false);
   const [manualError, setManualError] = useState('');
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRemaining = useCallback(async () => {
     if (!email) return;
     try {
       const res = await getRemainingLimits(email, 'magic-link');
       const rem = res.ok ? res.data?.remaining?.['magic-link'] : undefined;
-      if (rem) {
-        setRemaining(rem.remaining);
-        setLimitResetAt(rem.remaining <= 0 && rem.resetAt ? rem.resetAt : 0);
-      }
+      if (rem) setRemaining(rem.remaining);
     } catch {
       /* Rate-limit info is a nicety. If it cannot be read, the page still works
          — resend stays enabled and the server is the one that decides. */
@@ -72,33 +69,36 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
     };
   }, [fetchRemaining]);
 
+  // One interval per send, and it stops when the deadline passes.
   useEffect(() => {
-    if (cooldown <= 0) return;
-    cooldownRef.current = setInterval(() => {
-      setCooldown(v => {
-        if (v <= 1) {
-          if (cooldownRef.current) clearInterval(cooldownRef.current);
-          return 0;
-        }
-        return v - 1;
-      });
+    if (lockedUntil <= Date.now()) return;
+    setNow(Date.now());
+    const id = setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      if (t >= lockedUntil) clearInterval(id);
     }, 1000);
-    return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
-  }, [cooldown]);
+    return () => clearInterval(id);
+  }, [lockedUntil]);
+
+  const cooldown = Math.max(0, Math.ceil((lockedUntil - now) / 1000));
+
+  /* Starting a deadline also starts the clock it counts down against — setting
+     only the deadline would render the first second from a stale `now`. */
+  const lockUntil = (until: number) => {
+    setNow(Date.now());
+    setLockedUntil(until);
+  };
 
   /* A missing ptr is not fatal: the server only demands one while a send flow
      is live for this address. Resend anyway — the reply (or a 403 notice)
      tells the truth. */
-  const resendLocked = cooldown > 0 || retryAfter > 0 || (limitResetAt > 0 && Date.now() < limitResetAt) || remaining === 0;
-  const resendLabel = sending
-    ? 'Sending…'
-    : retryAfter > 0
-      ? `Resend in ${retryAfter}s`
-      : cooldown > 0
-        ? `Resend in ${cooldown}s`
-        : remaining === 0
-          ? 'No sends left'
-          : 'Resend sign-in link';
+  const resendLocked = cooldown > 0 || remaining === 0;
+  const resendLabel = cooldown > 0
+    ? `Resend in ${cooldown}s`
+    : remaining === 0
+      ? 'No sends left'
+      : 'Resend sign-in link';
 
   const handleResend = async () => {
     if (!email || resendLocked) return;
@@ -121,18 +121,16 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
           } catch {}
         }
         setRemaining(v => (v > 0 ? v - 1 : v));
-        setCooldown(30);
+        lockUntil(Date.now() + COOLDOWN_SECONDS * 1000);
         setTimeout(() => { void fetchRemaining(); }, 600);
       } else if (res.status === 429) {
         const resetsAt = res.resetsAt || (res.retryAfterMs ? Date.now() + res.retryAfterMs : 0);
-        const retrySec = Math.max(1, Math.ceil((resetsAt - Date.now()) / 1000));
-        setRetryAfter(retrySec);
-        setCooldown(retrySec);
-        if (resetsAt) setLimitResetAt(resetsAt);
+        const until = resetsAt || Date.now() + COOLDOWN_SECONDS * 1000;
+        lockUntil(until);
         setSendError(
           resetsAt
             ? `Too many requests — you can try again at ${new Date(resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
-            : res.error || `Please wait ${retrySec}s before requesting again.`,
+            : res.error || `Please wait ${Math.ceil((until - Date.now()) / 1000)}s before requesting again.`,
         );
         setTimeout(() => { void fetchRemaining(); }, 600);
       } else {
@@ -200,7 +198,7 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
             </p>
           </div>
           <form
-            className="mt-6"
+            className="signup-fields"
             noValidate
             onSubmit={(e) => {
               e.preventDefault();
@@ -221,16 +219,14 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
                 if (manualError) setManualError('');
               }}
             />
-            <div className="mt-5">
-              <PrimaryButton type="submit" loading={manualSending} disabled={manualSending}>
-                Send a new link
-              </PrimaryButton>
-            </div>
+            <PrimaryButton type="submit" loading={manualSending} disabled={manualSending}>
+              Send a new link
+            </PrimaryButton>
           </form>
-          <div className="mt-2 text-center">
-            <TextButton type="button" onClick={handleBack} className="inline-flex items-center gap-1.5">
-              <ArrowLeft size={13} /> Back to sign in
-            </TextButton>
+          <div className="more-ways">
+            <button type="button" className="more-ways-btn" onClick={handleBack}>
+              Back to sign in
+            </button>
           </div>
         </div>
       </AuthShell>
@@ -249,36 +245,26 @@ export const MagicLinkSentPage: React.FC<MagicLinkSentPageProps> = ({ email: ema
         </div>
 
         <div className="signup-fields">
-          <div className="space-y-5 text-left">
-            <Field
-              label="Sent to"
-              type="email"
-              value={email}
-              readOnly
-              hint="Resends are locked to the device that started sign-in."
-              trailing={
-                <span className="ms-chip" aria-hidden="true">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2.5" y="4.5" width="19" height="15" rx="3" />
-                    <path d="m3.5 7 7.4 5.4a2 2 0 0 0 2.2 0L20.5 7" />
-                  </svg>
-                </span>
-              }
-            />
+          <Field
+            label="Sent to"
+            type="email"
+            value={email}
+            readOnly
+            hint="Resends are locked to the device that started sign-in."
+          />
 
-            <PrimaryButton
-              type="button"
-              onClick={() => void handleResend()}
-              loading={sending}
-              disabled={resendLocked}
-            >
-              {resendLabel}
-            </PrimaryButton>
+          <PrimaryButton
+            type="button"
+            onClick={() => void handleResend()}
+            loading={sending}
+            disabled={resendLocked}
+          >
+            {resendLabel}
+          </PrimaryButton>
 
-            {sendError && (
-              <p role="alert" className="form-notice form-notice-error">{sendError}</p>
-            )}
-          </div>
+          {sendError && (
+            <p role="alert" className="form-notice form-notice-error">{sendError}</p>
+          )}
         </div>
 
         <div className="more-ways">

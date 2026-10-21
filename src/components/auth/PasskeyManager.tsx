@@ -12,6 +12,7 @@ import {
   type PasskeySummary,
 } from '../../lib/passkeys';
 import { haptic } from '../../lib/haptics';
+import type { ToastType } from '../../lib/toast';
 import { captureException } from '../../lib/sentry';
 import { trackEvent, trackError } from '../../lib/telemetry';
 import {
@@ -26,7 +27,7 @@ import { ReauthSheet } from './ReauthSheet';
 
 interface PasskeyManagerProps {
   /** Toast sink, same one the rest of the auth UI uses. */
-  onShowToast: (message: string) => void;
+  onShowToast: (message: string, type: ToastType) => void;
 }
 
 /**
@@ -81,7 +82,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       await registerPasskey(deviceName);
       trackEvent('auth.passkey_registered', { metadata: { named: Boolean(deviceName.trim()) } });
       haptic('success');
-      onShowToast('Passkey added to this device');
+      onShowToast('Passkey added to this device', 'success');
       setDeviceName('');
       await load();
     } catch (err) {
@@ -93,7 +94,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       if (!failure.cancelled) {
         haptic('error');
         captureException(err);
-        onShowToast(failure.message);
+        onShowToast(failure.message, 'error');
       }
     } finally {
       setBusy(false);
@@ -110,7 +111,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       await deletePasskey(passkey.id);
       trackEvent('auth.passkey_removed');
       haptic('success');
-      onShowToast('Passkey removed');
+      onShowToast('Passkey removed', 'success');
       await load();
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : null;
@@ -121,7 +122,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
         trackError('passkey:remove', err);
         haptic('error');
         captureException(err);
-        onShowToast(failure?.message || 'Could not remove that passkey.');
+        onShowToast(failure?.message || 'Could not remove that passkey.', 'error');
       }
     } finally {
       setPendingId(null);
@@ -139,7 +140,7 @@ export function PasskeyManager({ onShowToast }: PasskeyManagerProps): React.Reac
       await deletePasskey(target.id, proof);
       trackEvent('auth.passkey_removed');
       haptic('success');
-      onShowToast('Passkey removed');
+      onShowToast('Passkey removed', 'success');
       await load();
       return { ok: true };
     } catch (err) {
