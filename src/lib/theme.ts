@@ -18,12 +18,12 @@ export function readTheme(): ThemeId {
   }
 }
 
-/** `system` follows the device and falls back to dark when unavailable. */
+/** `system` follows the device and falls back to light when unavailable. */
 export function resolveTheme(id: ThemeId): "dark" | "light" {
   if (id !== "system") return id;
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
+  return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 /** Fired by `applyTheme`, so `useSyncExternalStore` readers (the toggle)
@@ -50,7 +50,11 @@ export function subscribeTheme(onChange: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const handler = () => onChange();
   window.addEventListener(THEME_CHANGED, handler);
-  const stopSystem = onSystemThemeChange(onChange);
+  const stopSystem = onSystemThemeChange(() => {
+    // A device flip must re-paint the palette, not just the toggle icon —
+    // applyTheme dispatches THEME_CHANGED, which notifies the readers.
+    applyTheme(readTheme());
+  });
   return () => {
     window.removeEventListener(THEME_CHANGED, handler);
     stopSystem();
@@ -69,4 +73,4 @@ export function onSystemThemeChange(onChange: () => void) {
 }
 
 /** Inlined in <head> so the palette is correct on the very first paint. */
-export const THEME_BOOT = `(function(){try{var k="${THEME_KEY}";var v=localStorage.getItem(k);var t=(v==="dark"||v==="light"||v==="system")?v:"system";var a=t==="light"||(t==="system"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches)?"light":"dark";document.documentElement.setAttribute("data-theme",a);document.documentElement.style.colorScheme=a;}catch(e){}})();`;
+export const THEME_BOOT = `(function(){try{var k="${THEME_KEY}";var v=localStorage.getItem(k);var t=(v==="dark"||v==="light"||v==="system")?v:"system";var a=t==="dark"||(t==="system"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",a);document.documentElement.style.colorScheme=a;}catch(e){}})();`;

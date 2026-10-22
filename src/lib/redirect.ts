@@ -174,10 +174,24 @@ export function getRedirectTarget(): string {
   const requested = requestedHandoff();
   if (requested) return requested;
 
+  // The referrer only counts for apps that actually own screens to return to.
+  // The marketing site sits on the bare parent domain (tirbeo.com) — a visitor
+  // who clicked "Log in" there must land on the dashboard, not bounce back to
+  // the landing page they came from.
   const referrer = document.referrer;
-  if (referrer && isAllowedRedirectTarget(referrer)) return referrer;
+  if (referrer && !isMarketingApex(referrer) && isAllowedRedirectTarget(referrer)) return referrer;
 
   return DEFAULT_DASHBOARD_URL;
+}
+
+function isMarketingApex(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    const parent = currentTirbeoParent()?.toLowerCase() ?? null;
+    return host === APP_DOMAIN || (parent !== null && host === parent);
+  } catch {
+    return true;
+  }
 }
 
 /**

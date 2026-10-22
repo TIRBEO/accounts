@@ -6,11 +6,15 @@ import {initSentry} from './lib/sentry';
 import {initA11yDevTools} from './lib/a11y';
 import {publishDeviceId} from './lib/device';
 import {startSessionSync} from './hooks/useSession';
+import {applyTheme, onSystemThemeChange, readTheme} from './lib/theme';
 import App from './App.tsx';
 import './index.css';
 
 initSentry();
 initA11yDevTools();
+// A device flip must re-paint the palette even on screens that mount no
+// theme toggle (the auth pages), so the listener lives here, not in a hook.
+onSystemThemeChange(() => applyTheme(readTheme()));
 // Before the first request: the sign-in alert gates on the device, and a
 // top-level navigation (an OAuth callback) can only carry the id as a cookie.
 publishDeviceId();

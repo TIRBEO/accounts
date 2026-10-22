@@ -148,9 +148,8 @@ export default function App() {
   // ── What the session answer means for this screen ──
   // A closed account goes to the settings gate, which reads the facts from the
   // API — nothing about the closure travels in the URL. A signed-in visitor is
-  // handed off only when the URL *asked* for a destination; otherwise they stay
-  // on this app's signed-in screen, which is where passkeys are managed. Bouncing
-  // them to the dashboard because they came from the dashboard is a loop.
+  // always handed off: this app keeps no signed-in screen of its own; the
+  // dashboard (and its passkey settings) is the destination.
   const handedOffRef = useRef(false);
   useEffect(() => {
     if (isCallbackPath() || isMagicSentPath()) return;
@@ -160,8 +159,7 @@ export default function App() {
     handedOffRef.current = true;
     const target = requestedHandoff();
     void attachLinkToken(showToast).then((linked) => {
-      const destination = linked || target;
-      if (destination) window.location.href = destination;
+      window.location.href = linked || target || getRedirectTarget();
     });
   }, [session.status, showToast]);
 
@@ -243,7 +241,7 @@ export default function App() {
       : routePath.startsWith('/magic-sent')
         ? page(<MagicLinkSentPage />)
         : page(
-            <SessionGate onShowToast={showToast}>
+            <SessionGate>
               <Suspense fallback={<AuthCardSkeleton />}>
                 <AuthCard onSuccessAuth={handleSuccessAuth} onShowToast={showToast} />
               </Suspense>

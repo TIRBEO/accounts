@@ -1,92 +1,22 @@
-import React, { useState } from 'react';
-import { ArrowRight, LogOut } from 'lucide-react';
-import { signOut, useSession } from '../../hooks/useSession';
-import { getRedirectTarget } from '../../lib/redirect';
-import { AuthCardSkeleton, AuthShell, SecondaryButton } from '../ui/ig-ui';
-import { RandomAvatar } from '../ui/random-avatar';
-import { PasskeyManager } from './PasskeyManager';
-import type { ToastType } from '../../lib/toast';
+import React from 'react';
+import { useSession } from '../../hooks/useSession';
+import { AuthCardSkeleton } from '../ui/ig-ui';
 
 interface SessionGateProps {
   children: React.ReactNode;
-  /** Toast sink so the passkey panel can report without its own provider. */
-  onShowToast?: (message: string, type: ToastType) => void;
 }
 
-export function SessionGate({ children, onShowToast }: SessionGateProps) {
+/**
+ * The signed-in visitor has no screen here any more — App's hand-off effect
+ * navigates them to the dashboard the moment the session answers "member".
+ * This gate only decides whether the login form may show while that answer is
+ * not in yet, and plates the card so the wait is not a blank canvas.
+ */
+export function SessionGate({ children }: SessionGateProps) {
   const session = useSession();
-  // A blocked provider photo paints as a black circle — the seeded face takes over.
-  const [photoBroken, setPhotoBroken] = useState(false);
-
   // 'unknown' is a probe in flight, not a verdict — the form is never held
   // behind it. Someone already signed in who types a password anyway still gets
   // a straight answer from the API.
   if (session.status === 'unknown' || session.status === 'guest') return <>{children}</>;
-  // A closed account is App's to redirect. Plate the card so the wait is not a
-  // blank canvas, and reveal nothing about the closure from here.
-  if (session.status === 'blocked') return <AuthCardSkeleton />;
-
-  const user = session.user;
-  const initials = (user?.name || user?.email || '?')
-    .split(' ')
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  return (
-    <AuthShell>
-      <div className="w-full">
-        <div className="text-center">
-          <h1 className="tb-heading">You&apos;re signed in</h1>
-          <p className="tb-sub mt-2">
-            Continue to your workspace, or review the security on this account.
-          </p>
-        </div>
-
-        <div className="mt-8 flex items-center gap-3.5 rounded-xl border border-border bg-card p-4 text-left">
-          {user?.photoUrl && !photoBroken ? (
-            <img
-              src={user.photoUrl}
-              alt={user.name || user.email}
-              referrerPolicy="no-referrer"
-              className="size-14 shrink-0 rounded-2xl border border-border object-cover"
-              onError={() => setPhotoBroken(true)}
-            />
-          ) : photoBroken ? (
-            <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-field">
-              <RandomAvatar seed={user?.email || user?.name || 'tirbeo'} className="size-full" />
-            </span>
-          ) : (
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border bg-field text-[18px] font-semibold text-text-2">
-              {initials}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-semibold text-fg">{user?.email}</p>
-            {user?.name ? <p className="mt-0.5 truncate text-[13.5px] text-text-3">{user.name}</p> : null}
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-3">
-          {/* Same plate as PrimaryButton — the site's CTA recipe, because a
-              navigation link cannot be a <button> and still be middle-clickable. */}
-          <a href={getRedirectTarget()} className="btn btn-primary btn-block">
-            Continue to dashboard
-            <ArrowRight size={15} className="opacity-70" aria-hidden />
-          </a>
-
-          <SecondaryButton onClick={() => { void signOut(); }}>
-            <span className="inline-flex items-center justify-center gap-2">
-              <LogOut size={15} className="text-text-3" />
-              Sign out
-            </span>
-          </SecondaryButton>
-        </div>
-
-        {onShowToast ? <PasskeyManager onShowToast={onShowToast} /> : null}
-      </div>
-    </AuthShell>
-  );
+  return <AuthCardSkeleton />;
 }
