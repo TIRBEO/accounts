@@ -154,12 +154,13 @@ export function requestedHandoff(): string | null {
       // A target that points back at this very handoff screen would re-enter
       // the flow instead of finishing it — drop it and keep looking.
       if (clean === window.location.origin + window.location.pathname) continue;
+      if (isMarketingHome(clean)) continue;
       if (isAllowedRedirectTarget(clean)) return clean;
       continue;
     }
 
     const built = buildFromAppName(trimmed);
-    if (built && isAllowedRedirectTarget(built)) return built;
+    if (built && !isMarketingHome(built) && isAllowedRedirectTarget(built)) return built;
   }
   return null;
 }
@@ -182,6 +183,25 @@ export function getRedirectTarget(): string {
   if (referrer && !isMarketingApex(referrer) && isAllowedRedirectTarget(referrer)) return referrer;
 
   return DEFAULT_DASHBOARD_URL;
+}
+
+/**
+ * The bare marketing origin — `https://tirbeo.com/` and nothing on it.
+ *
+ * Someone who clicked "Log in" on the marketing site wants their dashboard,
+ * not the page they came from, and the accounts app used to honour that
+ * target literally: `?redirect_to=https://tirbeo.com/` bounced the visitor
+ * back to the landing page with a session they never got to use. A deep
+ * marketing path is a different request and still passes.
+ */
+function isMarketingHome(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.pathname !== '/' && u.pathname !== '') return false;
+    return isMarketingApex(url);
+  } catch {
+    return true;
+  }
 }
 
 function isMarketingApex(url: string): boolean {

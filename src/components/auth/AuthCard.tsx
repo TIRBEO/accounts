@@ -393,11 +393,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const account = await authenticatePasskey();
       trackEvent('auth.passkey_login', { metadata: { mode: opts?.auto ? 'conditional' : 'explicit' } });
       haptic('success');
-      if (account.id) {
-        try {
-          localStorage.setItem('tirbeo_session_user_id', account.id);
-        } catch {}
-      }
       onSuccessAuth(account.email || email, 'Passkey');
     } catch (err) {
       const failure = err instanceof PasskeyError ? err : new PasskeyError('Passkey sign-in failed.');
